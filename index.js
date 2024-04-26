@@ -7,9 +7,11 @@ const cors = require('cors');
 
 app.use(cors())
 const PORT = process.env.PORT || 3333;
+console.log("🚀 ~ PORT:", PORT)
 const TOKEN = process.env.TOKEN; // Telegram Token
+console.log("🚀 ~ TOKEN:", TOKEN)
 const API_URL = process.env.BACKEND_URL; // Backend URL
-// console.log("🚀 ~ API_URL:", API_URL)
+console.log("🚀 ~ API_URL:", API_URL)
 
 const bot = new TelegramBot(TOKEN, { polling: true });
 
@@ -132,59 +134,63 @@ function startLogin(chatId) {
 
 // Function to start the token swapping process
 function startSwapToken(chatId) {
-    console.log("🚀 ~ startSwapToken ~ chatId:", chatId)
-    bot.sendMessage(chatId, '🔄 Please enter the chain ID:');
+    // console.log(" ~ startSwapToken ~ chatId:", chatId);
+    bot.sendMessage(chatId, ' Please enter the chain ID:');
+  
     bot.once('message', async (chainIdMsg) => {
-        const chainId = Number(chainIdMsg.text);
-        console.log("🚀 ~ bot.once ~ chainId:", chainId)
-
-        if (isNaN(chainId)) {
-            return bot.sendMessage(chatId, '❌ Invalid chain ID. Please enter a valid number.');
-        }
-
-        bot.sendMessage(chatId, '💱 Please enter the first token:');
-        bot.once('message', async (token0Msg) => {
-            const token0 = token0Msg.text;
-            console.log("🚀 ~ bot.once ~ token0:", token0)
-
-            bot.sendMessage(chatId, '💱 Please enter the second token:');
-            bot.once('message', async (token1Msg) => {
-                const token1 = token1Msg.text;
-                console.log("🚀 ~ bot.once ~ token1:", token1)
-
-                bot.sendMessage(chatId, '💰 Please enter the amount to swap:');
-                bot.once('message', async (amountInMsg) => {
-                    const amountIn = Number(amountInMsg.text);
-                    console.log("🚀 ~ bot.once ~ amountIn:", amountIn)
-
-                    if (isNaN(amountIn)) {
-                        return bot.sendMessage(chatId, '❌ Invalid amount. Please enter a valid number.');
-                    }
-                    console.log("🚀 ~ bot.once ~ API_URL:", API_URL)
-                    try {
-                        const response = await axios.post(`https://wavebot-191945f71768.herokuapp.com/mainswap`, {
-                            token0,
-                            token1,
-                            amountIn,
-                            chainId,
-                            chatId
-                        });
-                        console.log("🚀 ~ bot.once ~ response:", response)
-                        // if (response.data.status === true) {
-                        //     console.log("🚀 ~ bot.once ~ response:", response)
-                        //     bot.sendMessage(chatId, `Swap successful!`);
-                        // } else {
-                        //     bot.sendMessage(chatId, '❌ Swap failed. Please try again.');
-                        // }
-                    } catch (error) {
-                        console.error('Error:', error.message);
-                        bot.sendMessage(chatId, `❌ An error occurred while logging in: ${error.message}`);
-                    }
+      const chainId = Number(chainIdMsg.text);
+    //   console.log(" ~ bot.once ~ chainId:", chainId);
+  
+      if (isNaN(chainId)) {
+        return bot.sendMessage(chatId, '❌ Invalid chain ID. Please enter a valid number.');
+      }
+  
+      bot.sendMessage(chatId, ' Please enter the first token:');
+      bot.once('message', async (token0Msg) => {
+        const token0 = token0Msg.text;
+        // console.log(" ~ bot.once ~ token0:", token0);
+  
+        bot.sendMessage(chatId, ' Please enter the second token:');
+        bot.once('message', async (token1Msg) => {
+          const token1 = token1Msg.text;
+        //   console.log(" ~ bot.once ~ token1:", token1);
+  
+          bot.sendMessage(chatId, ' Please enter the amount to swap:');
+          bot.once('message', async (amountInMsg) => {
+            const amountIn = Number(amountInMsg.text);
+            // console.log(" ~ bot.once ~ amountIn:", amountIn);
+  
+            if (isNaN(amountIn)) {
+              return bot.sendMessage(chatId, '❌ Invalid amount. Please enter a valid number.');
+            }
+  
+            // console.log(" ~ bot.once ~ API_URL:", API_URL); // Assuming API_URL is a defined environment variable
+  
+            try {
+                const response = await axios.post(`${API_URL}/mainswap`, {
+                    token0,
+                    token1,
+                    amountIn,
+                    chainId,
+                    chatId,
                 });
-            });
+                
+                // console.log(" ~ bot.once ~ response:", response);
+              if (response.data.status === true) {
+                bot.sendMessage(chatId, `Swap successful!`);
+              } else {
+                // console.error(" ~ bot.once ~ error response:", response);
+                bot.sendMessage(chatId, response.data.message || '❌ Swap failed. Please try again.');
+              }
+            } catch (error) {
+            //   console.error('Error:', error);
+              bot.sendMessage(chatId, `❌ An error occurred: ${error.message}`); // Provide more specific error message if possible
+            }
+          });
         });
+      });
     });
-}
+  }
 
 app.listen(PORT, () => {
     console.log(`Our app is running on port ${PORT}`);
