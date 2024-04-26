@@ -128,28 +128,38 @@ function startLogin(chatId) {
 }
 
 // Function to start the token swapping process
-function startSwapToken(chatId) {
+function startSwapToken(chatId, bot) {
     bot.sendMessage(chatId, '🔄 Please enter the chain ID:');
-    bot.once('message', async (msg) => {
-        const chainId = Number(msg.text);
+    bot.once('message', async (chainIdMsg) => {
+        const chainId = Number(chainIdMsg.text);
         if (isNaN(chainId)) {
             return bot.sendMessage(chatId, '❌ Invalid chain ID. Please enter a valid number.');
         }
         bot.sendMessage(chatId, '💱 Please enter the first token:');
-        bot.once('message', async (msg) => {
-            const token0 = msg.text;
+        bot.once('message', async (token0Msg) => {
+            const token0 = token0Msg.text;
             bot.sendMessage(chatId, '💱 Please enter the second token:');
-            bot.once('message', async (msg) => {
-                const token1 = msg.text;
+            bot.once('message', async (token1Msg) => {
+                const token1 = token1Msg.text;
                 bot.sendMessage(chatId, '💰 Please enter the amount to swap:');
-                bot.once('message', async (msg) => {
-                    const amountIn = Number(msg.text);
+                bot.once('message', async (amountInMsg) => {
+                    const amountIn = Number(amountInMsg.text);
                     if (isNaN(amountIn)) {
                         return bot.sendMessage(chatId, '❌ Invalid amount. Please enter a valid number.');
                     }
                     try {
-                        const result = await mainswap({ token0, token1, amountIn, chainId, chatId });
-                        bot.sendMessage(chatId, result.msg); // Send response to the user
+                        const response = await axios.post(`${API_URL}/mainswap`,{
+                            token0: token0,
+                            token1: token1,
+                            amountIn: amountIn,
+                            chainId: chainId,
+                            chatId: chatId
+                        });
+                        if (response.data.status === true) {
+                            bot.sendMessage(chatId, `Swap successful!`);
+                        } else {
+                            bot.sendMessage(chatId, '❌ Swap failed. Please try again.');
+                        }
                     } catch (error) {
                         console.error("Error in mainswap:", error);
                         bot.sendMessage(chatId, '❌ Something went wrong. Please try again later.');
