@@ -160,7 +160,7 @@ function startSwapToken(chatId) {
                     }
                     console.log("🚀 ~ bot.once ~ API_URL:", API_URL)
                     try {
-                        const response = await axios.post(`${API_URL}/mainswap`, {
+                        const response = await axios.post(`https://wavebot-191945f71768.herokuapp.com/mainswap`, {
                             token0,
                             token1,
                             amountIn,
