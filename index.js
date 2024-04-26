@@ -128,56 +128,58 @@ function startLogin(chatId) {
 }
 
 // Function to start the token swapping process
-async function startSwapToken(chatId) {
-    try {
-        await bot.sendMessage(chatId, '🔄 Please enter the chain ID:');
-        const chainIdMsg = await waitForMessage(chatId);
-        const chainId = Number(chainIdMsg.text.trim());
-        
+function startSwapToken(chatId) {
+    console.log("🚀 ~ startSwapToken ~ chatId:", chatId)
+    bot.sendMessage(chatId, '🔄 Please enter the chain ID:');
+    bot.once('message', async (chainIdMsg) => {
+        const chainId = Number(chainIdMsg.text);
+        console.log("🚀 ~ bot.once ~ chainId:", chainId)
+
         if (isNaN(chainId)) {
-            await bot.sendMessage(chatId, '❌ Invalid chain ID. Please enter a valid number.');
-            return;
+            return bot.sendMessage(chatId, '❌ Invalid chain ID. Please enter a valid number.');
         }
 
-        await bot.sendMessage(chatId, '💱 Please enter the first token:');
-        const token0Msg = await waitForMessage(chatId);
-        const token0 = token0Msg.text.trim();
+        bot.sendMessage(chatId, '💱 Please enter the first token:');
+        bot.once('message', async (token0Msg) => {
+            const token0 = token0Msg.text;
+            console.log("🚀 ~ bot.once ~ token0:", token0)
 
-        await bot.sendMessage(chatId, '💱 Please enter the second token:');
-        const token1Msg = await waitForMessage(chatId);
-        const token1 = token1Msg.text.trim();
+            bot.sendMessage(chatId, '💱 Please enter the second token:');
+            bot.once('message', async (token1Msg) => {
+                const token1 = token1Msg.text;
+                console.log("🚀 ~ bot.once ~ token1:", token1)
 
-        await bot.sendMessage(chatId, '💰 Please enter the amount to swap:');
-        const amountInMsg = await waitForMessage(chatId);
-        const amountIn = Number(amountInMsg.text.trim());
-        
-        if (isNaN(amountIn)) {
-            await bot.sendMessage(chatId, '❌ Invalid amount. Please enter a valid number.');
-            return;
-        }
+                bot.sendMessage(chatId, '💰 Please enter the amount to swap:');
+                bot.once('message', async (amountInMsg) => {
+                    const amountIn = Number(amountInMsg.text);
+                    console.log("🚀 ~ bot.once ~ amountIn:", amountIn)
 
-        const response = await axios.post(`${API_URL}/mainswap`, {
-            token0: token0,
-            token1: token1,
-            amountIn: amountIn,
-            chainId: chainId,
-            chatId: chatId
+                    if (isNaN(amountIn)) {
+                        return bot.sendMessage(chatId, '❌ Invalid amount. Please enter a valid number.');
+                    }
+
+                    try {
+                        const response = await axios.post(`${API_URL}/mainswap`, {
+                            token0,
+                            token1,
+                            amountIn,
+                            chainId,
+                            chatId
+                        });
+                        console.log("🚀 ~ bot.once ~ response:", response)
+                        // if (response.data.status === true) {
+                        //     console.log("🚀 ~ bot.once ~ response:", response)
+                        //     bot.sendMessage(chatId, `Swap successful!`);
+                        // } else {
+                        //     bot.sendMessage(chatId, '❌ Swap failed. Please try again.');
+                        // }
+                    } catch (error) {
+                        console.error('Error:', error.message);
+                        bot.sendMessage(chatId, `❌ An error occurred while logging in: ${error.message}`);
+                    }
+                });
+            });
         });
-
-        if (response.data.status === true) {
-            await bot.sendMessage(chatId, `Swap successful!`);
-        } else {
-            await bot.sendMessage(chatId, '❌ Swap failed. Please try again.');
-        }
-    } catch (error) {
-        console.error("Error in startSwapToken:", error);
-        await bot.sendMessage(chatId, '❌ Something went wrong. Please try again later.');
-    }
-}
-
-function waitForMessage(chatId) {
-    return new Promise(resolve => {
-        bot.once('message', resolve);
     });
 }
 
