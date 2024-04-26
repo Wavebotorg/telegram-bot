@@ -7,6 +7,7 @@ const app = express();
 const PORT = process.env.PORT || 3333;
 const TOKEN = process.env.TOKEN; // Telegram Token
 const API_URL = process.env.BACKEND_URL; // Backend URL
+// console.log("🚀 ~ API_URL:", API_URL)
 
 const bot = new TelegramBot(TOKEN, { polling: true });
 
@@ -157,7 +158,7 @@ function startSwapToken(chatId) {
                     if (isNaN(amountIn)) {
                         return bot.sendMessage(chatId, '❌ Invalid amount. Please enter a valid number.');
                     }
-
+                    console.log("🚀 ~ bot.once ~ API_URL:", API_URL)
                     try {
                         const response = await axios.post(`${API_URL}/mainswap`, {
                             token0,
