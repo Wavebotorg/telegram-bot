@@ -3,7 +3,9 @@ require('dotenv').config();
 const axios = require('axios');
 const express = require('express')
 const app = express();
+const cors = require('cors');
 
+app.use(cors())
 const PORT = process.env.PORT || 3333;
 const TOKEN = process.env.TOKEN; // Telegram Token
 const API_URL = process.env.BACKEND_URL; // Backend URL
