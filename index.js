@@ -20,8 +20,11 @@ const buyKeyboard = {
       { text: 'Swap Token', callback_data: 'SwaptokenButton' },
     ],
     [
-      { text: '🗘Refresh', callback_data: 'refreshButton' },
       { text: '💼Balance', callback_data: 'balanceButton' },
+    ],
+    [
+      { text: '🗘Refresh', callback_data: 'refreshButton' },
+      { text: '<- Back', callback_data: 'backButton' },
     ],
   ],
 };
@@ -192,18 +195,23 @@ bot.on('callback_query', async (callbackQuery) => {
       break;
     case 'SwaptokenButton':
       bot.sendMessage(chatId, 'Choose a blockchain', { reply_markup: JSON.stringify(blockchainKeyboard) });
+      console.log("🚀 ~ bot.on ~ chatId:", chatId)
       bot.on('callback_query', async (callbackQuery) => {
         const data = callbackQuery.data;
         chainId = data;
+        console.log("🚀 ~ bot.on ~ chainId:", chainId)
         bot.sendMessage(chatId, ' Type To From Token::');
         bot.once('message', async (token0Msg) => {
           const token0 = token0Msg.text;
+          console.log("🚀 ~ bot.once ~ token0:", token0)
           bot.sendMessage(chatId, ' Type To To Token:');
           bot.once('message', async (token1Msg) => {
             const token1 = token1Msg.text;
+            console.log("🚀 ~ bot.once ~ token1:", token1)
             bot.sendMessage(chatId, ' Please enter the amount to swap:');
             bot.once('message', async (amountInMsg) => {
               const amountIn = Number(amountInMsg.text);
+              console.log("🚀 ~ bot.once ~ amountIn:", amountIn)
               try {
                 const response = await axios.post(`${API_URL}/mainswap`, {
                   token0,
@@ -226,6 +234,7 @@ bot.on('callback_query', async (callbackQuery) => {
       });
       break;
     case 'balanceButton':
+
       // const user = await UserModel.findOne({ chatId: chatId });
       // const balancedata = await controller.fetchBalance(user.wallet)
       // let message = "Balance:\n";
