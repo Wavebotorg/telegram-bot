@@ -49,13 +49,11 @@ bot.on('message', async (msg) => {
 
   if (msg.text === '/start') {
     sendWelcomeMessage(chatId);
-    bot.sendMessage(chatId, messageText, { reply_markup: JSON.stringify(buyKeyboard) });
   } else if (msg.text === 'SignUp') {
     startSignUp(chatId);
   } else if (msg.text === 'Login') {
     startLogin(chatId);
-  } else if (msg.text === 'SwaptokenButton') {
-    bot.sendMessage(chatId, messageText, { reply_markup: JSON.stringify(blockchainKeyboard) });
+  } else if (msg.text === 'SwapToken') {
     startSwapToken(chatId);
   } else {
     bot.sendMessage(chatId, `You typed: ${msg.text}`);
@@ -68,7 +66,7 @@ function sendWelcomeMessage(chatId) {
     reply_markup: {
       keyboard: [
         [{ text: 'SignUp', request_contact: false, request_location: false }],
-        // [{ text: 'SwapToken', request_contact: false, request_location: false }],
+        [{ text: 'SwapToken', request_contact: false, request_location: false }],
         [{ text: 'Login', request_contact: false, request_location: false }],
       ],
       resize_keyboard: true,
