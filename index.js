@@ -156,8 +156,8 @@ bot.on('message', (msg) => {
 📊 Dashbord(https://dashobaord.wavebot.app/)
 🌊 WebSite(https://marketing-dashboard-beta.vercel.app/)
 ‧‧────────────────‧‧
-*Your Email Address:* ${user.email}
-*Your Wallet Address:* ${user.wallet}`;
+*Your Email Address:* 
+*Your Wallet Address:* `;
 
       bot.sendMessage(chatId, messageText, { reply_markup: JSON.stringify(buyKeyboard) });
     }
@@ -174,16 +174,16 @@ bot.on('callback_query', async (callbackQuery) => {
 
   switch (data) {
     case 'menuButton': {
-      const user = await UserModel.findOne({ chatId: chatId });
-      console.log("🚀 ~ start ~ user:", user)
+      // const user = await UserModel.findOne({ chatId: chatId });
+      // console.log("🚀 ~ start ~ user:", user)
       bot.sendMessage(chatId,
         `*Welcome to WaveBot*
 🌊 WaveBot(https://wavebot.app/)
 📊 Dashbord(https://dashobaord.wavebot.app/)
 🌊 WebSite(https://marketing-dashboard-beta.vercel.app/)
 ‧‧────────────────‧‧
-*Your Email Address:* ${user.email}
-*Your Wallet Address:* ${user.wallet}`
+*Your Email Address:* 
+*Your Wallet Address:* `
         , { reply_markup: JSON.stringify(buyKeyboard) });
       break;
     }
@@ -191,24 +191,19 @@ bot.on('callback_query', async (callbackQuery) => {
       bot.editMessageText('Menu closed.', { chat_id: chatId, message_id: messageId });
       break;
     case 'SwaptokenButton':
-      bot.sendMessage(chatId, ' Please enter the chain ID:');
-      bot.once('message', async (chainIdMsg) => {
-        const chainId = Number(chainIdMsg.text);
-        if (isNaN(chainId)) {
-          return bot.sendMessage(chatId, '❌ Invalid chain ID. Please enter a valid number.');
-        }
-        bot.sendMessage(chatId, ' Please enter the first token:');
+      bot.sendMessage(chatId, 'Choose a blockchain', { reply_markup: JSON.stringify(blockchainKeyboard) });
+      bot.on('callback_query', async (callbackQuery) => {
+        const data = callbackQuery.data;
+        chainId = data;
+        bot.sendMessage(chatId, ' Type To From Token::');
         bot.once('message', async (token0Msg) => {
           const token0 = token0Msg.text;
-          bot.sendMessage(chatId, ' Please enter the second token:');
+          bot.sendMessage(chatId, ' Type To To Token:');
           bot.once('message', async (token1Msg) => {
             const token1 = token1Msg.text;
             bot.sendMessage(chatId, ' Please enter the amount to swap:');
             bot.once('message', async (amountInMsg) => {
               const amountIn = Number(amountInMsg.text);
-              if (isNaN(amountIn)) {
-                return bot.sendMessage(chatId, '❌ Invalid amount. Please enter a valid number.');
-              }
               try {
                 const response = await axios.post(`${API_URL}/mainswap`, {
                   token0,
