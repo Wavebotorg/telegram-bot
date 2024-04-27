@@ -4,7 +4,8 @@ const axios = require('axios');
 const express = require('express')
 const app = express();
 
-const PORT = process.env.PORT || 3333;
+const PORT = 3000;
+console.log("🚀 ~ PORT:", PORT)
 const TOKEN = process.env.TOKEN; // Telegram Token
 const API_URL = process.env.BACKEND_URL; // Backend URL
 
@@ -49,6 +50,7 @@ bot.on('message', async (msg) => {
 
     if (msg.text === '/start') {
         sendWelcomeMessage(chatId);
+        bot.sendMessage(chatId, messageText, { reply_markup: JSON.stringify(buyKeyboard) });
     } else if (msg.text === 'SignUp') {
         startSignUp(chatId);
     } else if (msg.text === 'Login') {
