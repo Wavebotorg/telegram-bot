@@ -3,17 +3,45 @@ require('dotenv').config();
 const axios = require('axios');
 const express = require('express')
 const app = express();
-const cors = require('cors');
 
-app.use(cors())
 const PORT = process.env.PORT || 3333;
-console.log("🚀 ~ PORT:", PORT)
 const TOKEN = process.env.TOKEN; // Telegram Token
-console.log("🚀 ~ TOKEN:", TOKEN)
 const API_URL = process.env.BACKEND_URL; // Backend URL
-console.log("🚀 ~ API_URL:", API_URL)
 
 const bot = new TelegramBot(TOKEN, { polling: true });
+
+const buyKeyboard = {
+    inline_keyboard: [
+      [
+        { text: 'Swap Token', callback_data: 'SwaptokenButton' },
+      ],
+      [
+        { text: '🗘Refresh', callback_data: 'refreshButton' },
+        { text: '💼Balance', callback_data: 'balanceButton' },
+      ],
+    ],
+  };
+
+  const blockchainKeyboard = {
+    inline_keyboard: [
+      [
+        { text: 'Ethereum', callback_data: '1' },
+        { text: 'Arbitrum', callback_data: '42161 ' },
+        { text: 'Optimism', callback_data: '10' },
+      ],
+      [
+        { text: 'Polygon', callback_data: '137' },
+        { text: 'Base', callback_data: '8453' },
+        { text: 'BNB Chain', callback_data: '56' },
+      ],
+      [
+        { text: 'Avalanche', callback_data: '43114' },
+        { text: 'Celo', callback_data: '42220' },
+        { text: 'Blast', callback_data: '238' },
+      ],
+    ],
+  };
+
 
 // Event listener for handling messages
 bot.on('message', async (msg) => {
@@ -25,7 +53,7 @@ bot.on('message', async (msg) => {
         startSignUp(chatId);
     } else if (msg.text === 'Login') {
         startLogin(chatId);
-    } else if (msg.text === 'SwapToken') {
+    } else if (msg.text === 'SwaptokenButton') {
         startSwapToken(chatId);
     } else {
         bot.sendMessage(chatId, `You typed: ${msg.text}`);
@@ -38,7 +66,8 @@ function sendWelcomeMessage(chatId) {
         reply_markup: {
             keyboard: [
                 [{ text: 'SignUp', request_contact: false, request_location: false }],
-                [{ text: 'SwapToken', request_contact: false, request_location: false }],
+                // [{ text: 'SwapToken', request_contact: false, request_location: false }],
+                [{ text: 'Login', request_contact: false, request_location: false }],
             ],
             resize_keyboard: true,
             one_time_keyboard: true,
@@ -46,7 +75,6 @@ function sendWelcomeMessage(chatId) {
     });
 }
 
-// Function to start the sign-up process
 function startSignUp(chatId) {
     bot.sendMessage(chatId, '👋 Welcome! Please provide your name:');
     bot.once('message', async (nameMsg) => {
@@ -104,7 +132,6 @@ function startSignUp(chatId) {
     });
 }
 
-// Function to start the login process
 function startLogin(chatId) {
     bot.sendMessage(chatId, '🔐 Please enter your email to log in:');
     bot.once('message', async (emailMsg) => {
@@ -132,40 +159,29 @@ function startLogin(chatId) {
 
 }
 
-// Function to start the token swapping process
 function startSwapToken(chatId) {
-    // console.log(" ~ startSwapToken ~ chatId:", chatId);
     bot.sendMessage(chatId, ' Please enter the chain ID:');
-  
     bot.once('message', async (chainIdMsg) => {
       const chainId = Number(chainIdMsg.text);
-    //   console.log(" ~ bot.once ~ chainId:", chainId);
-  
       if (isNaN(chainId)) {
         return bot.sendMessage(chatId, '❌ Invalid chain ID. Please enter a valid number.');
       }
-  
       bot.sendMessage(chatId, ' Please enter the first token:');
       bot.once('message', async (token0Msg) => {
         const token0 = token0Msg.text;
-        // console.log(" ~ bot.once ~ token0:", token0);
-  
+
         bot.sendMessage(chatId, ' Please enter the second token:');
         bot.once('message', async (token1Msg) => {
           const token1 = token1Msg.text;
-        //   console.log(" ~ bot.once ~ token1:", token1);
   
           bot.sendMessage(chatId, ' Please enter the amount to swap:');
           bot.once('message', async (amountInMsg) => {
             const amountIn = Number(amountInMsg.text);
-            // console.log(" ~ bot.once ~ amountIn:", amountIn);
   
             if (isNaN(amountIn)) {
               return bot.sendMessage(chatId, '❌ Invalid amount. Please enter a valid number.');
             }
-  
-            // console.log(" ~ bot.once ~ API_URL:", API_URL); // Assuming API_URL is a defined environment variable
-  
+
             try {
                 const response = await axios.post(`${API_URL}/mainswap`, {
                     token0,
@@ -175,15 +191,12 @@ function startSwapToken(chatId) {
                     chatId,
                 });
                 
-                // console.log(" ~ bot.once ~ response:", response);
               if (response.data.status === true) {
                 bot.sendMessage(chatId, `Swap successful!`);
               } else {
-                // console.error(" ~ bot.once ~ error response:", response);
                 bot.sendMessage(chatId, response.data.message || '❌ Swap failed. Please try again.');
               }
             } catch (error) {
-            //   console.error('Error:', error);
               bot.sendMessage(chatId, `❌ An error occurred: ${error.message}`); // Provide more specific error message if possible
             }
           });
