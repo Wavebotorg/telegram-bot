@@ -31,6 +31,7 @@ const buyKeyboard = {
 
 const blockchainKeyboard = {
   inline_keyboard: [
+    [{ text: "Solana", callback_data: 'Solana' }],
     [
       { text: 'Ethereum', callback_data: '1' },
       { text: 'Arbitrum', callback_data: '42161 ' },
@@ -48,6 +49,163 @@ const blockchainKeyboard = {
     ],
   ],
 };
+
+
+const isValidEmail = (email) => {
+  // Regular expression for email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+const isValidPassword = (password) => {
+  // Regular expression for password validation (example: at least 8 characters, at least one uppercase letter, one lowercase letter, one number, and one special character)
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  return passwordRegex.test(password);
+};
+
+
+const startNameRegistration = (chatId) => {
+  bot.sendMessage(chatId, '👋 Welcome! Please provide your name:');
+  bot.once('message', async (nameMsg) => {
+    const name = nameMsg.text;
+    bot.sendMessage(chatId, `Great, thanks ${name}! Next, please provide your email address:`);
+    startEmailRegistration(chatId, name); // Pass name to email registration
+  });
+};
+
+
+const startEmailRegistration = (chatId, name) => {
+  bot.once('message', async (emailMsg) => {
+    const email = emailMsg.text;
+
+
+    if (!isValidEmail(email)) {
+      bot.sendMessage(chatId, '❌ Invalid email address. Please enter a valid email.');
+      startEmailRegistration(chatId, name); // Reset email registration process
+      return; // Exit the function to prevent further execution
+    }
+
+
+    bot.sendMessage(chatId, 'Awesome! Now, please create a password:');
+    startPasswordRegistration(chatId, name, email); // Pass name and email to password registration
+  });
+};
+
+
+const startPasswordRegistration = (chatId, name, email) => {
+  bot.once('message', async (passwordMsg) => {
+    const password = passwordMsg.text;
+
+
+    if (!isValidPassword(password)) {
+      bot.sendMessage(chatId, '❌ Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character.');
+      startPasswordRegistration(chatId, name, email); // Reset password registration process
+      return; // Exit the function to prevent further execution
+    }
+
+
+    bot.sendMessage(chatId, 'Got it! Please confirm your password:');
+    startConfirmPasswordRegistration(chatId, name, email, password); // Pass name, email, and password to confirm password registration
+  });
+};
+
+
+const startConfirmPasswordRegistration = (chatId, name, email, password) => {
+  bot.once('message', async (confirmPasswordMsg) => {
+    const confirmPassword = confirmPasswordMsg.text;
+    if (password !== confirmPassword) {
+      bot.sendMessage(chatId, '❌ Passwords do not match. Please try again.');
+      startPasswordRegistration(chatId, name, email); // Start from password registration
+      return; // Exit the function to prevent further execution
+    }
+    // Continue with registration process
+    try {
+      const response = await axios.post(`${API_URL}/signup`, {
+        name,
+        email,
+        password,
+        confirmPassword,
+        chatId
+      });
+      const { message, data } = response.data;
+      if (data && data.email) {
+        await bot.sendMessage(chatId, `🎉 User registered successfully. Email: ${data.email}`);
+        bot.sendMessage(chatId, '📧 Please check your email for a verification code:');
+        startOTPVerification(chatId, email); // Start OTP verification process
+      } else {
+        bot.sendMessage(chatId, `❌ Failed to register user. Please try again.`);
+      }
+    } catch (error) {
+      console.error('Error:', error.message);
+      bot.sendMessage(chatId, `❌ An error occurred while registering the user: ${error.message}`);
+    }
+  });
+};
+
+
+const startOTPVerification = (chatId, email) => {
+  console.log("------------------------------------")
+  bot.once('message', async (otpMsg) => {
+    const otp = otpMsg.text;
+    try {
+      const response = await axios.post(`${API_URL}/verify`, {
+        email,
+        otp,
+      });
+      if (response.data.status == true) {
+        await bot.sendMessage(chatId, `✅ User verified successfully`);
+      } else {
+        bot.sendMessage(chatId, `❌ Invalid OTP. Please enter a valid OTP.`);
+        startOTPVerification(chatId, email); // Recall OTP verification process
+      }
+    } catch (error) {
+      console.error('Error:', error.message);
+      bot.sendMessage(chatId, `❌ An error occurred while verifying the user: ${error.message}`);
+    }
+  });
+};
+
+const startEmailLogin = (chatId) => {
+  bot.sendMessage(chatId, '🔐 Please enter your email to log in:');
+  bot.once('message', async (emailMsg) => {
+    const email = emailMsg.text;
+    if (!isValidEmail(email)) {
+      bot.sendMessage(chatId, '❌ Invalid email format. Please enter a valid email.');
+      startEmailLogin(chatId); // Restart login process from email if email is invalid
+      return;
+    }
+    startPasswordLogin(chatId, email); // Proceed to password login
+  });
+};
+
+const startPasswordLogin = (chatId, email) => {
+  bot.sendMessage(chatId, '🔑 Please enter your password:');
+  bot.once('message', async (passwordMsg) => {
+    const password = passwordMsg.text;
+    if (!isValidPassword(password)) {
+      bot.sendMessage(chatId, '❌ Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character.');
+      startPasswordLogin(chatId, email); // Restart login process from password if password is invalid
+      return;
+    }
+    try {
+      const response = await axios.post(`${API_URL}/login`, {
+        email,
+        password,
+        chatId,
+      });
+      if (response.data.status === true) {
+        bot.sendMessage(chatId, `✅ Login successful!`);
+      } else {
+        bot.sendMessage(chatId, '❌ Invalid email or password. Please try again.');
+        startEmailLogin(chatId); // Restart login process from email if credentials are invalid
+      }
+    } catch (error) {
+      console.error('Error:', error.message);
+      bot.sendMessage(chatId, `❌ An error occurred while logging in: ${error.message}`);
+    }
+  });
+};
+
 
 
 bot.on('message', (msg) => {
@@ -68,88 +226,100 @@ bot.on('message', (msg) => {
       },
     });
   } else if (msg.text === 'SignUp') {
+
+    // bot.onText(/SignUp/, (msg) => {
+    //   const chatId = msg.chat.id;
+    //   bot.sendMessage(chatId, '👋 Welcome! Please provide your name:');
+    //   bot.once('message', async (nameMsg) => {
+    //     const name = nameMsg.text;
+    //     console.log("🚀 ~ bot.once ~ name:", name)
+    //     bot.sendMessage(chatId, `Great, thanks ${name}! Next, please provide your email address:`);
+    //     bot.once('message', async (emailMsg) => {
+    //       const email = emailMsg.text;
+    //       console.log("🚀 ~ bot.once ~ email:", email)
+    //       bot.sendMessage(chatId, 'Awesome! Now, please create a password:');
+    //       bot.once('message', async (passwordMsg) => {
+    //         const password = passwordMsg.text;
+    //         bot.sendMessage(chatId, 'Got it! Please confirm your password:');
+    //         bot.once('message', async (confirmPasswordMsg) => {
+    //           const confirmPassword = confirmPasswordMsg.text;
+    //           try {
+    //             const response = await axios.post(`${API_URL}/signup`, {
+    //               name,
+    //               email,
+    //               password,
+    //               confirmPassword,
+    //               chatId
+    //             });
+    //             const { message, data } = response.data;
+    //             if (data && data.email) {
+    //               await bot.sendMessage(chatId, `🎉 User registered successfully. Email: ${data.email}`);
+    //               bot.sendMessage(chatId, '📧 Please check your email for a verification code:');
+    //               bot.once('message', async (otpMsg) => {
+    //                 const otp = otpMsg.text;
+    //                 try {
+    //                   const response = await axios.post(`${API_URL}/verify`, {
+    //                     email,
+    //                     otp,
+    //                   });
+    //                   if (response.data.status === true) {
+    //                     await bot.sendMessage(chatId, `✅ User verified successfully`);
+    //                   } else if (response.data.status === false) {
+    //                     bot.sendMessage(chatId, `❌ Invalid OTP. Please enter a valid OTP.`);
+    //                   }
+    //                 } catch (error) {
+    //                   console.error('Error:', error.message);
+    //                   bot.sendMessage(chatId, `❌ An error occurred while verifying the user: ${error.message}`);
+    //                 }
+    //               });
+    //             } else {
+    //               bot.sendMessage(chatId, `❌ Failed to register user. Please try again.`);
+    //             }
+    //           } catch (error) {
+    //             console.error('Error:', error.message);
+    //             bot.sendMessage(chatId, `❌ An error occurred while registering the user: ${error.message}`);
+    //           }
+    //         });
+    //       });
+    //     });
+    //   });
+    // });
+
     bot.onText(/SignUp/, (msg) => {
       const chatId = msg.chat.id;
-      bot.sendMessage(chatId, '👋 Welcome! Please provide your name:');
-      bot.once('message', async (nameMsg) => {
-        const name = nameMsg.text;
-        console.log("🚀 ~ bot.once ~ name:", name)
-        bot.sendMessage(chatId, `Great, thanks ${name}! Next, please provide your email address:`);
-        bot.once('message', async (emailMsg) => {
-          const email = emailMsg.text;
-          console.log("🚀 ~ bot.once ~ email:", email)
-          bot.sendMessage(chatId, 'Awesome! Now, please create a password:');
-          bot.once('message', async (passwordMsg) => {
-            const password = passwordMsg.text;
-            bot.sendMessage(chatId, 'Got it! Please confirm your password:');
-            bot.once('message', async (confirmPasswordMsg) => {
-              const confirmPassword = confirmPasswordMsg.text;
-              try {
-                const response = await axios.post(`${API_URL}/signup`, {
-                  name,
-                  email,
-                  password,
-                  confirmPassword,
-                  chatId
-                });
-                const { message, data } = response.data;
-                if (data && data.email) {
-                  await bot.sendMessage(chatId, `🎉 User registered successfully. Email: ${data.email}`);
-                  bot.sendMessage(chatId, '📧 Please check your email for a verification code:');
-                  bot.once('message', async (otpMsg) => {
-                    const otp = otpMsg.text;
-                    try {
-                      const response = await axios.post(`${API_URL}/verify`, {
-                        email,
-                        otp,
-                      });
-                      if (response.data.status === true) {
-                        await bot.sendMessage(chatId, `✅ User verified successfully`);
-                      } else if (response.data.status === false) {
-                        bot.sendMessage(chatId, `❌ Invalid OTP. Please enter a valid OTP.`);
-                      }
-                    } catch (error) {
-                      console.error('Error:', error.message);
-                      bot.sendMessage(chatId, `❌ An error occurred while verifying the user: ${error.message}`);
-                    }
-                  });
-                } else {
-                  bot.sendMessage(chatId, `❌ Failed to register user. Please try again.`);
-                }
-              } catch (error) {
-                console.error('Error:', error.message);
-                bot.sendMessage(chatId, `❌ An error occurred while registering the user: ${error.message}`);
-              }
-            });
-          });
-        });
-      });
+      console.log("🚀 ~ bot.onText ~ chatId:", chatId);
+      startNameRegistration(chatId); // Start registration process from name
     });
 
+
   } else if (msg.text === 'Login') {
-    bot.sendMessage(chatId, '🔐 Please enter your email to log in:');
-    bot.once('message', async (emailMsg) => {
-      const email = emailMsg.text;
-      bot.sendMessage(chatId, '🔑 Now, please enter your password:');
-      bot.once('message', async (passwordMsg) => {
-        const password = passwordMsg.text;
-        try {
-          const response = await axios.post(`${API_URL}/login`, {
-            email,
-            password,
-            chatId,
-          });
-          if (response.data.status === true) {
-            bot.sendMessage(chatId, `✅ Login successful!`);
-          } else {
-            bot.sendMessage(chatId, '❌ Invalid email or password. Please try again.');
-          }
-        } catch (error) {
-          console.error('Error:', error.message);
-          bot.sendMessage(chatId, `❌ An error occurred while logging in: ${error.message}`);
-        }
-      });
-    });
+    // bot.sendMessage(chatId, '🔐 Please enter your email to log in:');
+    // bot.once('message', async (emailMsg) => {
+    //   const email = emailMsg.text;
+    //   bot.sendMessage(chatId, '🔑 Now, please enter your password:');
+    //   bot.once('message', async (passwordMsg) => {
+    //     const password = passwordMsg.text;
+    //     try {
+    //       const response = await axios.post(`${API_URL}/login`, {
+    //         email,
+    //         password,
+    //         chatId,
+    //       });
+    //       if (response.data.status === true) {
+    //         bot.sendMessage(chatId, `✅ Login successful!`);
+    //       } else {
+    //         bot.sendMessage(chatId, '❌ Invalid email or password. Please try again.');
+    //       }
+    //     } catch (error) {
+    //       console.error('Error:', error.message);
+    //       bot.sendMessage(chatId, `❌ An error occurred while logging in: ${error.message}`);
+    //     }
+    //   });
+    // });
+    
+    const chatId = msg.chat.id;
+    console.log("🚀 ~ bot.onText ~ chatId:", chatId);
+    startEmailLogin(chatId); // Start login process from email
   }
   else if (msg.text === 'Start') {
     async function start() {
@@ -186,7 +356,7 @@ bot.on('callback_query', async (callbackQuery) => {
 🌊 WebSite(https://marketing-dashboard-beta.vercel.app/)
 ‧‧────────────────‧‧
 *Your Email Address:* 
-*Your Wallet Address:* `
+*Your Wallet Address:*`
         , { reply_markup: JSON.stringify(buyKeyboard) });
       break;
     }
