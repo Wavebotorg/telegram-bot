@@ -31,7 +31,7 @@ const buyKeyboard = {
 
 const blockchainKeyboard = {
   inline_keyboard: [
-    [{ text: "Solana", callback_data: 'Solana' }],
+    [{ text: "Solana", callback_data: '900' }],
     [
       { text: 'Ethereum', callback_data: '1' },
       { text: 'Arbitrum', callback_data: '42161 ' },
@@ -203,7 +203,10 @@ const startPasswordLogin = (chatId, email) => {
 
 // Function to start the swapping process
 const startSwapProcess = (chatId) => {
-  bot.sendMessage(chatId, 'Choose a blockchain', { reply_markup: JSON.stringify(blockchainKeyboard) });
+  bot.sendMessage(chatId, `🌟 Choose a blockchain 🌟
+
+  Great! Let's get started. Please select your preferred blockchain 
+  from the options below:`, { reply_markup: JSON.stringify(blockchainKeyboard) });
   console.log("🚀 ~ bot.on ~ chatId:", chatId);
 
 
@@ -262,7 +265,10 @@ bot.on('message', (msg) => {
   const userId = msg.from.id;
   console.log("🚀 ~ bot.on ~ userId:", userId)
   if (msg.text === '/start') {
-    bot.sendMessage(chatId, 'Welcome to the bot! Type something in the textbox:', {
+    bot.sendMessage(chatId, `👋 Welcome to the Wavebot! 👋
+
+    Thank you for joining us! To get started, simply press start Button. 
+    Our bot is here to assist you with anything you need!🤖💬`, {
       reply_markup: {
         keyboard: [
           [{ text: 'SignUp', request_contact: false, request_location: false }],
