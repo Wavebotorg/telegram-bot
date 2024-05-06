@@ -16,14 +16,18 @@ const buyKeyboard = {
       { text: '🗓Menu', callback_data: 'menuButton' },
       { text: '❌Close', callback_data: 'closeButton' },
     ],
+    // [
+    //   { text: '↔️SwapToken EVM ', callback_data: 'SwaptokenButton' },
+    // ],
+    // [
+    //   { text: '↔️SwapToken Solona', callback_data: 'solonaButton' },
+    // ],
     [
-      { text: '↔️SwapToken EVM ', callback_data: 'SwaptokenButton' },
+      { text: 'SwapToken', callback_data: 'SwaptokenButton' },
     ],
     [
-      { text: '↔️SwapToken Solona', callback_data: 'solonaButton' },
-    ],
-    [
-      { text: '💼Balance', callback_data: 'balanceButton' },
+      { text: '💼Balance EVM', callback_data: 'balanceButton' },
+      { text: '💼Balance Solona', callback_data: 'SolonabalanceButton' },
     ],
     [
       { text: '🔄Refresh', callback_data: 'refreshButton' },
@@ -34,7 +38,10 @@ const buyKeyboard = {
 
 const blockchainKeyboard = {
   inline_keyboard: [
-      [
+    [
+      { text: 'Solona', callback_data: 'solana' },
+    ],
+    [
       { text: 'Ethereum', callback_data: '1' },
       { text: 'Arbitrum', callback_data: '42161 ' },
       { text: 'Optimism', callback_data: '10' },
@@ -218,8 +225,44 @@ const startSwapProcess = (chatId) => {
   bot.on('callback_query', async (callbackQuery) => {
     const data = callbackQuery.data;
     const chainId = data;
-    console.log("🚀 ~ bot.on ~ chainId:", chainId);
-    startTokenSelection(chatId, chainId); // Proceed to token selection
+
+    if (chainId == "solana") {
+
+      bot.sendMessage(chatId, ' Type To input Token:');
+      bot.once('message', async (inputMsg) => {
+        const input = inputMsg.text;
+        console.log("🚀 ~ bot.once ~ input:", input)
+        bot.sendMessage(chatId, ' Type To output Token:');
+        bot.once('message', async (outputMsg) => {
+          const output = outputMsg.text;
+          console.log("🚀 ~ bot.once ~ output:", output)
+          bot.sendMessage(chatId, ' Please enter the amount to swap:');
+          bot.once('message', async (amountMsg) => {
+            const amount = Number(amountMsg.text);
+            console.log("🚀 ~ bot.once ~ amount:", amount)
+            try {
+              const response = await axios.post(`${API_URL}/solanaSwap`, {
+                input,
+                output,
+                amount,
+                chatId,
+              });
+              if (response.data.status === true) {
+                bot.sendMessage(chatId, `Solona Swap successful!`);
+              } else {
+                bot.sendMessage(chatId, response.data.message || '❌ Swap failed. Please try again.');
+              }
+            } catch (error) {
+              bot.sendMessage(chatId, `❌ An error occurred: ${error.message}`); // Provide more specific error message if possible
+            }
+          });
+        });
+      });
+      
+    } else {
+      console.log("🚀 ~ bot.on ~ chainId:", chainId);
+      startTokenSelection(chatId, chainId); // Proceed to token selection
+    }
   });
 };
 
@@ -266,9 +309,7 @@ const startAmountEntry = (chatId, chainId, token0, token1) => {
 
 bot.on('message', (msg) => {
   const chatId = msg.chat.id;
-  console.log("🚀 ~ bot.on ~ chatId:", chatId)
   const userId = msg.from.id;
-  console.log("🚀 ~ bot.on ~ userId:", userId)
   if (msg.text === '/start') {
     bot.sendMessage(chatId, `👋 Welcome to the Wavebot! 👋
 
@@ -336,44 +377,45 @@ bot.on('callback_query', async (callbackQuery) => {
       break;
 
     case 'solonaButton':
-      bot.sendMessage(chatId, ' Type To input Token::');
-      bot.once('message', async (inputMsg) => {
-        const input = inputMsg.text;
-        console.log("🚀 ~ bot.once ~ input:", input)
-        bot.sendMessage(chatId, ' Type To output Token:');
-        bot.once('message', async (outputMsg) => {
-          const output = outputMsg.text;
-          console.log("🚀 ~ bot.once ~ output:", output)
-          bot.sendMessage(chatId, ' Please enter the amount to swap:');
-          bot.once('message', async (amountMsg) => {
-            const amount = Number(amountMsg.text);
-            console.log("🚀 ~ bot.once ~ amount:", amount)
-            try {
-              const response = await axios.post(`${API_URL}/solanaSwap`, {
-                input,
-                output,
-                amount,
-                chatId,
-              });
-              if (response.data.status === true) {
-                bot.sendMessage(chatId, `Solona Swap successful!`);
-              } else {
-                bot.sendMessage(chatId, response.data.message || '❌ Swap failed. Please try again.');
-              }
-            } catch (error) {
-              bot.sendMessage(chatId, `❌ An error occurred: ${error.message}`); // Provide more specific error message if possible
-            }
-          });
-        });
-      });
       break;
 
     case 'SwaptokenButton':
       startSwapProcess(chatId); // Start swapping process
       break;
 
-    case 'balanceButton':
 
+    case 'SolonabalanceButton':
+      bot.on('callback_query', async (callbackQuery) => {
+        const chatId = callbackQuery.message.chat.id;
+        const action = callbackQuery.data;
+        if (action === 'SolonabalanceButton') {
+          try {
+            const response = await axios.post(`${API_URL}/solanaBalance`, {
+              chatId: chatId
+            });
+            const balances = response?.data?.data;
+            let message = 'Your Solana Wallet balances:\n\n';
+
+            if (balances && balances.length > 0) {
+              balances?.slice(0, 4)?.forEach(balance => {
+                message += `Token Name: ${balance.name}\n`;
+                message += `Balance: ${balance.amount}\n\n`;
+              });
+              message += `For More info (https://solscan.io/account/${response?.data?.walletAddress})\n\n`
+              message += 'Thank you for using our service! ✌️';
+            } else {
+              message = 'No balances found.';
+            }
+            bot.sendMessage(chatId, message);
+          } catch (error) {
+            console.error('Error fetching balance:', error);
+            bot.sendMessage(chatId, 'An error occurred while fetching your balance.');
+          }
+        }
+      });
+      break;
+
+    case 'balanceButton':
       bot.on('callback_query', async (callbackQuery) => {
         const chatId = callbackQuery.message.chat.id;
         const action = callbackQuery.data;
@@ -383,8 +425,9 @@ bot.on('callback_query', async (callbackQuery) => {
               chatId: chatId
             });
             const balances = response.data;
+            console.log("🚀 ~ bot.on ~ balances:", balances)
             let message = 'Your token balances:\n\n';
-            balances.forEach(balance => {
+            balances?.slice(0, 4)?.forEach(balance => {
               message += `Token Name: ${balance.name}\n`;
               message += `Balance: ${balance.balance}\n\n`;
             });
@@ -396,7 +439,6 @@ bot.on('callback_query', async (callbackQuery) => {
           }
         }
       });
-
       break;
     default:
       console.log(`Unknown button clicked: ${data}`);
