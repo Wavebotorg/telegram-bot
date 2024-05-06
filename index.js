@@ -223,7 +223,6 @@ const startSwapProcess = (chatId) => {
     const chainId = data;
 
     if (chainId == "solana") {
-
       bot.sendMessage(chatId, ' Type To input Token:');
       bot.once('message', async (inputMsg) => {
         const input = inputMsg.text;
@@ -243,11 +242,14 @@ const startSwapProcess = (chatId) => {
                 amount,
                 chatId,
               });
+
               if (response.data.status === true) {
                 bot.sendMessage(chatId, `Solona Swap successful!`);
+                bot.sendMessage(chatId, `https://solscan.io/account/${response?.data?.transactionCreated?.txid}`);
               } else {
                 bot.sendMessage(chatId, response.data.message || '❌ Swap failed. Please try again.');
               }
+
             } catch (error) {
               bot.sendMessage(chatId, `❌ An error occurred: ${error.message}`); // Provide more specific error message if possible
             }
@@ -358,14 +360,13 @@ bot.on('message', (msg) => {
       getEmailAndWalletFromBackend(chatId);
 
       const { email, EVMwallet, solanaWallets } = await getEmailAndWalletFromBackend(chatId);
-      const messageText = `Welcome to WaveBot! 🌊
-🌊 WaveBot(https://wavebot.app/)
-📖 Dashboard(https://dashboard.wavebot.app/)
+      const messageText = `Welcome to WaveBot! 🌊\n
+🌊 WaveBot(https://wavebot.app/)\n
+📖 Dashboard(https://dashboard.wavebot.app/)\n
 🌐 Website(https://marketing-dashboard-d22655001f93.herokuapp.com/)
 ‧‧────────────────‧‧
-
-*Your Email Address:* ${email}\n\n
-*Your Wallet Address (EVM):* ${EVMwallet}\n\n
+*Your Email Address:* ${email}\n
+*Your Wallet Address (EVM):* ${EVMwallet}\n
 *Your Wallet Address (Solana):* ${solanaWallets}`;
 
       bot.sendMessage(chatId, messageText, { reply_markup: JSON.stringify(buyKeyboard) });
