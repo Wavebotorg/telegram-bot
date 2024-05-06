@@ -17,7 +17,10 @@ const buyKeyboard = {
       { text: '❌Close', callback_data: 'closeButton' },
     ],
     [
-      { text: '↔️Swap Token', callback_data: 'SwaptokenButton' },
+      { text: '↔️SwapToken EVM ', callback_data: 'SwaptokenButton' },
+    ],
+    [
+      { text: '↔️SwapToken Solona', callback_data: 'solonaButton' },
     ],
     [
       { text: '💼Balance', callback_data: 'balanceButton' },
@@ -31,8 +34,7 @@ const buyKeyboard = {
 
 const blockchainKeyboard = {
   inline_keyboard: [
-    [{ text: "Solana", callback_data: '900' }],
-    [
+      [
       { text: 'Ethereum', callback_data: '1' },
       { text: 'Arbitrum', callback_data: '42161 ' },
       { text: 'Optimism', callback_data: '10' },
@@ -188,6 +190,9 @@ const startPasswordLogin = (chatId, email) => {
         password,
         chatId,
       });
+      console.log("🚀 ~ bot.once ~ chatId:", chatId)
+      console.log("🚀 ~ bot.once ~ password:", password)
+      console.log("🚀 ~ bot.once ~ email:", email)
       if (response.data.status === true) {
         bot.sendMessage(chatId, `✅ Login successful!`);
       } else {
@@ -280,98 +285,12 @@ bot.on('message', (msg) => {
       },
     });
   } else if (msg.text === 'SignUp') {
-
-    // bot.onText(/SignUp/, (msg) => {
-    //   const chatId = msg.chat.id;
-    //   bot.sendMessage(chatId, '👋 Welcome! Please provide your name:');
-    //   bot.once('message', async (nameMsg) => {
-    //     const name = nameMsg.text;
-    //     console.log("🚀 ~ bot.once ~ name:", name)
-    //     bot.sendMessage(chatId, `Great, thanks ${name}! Next, please provide your email address:`);
-    //     bot.once('message', async (emailMsg) => {
-    //       const email = emailMsg.text;
-    //       console.log("🚀 ~ bot.once ~ email:", email)
-    //       bot.sendMessage(chatId, 'Awesome! Now, please create a password:');
-    //       bot.once('message', async (passwordMsg) => {
-    //         const password = passwordMsg.text;
-    //         bot.sendMessage(chatId, 'Got it! Please confirm your password:');
-    //         bot.once('message', async (confirmPasswordMsg) => {
-    //           const confirmPassword = confirmPasswordMsg.text;
-    //           try {
-    //             const response = await axios.post(`${API_URL}/signup`, {
-    //               name,
-    //               email,
-    //               password,
-    //               confirmPassword,
-    //               chatId
-    //             });
-    //             const { message, data } = response.data;
-    //             if (data && data.email) {
-    //               await bot.sendMessage(chatId, `🎉 User registered successfully. Email: ${data.email}`);
-    //               bot.sendMessage(chatId, '📧 Please check your email for a verification code:');
-    //               bot.once('message', async (otpMsg) => {
-    //                 const otp = otpMsg.text;
-    //                 try {
-    //                   const response = await axios.post(`${API_URL}/verify`, {
-    //                     email,
-    //                     otp,
-    //                   });
-    //                   if (response.data.status === true) {
-    //                     await bot.sendMessage(chatId, `✅ User verified successfully`);
-    //                   } else if (response.data.status === false) {
-    //                     bot.sendMessage(chatId, `❌ Invalid OTP. Please enter a valid OTP.`);
-    //                   }
-    //                 } catch (error) {
-    //                   console.error('Error:', error.message);
-    //                   bot.sendMessage(chatId, `❌ An error occurred while verifying the user: ${error.message}`);
-    //                 }
-    //               });
-    //             } else {
-    //               bot.sendMessage(chatId, `❌ Failed to register user. Please try again.`);
-    //             }
-    //           } catch (error) {
-    //             console.error('Error:', error.message);
-    //             bot.sendMessage(chatId, `❌ An error occurred while registering the user: ${error.message}`);
-    //           }
-    //         });
-    //       });
-    //     });
-    //   });
-    // });
-
     bot.onText(/SignUp/, (msg) => {
       const chatId = msg.chat.id;
       console.log("🚀 ~ bot.onText ~ chatId:", chatId);
       startNameRegistration(chatId); // Start registration process from name
     });
-
-
   } else if (msg.text === 'Login') {
-
-    // bot.sendMessage(chatId, '🔐 Please enter your email to log in:');
-    // bot.once('message', async (emailMsg) => {
-    //   const email = emailMsg.text;
-    //   bot.sendMessage(chatId, '🔑 Now, please enter your password:');
-    //   bot.once('message', async (passwordMsg) => {
-    //     const password = passwordMsg.text;
-    //     try {
-    //       const response = await axios.post(`${API_URL}/login`, {
-    //         email,
-    //         password,
-    //         chatId,
-    //       });
-    //       if (response.data.status === true) {
-    //         bot.sendMessage(chatId, `✅ Login successful!`);
-    //       } else {
-    //         bot.sendMessage(chatId, '❌ Invalid email or password. Please try again.');
-    //       }
-    //     } catch (error) {
-    //       console.error('Error:', error.message);
-    //       bot.sendMessage(chatId, `❌ An error occurred while logging in: ${error.message}`);
-    //     }
-    //   });
-    // });
-
     const chatId = msg.chat.id;
     console.log("🚀 ~ bot.onText ~ chatId:", chatId);
     startEmailLogin(chatId); // Start login process from email
@@ -398,7 +317,6 @@ bot.on('callback_query', async (callbackQuery) => {
   const chatId = callbackQuery.message.chat.id;
   const messageId = callbackQuery.message.message_id;
   const data = callbackQuery.data;
-
   switch (data) {
     case 'menuButton': {
       bot.sendMessage(chatId,
@@ -412,51 +330,50 @@ bot.on('callback_query', async (callbackQuery) => {
         , { reply_markup: JSON.stringify(buyKeyboard) });
       break;
     }
+
     case 'closeButton':
       bot.editMessageText('Menu closed.', { chat_id: chatId, message_id: messageId });
       break;
+
+    case 'solonaButton':
+      bot.sendMessage(chatId, ' Type To input Token::');
+      bot.once('message', async (inputMsg) => {
+        const input = inputMsg.text;
+        console.log("🚀 ~ bot.once ~ input:", input)
+        bot.sendMessage(chatId, ' Type To output Token:');
+        bot.once('message', async (outputMsg) => {
+          const output = outputMsg.text;
+          console.log("🚀 ~ bot.once ~ output:", output)
+          bot.sendMessage(chatId, ' Please enter the amount to swap:');
+          bot.once('message', async (amountMsg) => {
+            const amount = Number(amountMsg.text);
+            console.log("🚀 ~ bot.once ~ amount:", amount)
+            try {
+              const response = await axios.post(`${API_URL}/solanaSwap`, {
+                input,
+                output,
+                amount,
+                chatId,
+              });
+              if (response.data.status === true) {
+                bot.sendMessage(chatId, `Solona Swap successful!`);
+              } else {
+                bot.sendMessage(chatId, response.data.message || '❌ Swap failed. Please try again.');
+              }
+            } catch (error) {
+              bot.sendMessage(chatId, `❌ An error occurred: ${error.message}`); // Provide more specific error message if possible
+            }
+          });
+        });
+      });
+      break;
+
     case 'SwaptokenButton':
-      // bot.sendMessage(chatId, 'Choose a blockchain', { reply_markup: JSON.stringify(blockchainKeyboard) });
-      // console.log("🚀 ~ bot.on ~ chatId:", chatId)
-      // bot.on('callback_query', async (callbackQuery) => {
-      //   const data = callbackQuery.data;
-      //   chainId = data;
-      //   console.log("🚀 ~ bot.on ~ chainId:", chainId)
-      //   bot.sendMessage(chatId, ' Type To From Token::');
-      //   bot.once('message', async (token0Msg) => {
-      //     const token0 = token0Msg.text;
-      //     console.log("🚀 ~ bot.once ~ token0:", token0)
-      //     bot.sendMessage(chatId, ' Type To To Token:');
-      //     bot.once('message', async (token1Msg) => {
-      //       const token1 = token1Msg.text;
-      //       console.log("🚀 ~ bot.once ~ token1:", token1)
-      //       bot.sendMessage(chatId, ' Please enter the amount to swap:');
-      //       bot.once('message', async (amountInMsg) => {
-      //         const amountIn = Number(amountInMsg.text);
-      //         console.log("🚀 ~ bot.once ~ amountIn:", amountIn)
-      //         try {
-      //           const response = await axios.post(`${API_URL}/mainswap`, {
-      //             token0,
-      //             token1,
-      //             amountIn,
-      //             chainId,
-      //             chatId,
-      //           });
-      //           if (response.data.status === true) {
-      //             bot.sendMessage(chatId, `Swap successful!`);
-      //           } else {
-      //             bot.sendMessage(chatId, response.data.message || '❌ Swap failed. Please try again.');
-      //           }
-      //         } catch (error) {
-      //           bot.sendMessage(chatId, `❌ An error occurred: ${error.message}`); // Provide more specific error message if possible
-      //         }
-      //       });
-      //     });
-      //   });
-      // });
       startSwapProcess(chatId); // Start swapping process
       break;
+
     case 'balanceButton':
+
       bot.on('callback_query', async (callbackQuery) => {
         const chatId = callbackQuery.message.chat.id;
         const action = callbackQuery.data;
@@ -479,6 +396,7 @@ bot.on('callback_query', async (callbackQuery) => {
           }
         }
       });
+
       break;
     default:
       console.log(`Unknown button clicked: ${data}`);
