@@ -13,17 +13,17 @@ const bot = new TelegramBot(TOKEN, { polling: true });
 const buyKeyboard = {
   inline_keyboard: [
     [
-      { text: '🗓Menu', callback_data: 'menuButton' },
-      // { text: '❌Close', callback_data: 'closeButton' },
+      { text: 'Buy', callback_data: 'buyButton' },
+      { text: 'Sell', callback_data: 'sellButton' },
     ],
-    // [
-    //   { text: '↔️SwapToken EVM ', callback_data: 'SwaptokenButton' },
-    // ],
-    // [
-    //   { text: '↔️SwapToken Solona', callback_data: 'solonaButton' },
-    // ],
+    [
+      { text: 'Position', callback_data: 'positionButton' },
+      { text: 'Limit Orders', callback_data: 'limitButton' },
+      { text: 'DCA Orders', callback_data: 'dcaOrdersButton' },
+    ],
     [
       { text: 'SwapToken', callback_data: 'SwaptokenButton' },
+      { text: '🗓Menu', callback_data: 'menuButton' },
     ],
     [
       { text: '💼Balance EVM', callback_data: 'balanceButton' },
@@ -61,13 +61,11 @@ const blockchainKeyboard = {
 
 
 const isValidEmail = (email) => {
-  // Regular expression for email validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 };
 
 const isValidPassword = (password) => {
-  // Regular expression for password validation (example: at least 8 characters, at least one uppercase letter, one lowercase letter, one number, and one special character)
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
   return passwordRegex.test(password);
 };
@@ -210,7 +208,6 @@ const startPasswordLogin = (chatId, email) => {
   });
 };
 
-// Function to start the swapping process
 const startSwapProcess = (chatId) => {
   bot.sendMessage(chatId, `🌟 Choose a blockchain 🌟
 
@@ -264,7 +261,6 @@ const startSwapProcess = (chatId) => {
   });
 };
 
-// Function to select tokens for swapping
 const startTokenSelection = (chatId, chainId) => {
   bot.sendMessage(chatId, 'Type From Token:');
   bot.once('message', async (token0Msg) => {
@@ -279,7 +275,6 @@ const startTokenSelection = (chatId, chainId) => {
   });
 };
 
-// Function to enter the amount for swapping
 const startAmountEntry = (chatId, chainId, token0, token1) => {
   bot.sendMessage(chatId, 'Please enter the amount to swap:');
   bot.once('message', async (amountInMsg) => {
@@ -304,25 +299,22 @@ const startAmountEntry = (chatId, chainId, token0, token1) => {
   });
 };
 
-
 async function getEmailAndWalletFromBackend(chatId) {
   try {
     const finddata = await axios.post(`${API_URL}/getUserBotData`, { chatId });
-    const email = finddata?.data?.walletDetails?.email;
-    const EVMwallet = finddata?.data?.walletDetails?.wallet;
-    const solanaWallets = finddata?.data?.walletDetails?.solanawallet;
-    if (email && EVMwallet && solanaWallets) {
+    if (finddata?.data?.status) {
+      const email = finddata?.data?.walletDetails?.email;
+      const EVMwallet = finddata?.data?.walletDetails?.wallet;
+      const solanaWallets = finddata?.data?.walletDetails?.solanawallet;
       return { email, EVMwallet, solanaWallets };
     } else {
-      throw new Error("Incomplete data received from the backend");
+      bot.sendMessage(chatId, finddata?.data?.message); // Sending an appropriate message if data is missing
     }
   } catch (error) {
-    throw new Error("Error fetching data from backend:", error);
+    console.error('Error fetching data:', error);
+    bot.sendMessage(chatId, 'An error occurred while fetching data.'); // Sending an error message
   }
 }
-
-
-
 
 bot.on('message', (msg) => {
   const chatId = msg.chat.id;
@@ -343,38 +335,38 @@ bot.on('message', (msg) => {
         one_time_keyboard: true,
       },
     });
+    
   } else if (msg.text === 'SignUp') {
     bot.onText(/SignUp/, (msg) => {
       const chatId = msg.chat.id;
-      console.log("🚀 ~ bot.onText ~ chatId:", chatId);
-      startNameRegistration(chatId); // Start registration process from name
+      startNameRegistration(chatId);
     });
+
   } else if (msg.text === 'Login') {
     const chatId = msg.chat.id;
-    console.log("🚀 ~ bot.onText ~ chatId:", chatId);
-    startEmailLogin(chatId); // Start login process from email
+    startEmailLogin(chatId);
   }
+
   else if (msg.text === 'Start') {
     async function start() {
-
       getEmailAndWalletFromBackend(chatId);
-
-      const { email, EVMwallet, solanaWallets } = await getEmailAndWalletFromBackend(chatId);
+      const userInfo = await getEmailAndWalletFromBackend(chatId);
       const messageText = `Welcome to WaveBot! 🌊\n
 🌊 WaveBot(https://wavebot.app/)\n
 📖 Dashboard(https://dashboard.wavebot.app/)\n
 🌐 Website(https://marketing-dashboard-d22655001f93.herokuapp.com/)
 ‧‧────────────────‧‧
-*Your Email Address:* ${email}\n
-*Your Wallet Address (EVM):* ${EVMwallet}\n
-*Your Wallet Address (Solana):* ${solanaWallets}`;
-
+*Your Email Address: ${userInfo?.email}\n
+*Your Wallet Address (EVM): ${userInfo?.EVMwallet}\n
+*Your Wallet Address (Solana): ${userInfo?.solanaWallets}`;
       bot.sendMessage(chatId, messageText, { reply_markup: JSON.stringify(buyKeyboard) });
     }
     start()
+
   } else {
     bot.sendMessage(chatId, `You typed: ${msg.text}`);
   }
+
 });
 
 bot.on('callback_query', async (callbackQuery) => {
@@ -382,25 +374,14 @@ bot.on('callback_query', async (callbackQuery) => {
   const messageId = callbackQuery.message.message_id;
   const data = callbackQuery.data;
   switch (data) {
+
     case 'menuButton': {
-      bot.sendMessage(chatId,
-        `*Welcome to WaveBot! 🌊
-🌊 WaveBot(https://wavebot.app/)
-📖 Dashbord(https://dashobaord.wavebot.app/)
-🌐 WebSite(https://marketing-dashboard-d22655001f93.herokuapp.com/)
-‧‧────────────────‧‧
-*Your Email Address:* 
-*Your Wallet Address:* `
-        , { reply_markup: JSON.stringify(buyKeyboard) });
+      bot.sendMessage(chatId, 'Click Menu Button');
       break;
     }
 
-    // case 'closeButton':
-    //   bot.editMessageText('Menu closed.', { chat_id: chatId, message_id: messageId });
-    //   break;
-
     case 'SwaptokenButton':
-      startSwapProcess(chatId); // Start swapping process
+      startSwapProcess(chatId);
       break;
 
     case 'SolonabalanceButton':
@@ -464,55 +445,6 @@ bot.on('callback_query', async (callbackQuery) => {
       console.log(`Unknown button clicked: ${data}`);
   }
 });
-
-
-//************** Loading **************************
-
-// const startLoading = async (chatId) => {
-//   const loadingMessage = await bot.sendMessage(chatId, 'Loading... ⌛️');
-
-//   await simulateLoadingProcess();
-
-//   await bot.editMessageText('Loading complete! ✅', {
-//     chat_id: chatId,
-//     message_id: loadingMessage.message_id,
-//   });
-// };
-
-// const simulateLoadingProcess = () => {
-//   return new Promise((resolve) => {
-//     setTimeout(resolve, 3000); // Simulating a 3-second loading process
-//   });
-// };
-
-// bot.onText(/\/demo/, (msg) => {
-//   const chatId = msg.chat.id;
-//   startLoading(chatId); // Start the loading process
-// });
-
-
-//***************** Refeersh  */
-
-// bot.onText(/\/res/, (msg) => {
-//   const chatId = msg.chat.id;
-//   bot.sendMessage(chatId, 'Welcome! Click the button below to refresh:', {
-//     reply_markup: {
-//       keyboard: [[{ text: 'Refresh' }]],
-//       resize_keyboard: true,
-//     },
-//   });
-// });
-
-// // Handle button clicks
-// bot.on('message', (msg) => {
-//   const chatId = msg.chat.id;
-//   if (msg.text === 'Refresh') {
-//     // Add your refreshing logic here
-//     bot.sendMessage(chatId, 'Data refreshed!');
-//   }
-// });
-
-
 
 
 app.listen(PORT, () => {
