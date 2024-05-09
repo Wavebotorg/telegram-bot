@@ -371,6 +371,7 @@ const startPasswordLogin = (chatId, email) => {
               reply_markup: JSON.stringify(buyKeyboard),
             });
           }
+          await sendWelcomeMessage2(chatId)
         } else {
           if (isLoggingIn) {
             bot.sendMessage(
@@ -530,7 +531,8 @@ async function logoutfunaction(chatId) {
 }
 
 //Send welcome Msg
-function sendWelcomeMessage(chatId, isUser) {
+async function sendWelcomeMessage(chatId) {
+  const isUser = await getstartBot(chatId);
   const keyboard = isUser
     ? [[{ text: "Start", request_contact: false, request_location: false }]]
     : [
@@ -543,6 +545,23 @@ function sendWelcomeMessage(chatId, isUser) {
   
   Thank you for joining us! To get started, simply press start Button. 
   Our bot is here to assist you with anything you need!🤖💬`,
+    {
+      reply_markup: {
+        keyboard: keyboard,
+        resize_keyboard: true,
+        one_time_keyboard: true,
+      },
+    }
+  );
+}
+//Send welcome Msg
+async function sendWelcomeMessage2(chatId) {
+  const keyboard =
+    [[{ text: "Start", request_contact: false, request_location: false }]]
+
+  bot.sendMessage(
+    chatId,
+    `👋 Welcome to the Wavebot!👋`,
     {
       reply_markup: {
         keyboard: keyboard,
@@ -621,9 +640,10 @@ bot.on("message", async (msg) => {
     isSigningUp = false;
     const isUser = await getstartBot(chatId);
     if (!isUser) {
-      await sendWelcomeMessage(chatId, isUser);
+      await sendWelcomeMessage(chatId);
     } else {
       await start(chatId);
+      await sendWelcomeMessage2(chatId)
     }
   }
   // Handle 'SignUp' command
