@@ -1619,8 +1619,26 @@ bot.on("callback_query", async (callbackQuery) => {
         is43114Sell = false;
         is42220Sell = false;
         is238Sell = false;
+
+        await bot.sendMessage(chatId, "Enter ARB token that you want to sell:");
         if (is42161Sell) {
-          await bot.sendMessage(chatId, "Arbitrum is comming soon!!");
+          bot.once("message", async (token1Msg) => {
+            const token1 = token1Msg.text;
+            if (is42161Sell) {
+              await bot.sendMessage(
+                chatId,
+                "Please enter the sell amount :"
+              );
+            }
+            if (is42161Sell) {
+              bot.once("message", async (amountInMsg) => {
+                const amountIn = Number(amountInMsg.text);
+                if (is42161Sell) {
+                  startAmountEntry(chatId, 42161, token1, "0x912CE59144191C1204E64559FE8253a0e49E6548", amountIn);
+                }
+              });
+            }
+          });
         }
       } else {
         await bot.sendMessage(chatId, "please login!!", {
