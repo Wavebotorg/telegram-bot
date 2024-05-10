@@ -10,47 +10,48 @@ const API_URL = process.env.BACKEND_URL; // Backend URL
 
 const bot = new TelegramBot(TOKEN, { polling: true });
 let isloginKeyboard = false;
-let isSigningUp = false; // Flag to track signup process
-let isLoggingIn = false; // Flag to track login process
-let isSwap = false
+let isSigningUp = false;
+let isLoggingIn = false;
+let isLogout = false;
+let isSwap = false;
 
 // ------------------------------ buy-----------------------------
 
 let isSolBuy = false;
-let is1Buy = false
-let is42161Buy = false
-let is10Buy = false
-let is137Buy = false
-let is8453Buy = false
-let is56Buy = false
-let is43114Buy = false
-let is42220Buy = false
-let is238Buy = false
+let is1Buy = false;
+let is42161Buy = false;
+let is10Buy = false;
+let is137Buy = false;
+let is8453Buy = false;
+let is56Buy = false;
+let is43114Buy = false;
+let is42220Buy = false;
+let is238Buy = false;
 
 // -------------------------------------- sell -----------------------------------
 
 let isSolSell = false;
-let is1Sell = false
-let is42161Sell = false
-let is10Sell = false
-let is137Sell = false
-let is8453Sell = false
-let is56Sell = false
-let is43114Sell = false
-let is42220Sell = false
-let is238Sell = false
+let is1Sell = false;
+let is42161Sell = false;
+let is10Sell = false;
+let is137Sell = false;
+let is8453Sell = false;
+let is56Sell = false;
+let is43114Sell = false;
+let is42220Sell = false;
+let is238Sell = false;
 
 // --------------------------------------- swap --------------------------------------
-let isSolana = false
-let is1 = false
-let is42161 = false
-let is10 = false
-let is137 = false
-let is8453 = false
-let is56 = false
-let is43114 = false
-let is42220 = false
-let is238 = false
+let isSolana = false;
+let is1 = false;
+let is42161 = false;
+let is10 = false;
+let is137 = false;
+let is8453 = false;
+let is56 = false;
+let is43114 = false;
+let is42220 = false;
+let is238 = false;
 
 const buyKeyboard = {
   inline_keyboard: [
@@ -156,13 +157,13 @@ const isValidPassword = (password) => {
 };
 
 // Signup Funaction
-const startNameRegistration = (chatId) => {
-  bot.sendMessage(chatId, "👋 Welcome! Please provide your name:");
+const startNameRegistration = async (chatId) => {
+  await bot.sendMessage(chatId, "👋 Welcome! Please provide your name:");
   if (isSigningUp) {
     bot.once("message", async (nameMsg) => {
       const name = nameMsg.text;
       if (isSigningUp) {
-        bot.sendMessage(
+        await bot.sendMessage(
           chatId,
           `Great, thanks ${name}! Next, please provide your email address:`
         );
@@ -181,21 +182,20 @@ const startEmailRegistration = (chatId, name) => {
     if (isSigningUp) {
       if (!isValidEmail(email)) {
         if (isSigningUp) {
-          bot.sendMessage(
+          await bot.sendMessage(
             chatId,
             "❌ Invalid email address. Please enter a valid email."
           );
-        }
-        if (isSigningUp) {
-          startEmailRegistration(chatId, name); // Reset email registration process
+          await bot.sendMessage(chatId, "Please renter a valid email.");
+          return startEmailRegistration(chatId, name);
         }
       }
     }
     if (isSigningUp) {
-      bot.sendMessage(chatId, "Awesome! Now, please create a password:");
+      await bot.sendMessage(chatId, "Awesome! Now, please create a password:");
     }
     if (isSigningUp) {
-      startPasswordRegistration(chatId, name, email); // Pass name and email to password registration
+      await startPasswordRegistration(chatId, name, email); // Pass name and email to password registration
     }
   });
 };
@@ -206,10 +206,12 @@ const startPasswordRegistration = (chatId, name, email) => {
     const password = passwordMsg.text;
     if (isSigningUp) {
       if (!isValidPassword(password)) {
-        bot.sendMessage(
-          chatId,
-          "❌ Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character."
-        );
+        if (isSigningUp) {
+          await bot.sendMessage(
+            chatId,
+            "❌ Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character."
+          );
+        }
         if (isSigningUp) {
           startPasswordRegistration(chatId, name, email); // Reset password registration process
         }
@@ -217,7 +219,7 @@ const startPasswordRegistration = (chatId, name, email) => {
     }
 
     if (isSigningUp) {
-      bot.sendMessage(chatId, "Got it! Please confirm your password:");
+      await bot.sendMessage(chatId, "Got it! Please confirm your password:");
     }
     if (isSigningUp) {
       startConfirmPasswordRegistration(chatId, name, email, password); // Pass name, email, and password to confirm password registration
@@ -231,10 +233,13 @@ const startConfirmPasswordRegistration = (chatId, name, email, password) => {
     const confirmPassword = confirmPasswordMsg.text;
     if (isSigningUp) {
       if (password !== confirmPassword) {
-        bot.sendMessage(chatId, "❌ Passwords do not match. Please try again.");
-        if (isSigningUp) {
-          startPasswordRegistration(chatId, name, email); // Start from password registration
-        }
+        await bot.sendMessage(
+          chatId,
+          "❌ Passwords do not match. Please try again."
+        );
+        // if (isSigningUp) {
+        //   startPasswordRegistration(chatId, name, email); // Start from password registration
+        // }
       }
     }
     // Continue with registration process
@@ -249,29 +254,50 @@ const startConfirmPasswordRegistration = (chatId, name, email, password) => {
       });
       const { message, data } = response.data;
       if (data && data.email) {
-        await bot.sendMessage(
+        await await bot.sendMessage(
           chatId,
           `🎉 User registered successfully. Email: ${data.email}`
         );
-        bot.sendMessage(
+        await bot.sendMessage(
           chatId,
           "📧 Please check your email for a verification code:"
         );
         startOTPVerification(chatId, email); // Start OTP verification process
       } else {
-        bot.sendMessage(
+        await bot.sendMessage(
           chatId,
           `❌ Failed to register user. Please try again.`
         );
+        isSigningUp = false;
+        await bot.sendMessage(chatId, `👋please register again carefully!!👋`, {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
       }
     } catch (error) {
       console.error("Error:", error.message);
-      bot.sendMessage(
+      await bot.sendMessage(
         chatId,
         `❌ An error occurred while registering the user: ${error.message}`
       );
-    } finally {
-      isSigningUp = false; // Reset signup flag
     }
   });
 };
@@ -288,15 +314,21 @@ const startOTPVerification = (chatId, email) => {
         chatId,
       });
       if (response.data.status == true) {
-        await bot.sendMessage(chatId, `✅ User verified successfully`);
+        await await bot.sendMessage(chatId, `✅ User verified successfully`);
         await start(chatId);
+        await sendWelcomeMessage2(chatId);
+        isSigningUp = false;
       } else {
-        bot.sendMessage(chatId, `❌ Invalid OTP. Please enter a valid OTP.`);
+        await bot.sendMessage(
+          chatId,
+          `❌ Invalid OTP. Please enter a valid OTP.`
+        );
+        await bot.sendMessage(chatId, `Please enter a valid OTP.`);
         startOTPVerification(chatId, email); // Recall OTP verification process
       }
     } catch (error) {
       console.error("Error:", error.message);
-      bot.sendMessage(
+      await bot.sendMessage(
         chatId,
         `❌ An error occurred while verifying the user: ${error.message}`
       );
@@ -305,25 +337,12 @@ const startOTPVerification = (chatId, email) => {
 };
 
 // Star Login
-const startEmailLogin = (chatId) => {
-  bot.sendMessage(chatId, "🔐 Please enter your email to log in:");
+const startEmailLogin = async (chatId) => {
+  await bot.sendMessage(chatId, "🔐 Please enter your email to log in:");
 
   if (isLoggingIn) {
     bot.once("message", async (emailMsg) => {
       const email = emailMsg.text;
-      if (isLoggingIn) {
-        if (!isValidEmail(email)) {
-          bot.sendMessage(
-            chatId,
-            "❌ Invalid email format. Please enter a valid email."
-          );
-          if (isLoggingIn) {
-            startEmailLogin(chatId); // Restart login process from email if email is invalid
-          }
-          return;
-        }
-      }
-
       if (isLoggingIn) {
         startPasswordLogin(chatId, email); // Proceed to password login
       }
@@ -332,71 +351,58 @@ const startEmailLogin = (chatId) => {
 };
 
 // star Login
-const startPasswordLogin = (chatId, email) => {
-  bot.sendMessage(chatId, "🔑 Please enter your password:");
+const startPasswordLogin = async (chatId, email) => {
+  await bot.sendMessage(chatId, "🔑 Please enter your password:");
   if (isLoggingIn) {
     bot.once("message", async (passwordMsg) => {
       const password = passwordMsg.text;
       if (isLoggingIn) {
-        if (!isValidPassword(password)) {
-          bot.sendMessage(
+        try {
+          const response = await axios.post(`${API_URL}/login`, {
+            email,
+            password,
             chatId,
-            "❌ Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character."
-          );
-          if (isLoggingIn) {
-            startPasswordLogin(chatId, email); // Restart login process from password if password is invalid
-          }
-          return;
-        }
-      }
-      try {
-        const response = await axios.post(`${API_URL}/login`, {
-          email,
-          password,
-          chatId,
-        });
-        if (response.data.status === true) {
-          bot.sendMessage(chatId, `✅ Login successful!`);
-          const userInfo = await getEmailAndWalletFromBackend(chatId);
-          if (userInfo?.email) {
-            const messageText = `Welcome to WaveBot! 🌊\n
-  🌊 WaveBot(https://wavebot.app/)\n
-  📖 Dashboard(https://dashboard.wavebot.app/)\n
-  🌐 Website(https://marketing-dashboard-d22655001f93.herokuapp.com/)
-  ‧‧────────────────‧‧
-  *Your Email Address: ${userInfo?.email}\n
-  *Your Wallet Address (EVM): ${userInfo?.EVMwallet}\n
-  *Your Wallet Address (Solana): ${userInfo?.solanaWallets}`;
-            bot.sendMessage(chatId, messageText, {
-              reply_markup: JSON.stringify(buyKeyboard),
-            });
-          }
-          await sendWelcomeMessage2(chatId)
-        } else {
-          if (isLoggingIn) {
-            bot.sendMessage(
+          });
+          if (response.data.status === true) {
+            await bot.sendMessage(chatId, `✅ Login successfull!`);
+            const userInfo = await getEmailAndWalletFromBackend(chatId);
+            if (userInfo?.email) {
+              const messageText = `Welcome to WaveBot! 🌊\n
+    🌊 WaveBot(https://wavebot.app/)\n
+    📖 Dashboard(https://dashboard.wavebot.app/)\n
+    🌐 Website(https://marketing-dashboard-d22655001f93.herokuapp.com/)
+    ‧‧────────────────‧‧
+    *Your Email Address: ${userInfo?.email}\n
+    *Your Wallet Address (EVM): ${userInfo?.EVMwallet}\n
+    *Your Wallet Address (Solana): ${userInfo?.solanaWallets}`;
+              await bot.sendMessage(chatId, messageText, {
+                reply_markup: JSON.stringify(buyKeyboard),
+              });
+            }
+            await sendWelcomeMessage2(chatId);
+            isLoggingIn = false;
+          } else {
+            await bot.sendMessage(
               chatId,
               "❌ Invalid email or password. Please try again."
             );
-            startEmailLogin(chatId); // Restart login process from email if credentials are invalid
+            await startEmailLogin(chatId); // Restart login process from email if credentials are invalid
           }
+        } catch (error) {
+          console.error("Error:", error.message);
+          await bot.sendMessage(
+            chatId,
+            `❌ An error occurred while logging in: ${error.message}`
+          );
         }
-      } catch (error) {
-        console.error("Error:", error.message);
-        bot.sendMessage(
-          chatId,
-          `❌ An error occurred while logging in: ${error.message}`
-        );
-      } finally {
-        isLoggingIn = false; // Reset login flag
       }
     });
   }
 };
 
 // Start Swap
-const startSwapProcess = (chatId) => {
-  bot.sendMessage(
+const startSwapProcess = async (chatId) => {
+  await bot.sendMessage(
     chatId,
     `🌟 Choose a blockchain 🌟
 
@@ -407,15 +413,13 @@ const startSwapProcess = (chatId) => {
 };
 
 // select chainId
-const startTokenSelection = (chatId, chainId) => {
-  bot.sendMessage(chatId, "Type From Token:");
+const startTokenSelection = async (chatId, chainId) => {
+  await bot.sendMessage(chatId, "Type From Token:");
   bot.once("message", async (token0Msg) => {
     const token0 = token0Msg.text;
-    console.log("🚀 ~ bot.once ~ token0:", token0);
-    bot.sendMessage(chatId, "Type To Token:");
+    await bot.sendMessage(chatId, "Type To Token:");
     bot.once("message", async (token1Msg) => {
       const token1 = token1Msg.text;
-      console.log("🚀 ~ bot.once ~ token1:", token1);
       startAmountEntry(chatId, chainId, token0, token1); // Proceed to amount entry
     });
   });
@@ -432,18 +436,18 @@ const startAmountEntry = async (chatId, chainId, token0, token1, amountIn) => {
       chatId,
     });
     if (response.data.status === true) {
-      bot.sendMessage(
+      await bot.sendMessage(
         chatId,
         `Swap successful Your Hash is ${response.data.data}`
       );
     } else {
-      bot.sendMessage(
+      await bot.sendMessage(
         chatId,
         response.data.message || "❌ Swap failed. Please try again."
       );
     }
   } catch (error) {
-    bot.sendMessage(chatId, `❌ An error occurred: ${error.message}`); // Provide more specific error message if possible
+    await bot.sendMessage(chatId, `❌ An error occurred: ${error.message}`); // Provide more specific error message if possible
   }
 };
 
@@ -465,20 +469,19 @@ const buyToken = async (chatId, chainId, token0, token1, amountIn) => {
       chatId,
     });
     if (response.data.status === true) {
-      bot.sendMessage(
+      await bot.sendMessage(
         chatId,
         `Swap successful Your Hash is ${response.data.data}`
       );
     } else {
-      bot.sendMessage(
+      await bot.sendMessage(
         chatId,
         response.data.message || "❌ Swap failed. Please try again."
       );
     }
   } catch (error) {
-    bot.sendMessage(chatId, `❌ An error occurred: ${error.message}`); // Provide more specific error message if possible
+    await bot.sendMessage(chatId, `❌ An error occurred: ${error.message}`); // Provide more specific error message if possible
   }
-
 };
 
 // get User Data
@@ -495,28 +498,26 @@ async function getEmailAndWalletFromBackend(chatId) {
     }
   } catch (error) {
     console.error("Error fetching data:", error);
-    bot.sendMessage(chatId, "An error occurred while fetching data."); // Sending an error message
+    await bot.sendMessage(chatId, "An error occurred while fetching data."); // Sending an error message
   }
 }
 
 // Buy Token
-const buyStartTokenSelection = (chatId) => {
-  bot.sendMessage(chatId, `Buy Token`, {
+const buyStartTokenSelection = async (chatId) => {
+  await bot.sendMessage(chatId, `Buy Token`, {
     reply_markup: JSON.stringify(buyblockchainKeyboard),
   });
 };
 
 // Sell Token
-const sellStartTokenSelection = (chatId) => {
-  bot.sendMessage(chatId, `Sell Token`, {
+const sellStartTokenSelection = async (chatId) => {
+  await bot.sendMessage(chatId, `Sell Token`, {
     reply_markup: JSON.stringify(sellblockchainKeyboard),
   });
 };
 
-
 //Logout
 async function logoutfunaction(chatId) {
-  console.log("🚀 ~ logoutfunaction ~ chatId:", chatId);
   try {
     const finddata = await axios.post(`${API_URL}/logoutBotUser`, { chatId });
     if (finddata?.data?.status) {
@@ -526,7 +527,7 @@ async function logoutfunaction(chatId) {
     }
   } catch (error) {
     console.error("Error fetching data:", error);
-    bot.sendMessage(chatId, "An error occurred while fetching data."); // Sending an error message
+    await bot.sendMessage(chatId, "An error occurred while fetching data."); // Sending an error message
   }
 }
 
@@ -539,7 +540,7 @@ async function sendWelcomeMessage(chatId) {
       [{ text: "SignUp", request_contact: false, request_location: false }],
       [{ text: "Login", request_contact: false, request_location: false }],
     ];
-  bot.sendMessage(
+  await bot.sendMessage(
     chatId,
     `👋 Welcome to the Wavebot! 👋
   
@@ -554,47 +555,38 @@ async function sendWelcomeMessage(chatId) {
     }
   );
 }
+
 //Send welcome Msg
 async function sendWelcomeMessage2(chatId) {
-  const keyboard =
-    [[{ text: "Start", request_contact: false, request_location: false }]]
+  const keyboard = [
+    [{ text: "Start", request_contact: false, request_location: false }],
+  ];
 
-  bot.sendMessage(
-    chatId,
-    `👋 Welcome to the Wavebot!👋`,
-    {
-      reply_markup: {
-        keyboard: keyboard,
-        resize_keyboard: true,
-        one_time_keyboard: true,
-      },
-    }
-  );
+  await bot.sendMessage(chatId, `👋 Welcome to the Wavebot!👋`, {
+    reply_markup: {
+      keyboard: keyboard,
+      resize_keyboard: true,
+      one_time_keyboard: true,
+    },
+  });
 }
 
 // Function to start the bot session
 async function loginLogOutButton(chatId) {
-  const keyboard =
-    [
-      [{ text: "SignUp", request_contact: false, request_location: false }],
-      [{ text: "Login", request_contact: false, request_location: false }],
-    ];
-  bot.sendMessage(
-    chatId,
-    `👋please login!!👋`,
-    {
-      reply_markup: {
-        keyboard: keyboard,
-        resize_keyboard: true,
-        one_time_keyboard: true,
-      },
-    }
-  );
+  await bot.sendMessage(chatId, `👋please login!!👋`, {
+    reply_markup: {
+      keyboard: [
+        [{ text: "SignUp", request_contact: false, request_location: false }],
+        [{ text: "Login", request_contact: false, request_location: false }],
+      ],
+      resize_keyboard: true,
+      one_time_keyboard: true,
+    },
+  });
 }
 
 // get User Data
 async function getstartBot(chatId) {
-  console.log("🚀 ~ getstartBot ~ chatId:", chatId);
   try {
     const finddata = await axios.post(`${API_URL}/startBot`, { chatId });
     if (finddata?.data?.status) {
@@ -620,7 +612,7 @@ async function start(chatId) {
       *Your Email Address: ${userInfo?.email}\n
       *Your Wallet Address (EVM): ${userInfo?.EVMwallet}\n
       *Your Wallet Address (Solana): ${userInfo?.solanaWallets}`;
-    bot.sendMessage(chatId, messageText, {
+    await bot.sendMessage(chatId, messageText, {
       reply_markup: JSON.stringify(buyKeyboard),
     });
   } else {
@@ -628,10 +620,8 @@ async function start(chatId) {
   }
 }
 
-
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
-  console.log("🚀 ~ bot.on ~ chatId:", chatId);
   const userId = msg.from.id;
 
   // Handle '/start' command
@@ -643,7 +633,7 @@ bot.on("message", async (msg) => {
       await sendWelcomeMessage(chatId);
     } else {
       await start(chatId);
-      await sendWelcomeMessage2(chatId)
+      await sendWelcomeMessage2(chatId);
     }
   }
   // Handle 'SignUp' command
@@ -666,9 +656,9 @@ bot.on("message", async (msg) => {
     await start(chatId);
   }
   // Handle other messages
-  else {
-    bot.sendMessage(chatId, `You typed: ${msg.text}`);
-  }
+  // else {
+  //   await bot.sendMessage(chatId, `You typed: ${msg.text}`);
+  // }
 });
 
 // Function to fetch Solana balance
@@ -690,10 +680,13 @@ async function fetchSolanaBalance(chatId) {
     } else {
       message = "No balances found.";
     }
-    bot.sendMessage(chatId, message);
+    await bot.sendMessage(chatId, message);
   } catch (error) {
     console.error("Error fetching balance:", error);
-    bot.sendMessage(chatId, "An error occurred while fetching your balance.");
+    await bot.sendMessage(
+      chatId,
+      "An error occurred while fetching your balance."
+    );
   }
 }
 
@@ -704,17 +697,19 @@ async function fetchTokenBalances(chatId) {
       chatId: chatId,
     });
     const balances = response.data;
-    console.log("🚀 ~ bot.on ~ balances:", balances);
     let message = "Your token balances:\n\n";
     balances?.slice(0, 4)?.forEach((balance) => {
       message += `Token Name: ${balance.name}\n`;
       message += `Balance: ${balance.balance}\n\n`;
     });
     message += "Thank you for using our service! ✌️";
-    bot.sendMessage(chatId, message);
+    await bot.sendMessage(chatId, message);
   } catch (error) {
     console.error("Error fetching balance:", error);
-    bot.sendMessage(chatId, "An error occurred while fetching your balance.");
+    await bot.sendMessage(
+      chatId,
+      "An error occurred while fetching your balance."
+    );
   }
 }
 
@@ -722,28 +717,13 @@ bot.on("callback_query", async (callbackQuery) => {
   const chatId = callbackQuery.message.chat.id;
   const messageId = callbackQuery.message.message_id;
   const data = callbackQuery.data;
-  console.log("🚀 ~ bot.on ~ data: meet", data)
-
+  const isUser = await getstartBot(chatId);
   switch (data) {
     case "menuButton":
-      bot.sendMessage(chatId, "Click Menu Button");
-      break;
-
-    case "SwaptokenButton":
-      startSwapProcess(chatId);
-      break;
-
-    case "SolonabalanceButton":
-      fetchSolanaBalance(chatId);
-      break;
-
-    case "balanceButton":
-      fetchTokenBalances(chatId);
-      break;
-
-    case "logoutButton":
-      await logoutfunaction(chatId).then(async (res) => {
-        bot.sendMessage(chatId, "logout successfull!", {
+      if (isUser) {
+        await bot.sendMessage(chatId, "Click Menu Button");
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
           reply_markup: {
             keyboard: [
               [
@@ -766,675 +746,1724 @@ bot.on("callback_query", async (callbackQuery) => {
             one_time_keyboard: true,
           },
         });
-      });
+      }
+      break;
+    case "SwaptokenButton":
+      if (isUser) {
+        startSwapProcess(chatId);
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
+      break;
+
+    case "SolonabalanceButton":
+      if (isUser) {
+        fetchSolanaBalance(chatId);
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
+      break;
+
+    case "balanceButton":
+      if (isUser) {
+        fetchTokenBalances(chatId);
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
+      break;
+
+    case "logoutButton":
+      if (isUser) {
+        isSolana = false;
+        is1 = false;
+        is42161 = false;
+        is10 = false;
+        is137 = false;
+        is8453 = false;
+        is56 = false;
+        is43114 = false;
+        is42220 = false;
+        is238 = false;
+        isSigningUp = false;
+        isLoggingIn = false;
+        isSolSell = false;
+        is1Sell = false;
+        is42161Sell = false;
+        is10Sell = false;
+        is137Sell = false;
+        is8453Sell = false;
+        is56Sell = false;
+        is43114Sell = false;
+        is42220Sell = false;
+        is238Sell = false;
+        isSolBuy = false;
+        is1Buy = false;
+        is42161Buy = false;
+        is10Buy = false;
+        is137Buy = false;
+        is8453Buy = false;
+        is56Buy = false;
+        is43114Buy = false;
+        is42220Buy = false;
+        is238Buy = false;
+        await logoutfunaction(chatId).then(async (res) => {
+          await bot.sendMessage(chatId, "logout successfull!", {
+            reply_markup: {
+              keyboard: [
+                [
+                  {
+                    text: "SignUp",
+                    request_contact: false,
+                    request_location: false,
+                  },
+                ],
+                [
+                  {
+                    text: "Login",
+                    request_contact: false,
+                    request_location: false,
+                  },
+                ],
+                //[{ text: 'Start', request_contact: false, request_location: false }],
+              ],
+              resize_keyboard: true,
+              one_time_keyboard: true,
+            },
+          });
+        });
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
       break;
 
     case "buyButton":
-      isSwap = false
-      buyStartTokenSelection(chatId);
+      if (isUser) {
+        isSwap = false;
+        buyStartTokenSelection(chatId);
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
       break;
 
     case "sellButton":
-      isSwap = false
-      sellStartTokenSelection(chatId);
+      if (isUser) {
+        isSwap = false;
+        sellStartTokenSelection(chatId);
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
       break;
     // -------------------------------------------------- buy ------------------------------------------------------
 
     case "solBuy":
-      isSolBuy = true;
-      is1Buy = false
-      is42161Buy = false
-      is10Buy = false
-      is137Buy = false
-      is8453Buy = false
-      is56Buy = false
-      is43114Buy = false
-      is42220Buy = false
-      is238Buy = false
-      bot.sendMessage(chatId, "Enter solBuy a Token that you want to Buy:");
-      if (isSolBuy) {
-        bot.once("message", async (outputMsg) => {
-          const output = outputMsg.text;
-          console.log("🚀 ~ bot.once ~ output:", output);
-          if (isSolBuy) {
-            bot.sendMessage(chatId, " Please enter the solBuy amount to Buy:");
-          }
-          if (isSolBuy) {
-            bot.once("message", async (amountMsg) => {
-              const amount = amountMsg.text;
-              console.log("🚀 ~ bot.once ~ amount:", amount);
-              if (isSolBuy) {
-                try {
-                  const tokenRes = await axios.post(`${API_URL}/getSolanaTokenPrice`, {
-                    token: "So11111111111111111111111111111111111111112",
-                    token2: output,
-                  });
-                  const tokensPrice = tokenRes?.data?.finalRes;
-                  const buyAmt = amount * tokensPrice?.to;
-                  const finalAmt = buyAmt / tokensPrice?.sol;
-                  console.log("🚀 ~ bot.once ~ finalAmt:", finalAmt);
-                  const response = await axios.post(`${API_URL}/solanaSwap`, {
-                    input: "So11111111111111111111111111111111111111112",
-                    output,
-                    amount: finalAmt,
-                    chatId,
-                    desBot: 9,
-                  });
-                  if (response.data.status === true) {
-                    bot.sendMessage(chatId, `Solona Swap successful!`);
-                    bot.sendMessage(
-                      chatId,
-                      `https://solscan.io/account/${response?.data?.transactionCreated?.txid}`
+      if (isUser) {
+        isSolBuy = true;
+        is1Buy = false;
+        is42161Buy = false;
+        is10Buy = false;
+        is137Buy = false;
+        is8453Buy = false;
+        is56Buy = false;
+        is43114Buy = false;
+        is42220Buy = false;
+        is238Buy = false;
+        await bot.sendMessage(
+          chatId,
+          "Enter solBuy a Token that you want to Buy:"
+        );
+        if (isSolBuy) {
+          bot.once("message", async (outputMsg) => {
+            const output = outputMsg.text;
+            if (isSolBuy) {
+              await bot.sendMessage(
+                chatId,
+                " Please enter the solBuy amount to Buy:"
+              );
+            }
+            if (isSolBuy) {
+              bot.once("message", async (amountMsg) => {
+                const amount = amountMsg.text;
+                if (isSolBuy) {
+                  try {
+                    const tokenRes = await axios.post(
+                      `${API_URL}/getSolanaTokenPrice`,
+                      {
+                        token: "So11111111111111111111111111111111111111112",
+                        token2: output,
+                      }
                     );
-                  } else {
-                    bot.sendMessage(
+                    const tokensPrice = tokenRes?.data?.finalRes;
+                    const buyAmt = amount * tokensPrice?.to;
+                    const finalAmt = buyAmt / tokensPrice?.sol;
+                    const response = await axios.post(`${API_URL}/solanaSwap`, {
+                      input: "So11111111111111111111111111111111111111112",
+                      output,
+                      amount: finalAmt,
                       chatId,
-                      response.data.message || "❌ Swap failed. Please try again."
-                    );
-                  }
-                } catch (error) {
-                  console.log("🚀 ~ bot.once ~ error:", error);
+                      desBot: 9,
+                    });
+                    if (response.data.status === true) {
+                      await bot.sendMessage(chatId, `Solona Swap successful!`);
+                      await bot.sendMessage(
+                        chatId,
+                        `https://solscan.io/account/${response?.data?.transactionCreated?.txid}`
+                      );
+                    } else {
+                      await bot.sendMessage(
+                        chatId,
+                        response.data.message ||
+                        "❌ Swap failed. Please try again."
+                      );
+                    }
+                  } catch (error) { }
                 }
-              }
-              //
-            });
-          }
+                //
+              });
+            }
+          });
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
         });
-
       }
       break;
 
     case "42161buy":
-      isSolBuy = false;
-      is1Buy = false
-      is42161Buy = true
-      is10Buy = false
-      is137Buy = false
-      is8453Buy = false
-      is56Buy = false
-      is43114Buy = false
-      is42220Buy = false
-      is238Buy = false
-      console.log("-------------- EVM--------------------");
-      bot.sendMessage(chatId, "Enter a ARB token that you want to buy from :");
-      if (is42161Buy) {
-        bot.once("message", async (token1Msg) => {
-          const token1 = token1Msg.text;
-          console.log("🚀 ~ bot.once ~ token1:", token1);
-          if (is42161Buy) {
-            bot.sendMessage(chatId, "Please enter the ARB amount that you want to buy:");
-          }
-          if (is42161Buy) {
-            bot.once("message", async (amountInMsg) => {
-              const amountIn = Number(amountInMsg.text);
-              if (is42161Buy) {
-                buyToken(
-                  chatId,
-                  42161,
-                  "0x912CE59144191C1204E64559FE8253a0e49E6548",
-                  token1,
-                  amountIn
-                );
-              }
-            })
-          }
+      if (isUser) {
+        isSolBuy = false;
+        is1Buy = false;
+        is42161Buy = true;
+        is10Buy = false;
+        is137Buy = false;
+        is8453Buy = false;
+        is56Buy = false;
+        is43114Buy = false;
+        is42220Buy = false;
+        is238Buy = false;
+        console.log("-------------- EVM--------------------");
+        await bot.sendMessage(
+          chatId,
+          "Enter a ARB token that you want to buy from :"
+        );
+        if (is42161Buy) {
+          bot.once("message", async (token1Msg) => {
+            const token1 = token1Msg.text;
+            if (is42161Buy) {
+              await bot.sendMessage(
+                chatId,
+                "Please enter the ARB amount that you want to buy:"
+              );
+            }
+            if (is42161Buy) {
+              bot.once("message", async (amountInMsg) => {
+                const amountIn = Number(amountInMsg.text);
+                if (is42161Buy) {
+                  buyToken(
+                    chatId,
+                    42161,
+                    "0x912CE59144191C1204E64559FE8253a0e49E6548",
+                    token1,
+                    amountIn
+                  );
+                }
+              });
+            }
+          });
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
         });
       }
       break;
 
     case "1buy":
-      isSolBuy = false;
-      is1Buy = true
-      is42161Buy = false
-      is10Buy = false
-      is137Buy = false
-      is8453Buy = false
-      is56Buy = false
-      is43114Buy = false
-      is42220Buy = false
-      is238Buy = false
-      if (is1Buy) {
-        bot.sendMessage(chatId, "Ethereum is comming soon....")
+      if (isUser) {
+        isSolBuy = false;
+        is1Buy = true;
+        is42161Buy = false;
+        is10Buy = false;
+        is137Buy = false;
+        is8453Buy = false;
+        is56Buy = false;
+        is43114Buy = false;
+        is42220Buy = false;
+        is238Buy = false;
+        if (is1Buy) {
+          await bot.sendMessage(chatId, "Ethereum is comming soon....");
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
       }
       break;
 
     case "10buy":
-      isSolBuy = false;
-      is1Buy = false
-      is42161Buy = false
-      is10Buy = true
-      is137Buy = false
-      is8453Buy = false
-      is56Buy = false
-      is43114Buy = false
-      is42220Buy = false
-      is238Buy = false
-      if (is10Buy) {
-        bot.sendMessage(chatId, "Optimism Ethereum is comming soon....")
+      if (isUser) {
+        isSolBuy = false;
+        is1Buy = false;
+        is42161Buy = false;
+        is10Buy = true;
+        is137Buy = false;
+        is8453Buy = false;
+        is56Buy = false;
+        is43114Buy = false;
+        is42220Buy = false;
+        is238Buy = false;
+        if (is10Buy) {
+          await bot.sendMessage(chatId, "Optimism Ethereum is comming soon....");
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
       }
       break;
 
     case "137buy":
-      isSolBuy = false;
-      is1Buy = false
-      is42161Buy = false
-      is10Buy = false
-      is137Buy = true
-      is8453Buy = false
-      is56Buy = false
-      is43114Buy = false
-      is42220Buy = false
-      is238Buy = false
-      if (is137Buy) {
-        bot.sendMessage(chatId, "Polygon Ethereum is comming soon....")
+      if (isUser) {
+        isSolBuy = false;
+        is1Buy = false;
+        is42161Buy = false;
+        is10Buy = false;
+        is137Buy = true;
+        is8453Buy = false;
+        is56Buy = false;
+        is43114Buy = false;
+        is42220Buy = false;
+        is238Buy = false;
+        if (is137Buy) {
+          await bot.sendMessage(chatId, "Polygon Ethereum is comming soon....");
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
       }
       break;
     case "8453buy":
-      isSolBuy = false;
-      is1Buy = false
-      is42161Buy = false
-      is10Buy = false
-      is137Buy = false
-      is8453Buy = true
-      is56Buy = false
-      is43114Buy = false
-      is42220Buy = false
-      is238Buy = false
-      if (is8453Buy) {
-        bot.sendMessage(chatId, "Base Ethereum is comming soon....")
+      if (isUser) {
+        isSolBuy = false;
+        is1Buy = false;
+        is42161Buy = false;
+        is10Buy = false;
+        is137Buy = false;
+        is8453Buy = true;
+        is56Buy = false;
+        is43114Buy = false;
+        is42220Buy = false;
+        is238Buy = false;
+        if (is8453Buy) {
+          await bot.sendMessage(chatId, "Base Ethereum is comming soon....");
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
       }
       break;
     case "56buy":
-      isSolBuy = false;
-      is1Buy = false
-      is42161Buy = false
-      is10Buy = false
-      is137Buy = false
-      is8453Buy = false
-      is56Buy = true
-      is43114Buy = false
-      is42220Buy = false
-      is238Buy = false
-      if (is56Buy) {
-        bot.sendMessage(chatId, "BNB Chain Ethereum is comming soon....")
+      if (isUser) {
+        isSolBuy = false;
+        is1Buy = false;
+        is42161Buy = false;
+        is10Buy = false;
+        is137Buy = false;
+        is8453Buy = false;
+        is56Buy = true;
+        is43114Buy = false;
+        is42220Buy = false;
+        is238Buy = false;
+        if (is56Buy) {
+          await bot.sendMessage(chatId, "BNB Chain Ethereum is comming soon....");
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
       }
       break;
     case "43114buy":
-      isSolBuy = false;
-      is1Buy = false
-      is42161Buy = false
-      is10Buy = false
-      is137Buy = false
-      is8453Buy = false
-      is56Buy = false
-      is43114Buy = true
-      is42220Buy = false
-      is238Buy = false
-      if (is43114Buy) {
-        bot.sendMessage(chatId, "AvakancheEthereum is comming soon....")
+      if (isUser) {
+        isSolBuy = false;
+        is1Buy = false;
+        is42161Buy = false;
+        is10Buy = false;
+        is137Buy = false;
+        is8453Buy = false;
+        is56Buy = false;
+        is43114Buy = true;
+        is42220Buy = false;
+        is238Buy = false;
+        if (is43114Buy) {
+          await bot.sendMessage(chatId, "AvakancheEthereum is comming soon....");
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
       }
       break;
     case "42220buy":
-      isSolBuy = false;
-      is1Buy = false
-      is42161Buy = false
-      is10Buy = false
-      is137Buy = false
-      is8453Buy = false
-      is56Buy = false
-      is43114Buy = false
-      is42220Buy = true
-      is238Buy = false
-      if (is42220Buy) {
-        bot.sendMessage(chatId, "Celo Ethereum is comming soon....")
+      if (isUser) {
+        isSolBuy = false;
+        is1Buy = false;
+        is42161Buy = false;
+        is10Buy = false;
+        is137Buy = false;
+        is8453Buy = false;
+        is56Buy = false;
+        is43114Buy = false;
+        is42220Buy = true;
+        is238Buy = false;
+        if (is42220Buy) {
+          await bot.sendMessage(chatId, "Celo Ethereum is comming soon....");
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
       }
       break;
     case "238buy":
-      isSolBuy = false;
-      is1Buy = false
-      is42161Buy = false
-      is10Buy = false
-      is137Buy = false
-      is8453Buy = false
-      is56Buy = false
-      is43114Buy = false
-      is42220Buy = false
-      is238Buy = true
-      if (is238Buy) {
-        bot.sendMessage(chatId, "Blast Ethereum is comming soon....")
+      if (isUser) {
+        isSolBuy = false;
+        is1Buy = false;
+        is42161Buy = false;
+        is10Buy = false;
+        is137Buy = false;
+        is8453Buy = false;
+        is56Buy = false;
+        is43114Buy = false;
+        is42220Buy = false;
+        is238Buy = true;
+        if (is238Buy) {
+          await bot.sendMessage(chatId, "Blast Ethereum is comming soon....");
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
       }
       break;
 
     // ------------------------------------------------ sell -----------------------------------------------------------
 
     case "solSell":
-      isSolSell = true
-      is1Sell = false
-      is42161Sell = false
-      is10Sell = false
-      is137Sell = false
-      is8453Sell = false
-      is56Sell = false
-      is43114Sell = false
-      is42220Sell = false
-      is238Sell = false
-      console.log("--------------------- Sellllllllllllllllll ");
-      bot.sendMessage(chatId, "solSell Enter a Token that you want to sell:");
-      if (isSolSell) {
-
-        bot.once("message", async (inputMsg) => {
-          const input = inputMsg.text;
-          console.log("🚀 ~ bot.once ~ input:", input);
-          if (isSolSell) {
-
-            bot.sendMessage(chatId, "Please enter the solSell amount to Buy:");
-          }
-          if (isSolSell) {
-            bot.once("message", async (amountMsg) => {
-              const amount = amountMsg.text;
-              console.log("🚀 ~ bot.once ~ amount:", amount);
-              if (isSolSell) {
-                try {
-                  const response = await axios.post(`${API_URL}/solanaSwap`, {
-                    input,
-                    output: "So11111111111111111111111111111111111111112",
-                    amount,
-                    chatId,
-                  });
-                  if (response.data.status === true) {
-                    bot.sendMessage(chatId, `Solona Swap successful!`);
-                    bot.sendMessage(
+      if (isUser) {
+        isSolSell = true;
+        is1Sell = false;
+        is42161Sell = false;
+        is10Sell = false;
+        is137Sell = false;
+        is8453Sell = false;
+        is56Sell = false;
+        is43114Sell = false;
+        is42220Sell = false;
+        is238Sell = false;
+        console.log("--------------------- Sellllllllllllllllll ");
+        await bot.sendMessage(
+          chatId,
+          "solSell Enter a Token that you want to sell:"
+        );
+        if (isSolSell) {
+          bot.once("message", async (inputMsg) => {
+            const input = inputMsg.text;
+            if (isSolSell) {
+              await bot.sendMessage(
+                chatId,
+                "Please enter the solSell amount to Buy:"
+              );
+            }
+            if (isSolSell) {
+              bot.once("message", async (amountMsg) => {
+                const amount = amountMsg.text;
+                if (isSolSell) {
+                  try {
+                    const response = await axios.post(`${API_URL}/solanaSwap`, {
+                      input,
+                      output: "So11111111111111111111111111111111111111112",
+                      amount,
                       chatId,
-                      `https://solscan.io/account/${response?.data?.transactionCreated?.txid}`
-                    );
-                  } else {
-                    bot.sendMessage(
-                      chatId,
-                      response.data.message || "❌ Swap failed. Please try again."
-                    );
-                  }
-                } catch (error) {
-                  console.log("🚀 ~ bot.once ~ error:", error);
-                }
-              }              //
-            });
-          }
+                    });
+                    if (response.data.status === true) {
+                      await bot.sendMessage(chatId, `Solona Swap successful!`);
+                      await bot.sendMessage(
+                        chatId,
+                        `https://solscan.io/account/${response?.data?.transactionCreated?.txid}`
+                      );
+                    } else {
+                      await bot.sendMessage(
+                        chatId,
+                        response.data.message ||
+                        "❌ Swap failed. Please try again."
+                      );
+                    }
+                  } catch (error) { }
+                } //
+              });
+            }
+          });
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
         });
       }
       break;
 
     case "1sell":
-      isSolSell = false
-      is1Sell = true
-      is42161Sell = false
-      is10Sell = false
-      is137Sell = false
-      is8453Sell = false
-      is56Sell = false
-      is43114Sell = false
-      is42220Sell = false
-      is238Sell = false
-      if (is1Sell) {
-        bot.sendMessage(chatId, "Ethereum is comming soon!!")
+      if (isUser) {
+        isSolSell = false;
+        is1Sell = true;
+        is42161Sell = false;
+        is10Sell = false;
+        is137Sell = false;
+        is8453Sell = false;
+        is56Sell = false;
+        is43114Sell = false;
+        is42220Sell = false;
+        is238Sell = false;
+        if (is1Sell) {
+          await bot.sendMessage(chatId, "Ethereum is comming soon!!");
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
       }
       break;
     case "42161sell":
-      isSolSell = false
-      is1Sell = false
-      is42161Sell = true
-      is10Sell = false
-      is137Sell = false
-      is8453Sell = false
-      is56Sell = false
-      is43114Sell = false
-      is42220Sell = false
-      is238Sell = false
-      if (is42161Sell) {
-        bot.sendMessage(chatId, "Arbitrum is comming soon!!")
+      if (isUser) {
+        isSolSell = false;
+        is1Sell = false;
+        is42161Sell = true;
+        is10Sell = false;
+        is137Sell = false;
+        is8453Sell = false;
+        is56Sell = false;
+        is43114Sell = false;
+        is42220Sell = false;
+        is238Sell = false;
+        if (is42161Sell) {
+          await bot.sendMessage(chatId, "Arbitrum is comming soon!!");
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
       }
       break;
     case "10sell":
-      isSolSell = false
-      is1Sell = false
-      is42161Sell = false
-      is10Sell = true
-      is137Sell = false
-      is8453Sell = false
-      is56Sell = false
-      is43114Sell = false
-      is42220Sell = false
-      is238Sell = false
-      if (is10Sell) {
-        bot.sendMessage(chatId, "Optimism is comming soon!!")
+      if (isUser) {
+        isSolSell = false;
+        is1Sell = false;
+        is42161Sell = false;
+        is10Sell = true;
+        is137Sell = false;
+        is8453Sell = false;
+        is56Sell = false;
+        is43114Sell = false;
+        is42220Sell = false;
+        is238Sell = false;
+        if (is10Sell) {
+          await bot.sendMessage(chatId, "Optimism is comming soon!!");
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
       }
       break;
     case "137sell":
-      isSolSell = false
-      is1Sell = false
-      is42161Sell = false
-      is10Sell = false
-      is137Sell = true
-      is8453Sell = false
-      is56Sell = false
-      is43114Sell = false
-      is42220Sell = false
-      is238Sell = false
-      if (is137Sell) {
-        bot.sendMessage(chatId, "Polygon is comming soon!!")
+      if (isUser) {
+        isSolSell = false;
+        is1Sell = false;
+        is42161Sell = false;
+        is10Sell = false;
+        is137Sell = true;
+        is8453Sell = false;
+        is56Sell = false;
+        is43114Sell = false;
+        is42220Sell = false;
+        is238Sell = false;
+        if (is137Sell) {
+          await bot.sendMessage(chatId, "Polygon is comming soon!!");
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
       }
       break;
     case "8453sell":
-      isSolSell = false
-      is1Sell = false
-      is42161Sell = false
-      is10Sell = false
-      is137Sell = false
-      is8453Sell = true
-      is56Sell = false
-      is43114Sell = false
-      is42220Sell = false
-      is238Sell = false
-      if (is8453Sell) {
-        bot.sendMessage(chatId, "Base is comming soon!!")
+      if (isUser) {
+        isSolSell = false;
+        is1Sell = false;
+        is42161Sell = false;
+        is10Sell = false;
+        is137Sell = false;
+        is8453Sell = true;
+        is56Sell = false;
+        is43114Sell = false;
+        is42220Sell = false;
+        is238Sell = false;
+        if (is8453Sell) {
+          await bot.sendMessage(chatId, "Base is comming soon!!");
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
       }
       break;
     case "56sell":
-      isSolSell = false
-      is1Sell = false
-      is42161Sell = false
-      is10Sell = false
-      is137Sell = false
-      is8453Sell = false
-      is56Sell = true
-      is43114Sell = false
-      is42220Sell = false
-      is238Sell = false
-      if (is56Sell) {
-        bot.sendMessage(chatId, "BNB Chain is comming soon!!")
+      if (isUser) {
+        isSolSell = false;
+        is1Sell = false;
+        is42161Sell = false;
+        is10Sell = false;
+        is137Sell = false;
+        is8453Sell = false;
+        is56Sell = true;
+        is43114Sell = false;
+        is42220Sell = false;
+        is238Sell = false;
+        if (is56Sell) {
+          await bot.sendMessage(chatId, "BNB Chain is comming soon!!");
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
       }
       break;
     case "43114sell":
-      isSolSell = false
-      is1Sell = false
-      is42161Sell = false
-      is10Sell = false
-      is137Sell = false
-      is8453Sell = false
-      is56Sell = false
-      is43114Sell = true
-      is42220Sell = false
-      is238Sell = false
-      if (is43114Sell) {
-        bot.sendMessage(chatId, "Avalanche is comming soon!!")
+      if (isUser) {
+        isSolSell = false;
+        is1Sell = false;
+        is42161Sell = false;
+        is10Sell = false;
+        is137Sell = false;
+        is8453Sell = false;
+        is56Sell = false;
+        is43114Sell = true;
+        is42220Sell = false;
+        is238Sell = false;
+        if (is43114Sell) {
+          await bot.sendMessage(chatId, "Avalanche is comming soon!!");
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
       }
       break;
     case "42220sell":
-      isSolSell = false
-      is1Sell = false
-      is42161Sell = false
-      is10Sell = false
-      is137Sell = false
-      is8453Sell = false
-      is56Sell = false
-      is43114Sell = false
-      is42220Sell = true
-      is238Sell = false
-      if (is42220Sell) {
-        bot.sendMessage(chatId, "Celo is comming soon!!")
+      if (isUser) {
+        isSolSell = false;
+        is1Sell = false;
+        is42161Sell = false;
+        is10Sell = false;
+        is137Sell = false;
+        is8453Sell = false;
+        is56Sell = false;
+        is43114Sell = false;
+        is42220Sell = true;
+        is238Sell = false;
+        if (is42220Sell) {
+          await bot.sendMessage(chatId, "Celo is comming soon!!");
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
       }
       break;
     case "238sell":
-      isSolSell = false
-      is1Sell = false
-      is42161Sell = false
-      is10Sell = false
-      is137Sell = false
-      is8453Sell = false
-      is56Sell = false
-      is43114Sell = false
-      is42220Sell = false
-      is238Sell = true
-      if (is238Sell) {
-        bot.sendMessage(chatId, "Blast is comming soon!!")
+      if (isUser) {
+        isSolSell = false;
+        is1Sell = false;
+        is42161Sell = false;
+        is10Sell = false;
+        is137Sell = false;
+        is8453Sell = false;
+        is56Sell = false;
+        is43114Sell = false;
+        is42220Sell = false;
+        is238Sell = true;
+        if (is238Sell) {
+          await bot.sendMessage(chatId, "Blast is comming soon!!");
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
       }
       break;
-
 
     // ---------------------------------------------------------------- swap--------------------------------------------------------
 
     case "solana":
-      isSolana = true
-      is1 = false
-      is42161 = false
-      is10 = false
-      is137 = false
-      is8453 = false
-      is56 = false
-      is43114 = false
-      is42220 = false
-      is238 = false
+      if (isUser) {
+        isSolana = true;
+        is1 = false;
+        is42161 = false;
+        is10 = false;
+        is137 = false;
+        is8453 = false;
+        is56 = false;
+        is43114 = false;
+        is42220 = false;
+        is238 = false;
 
-      bot.sendMessage(chatId, " Type From Token:");
-      if (isSolana) {
-        bot.once("message", async (inputMsg) => {
-          const input = inputMsg.text;
-          console.log("🚀 ~ bot.once ~ input:", input);
-          if (isSolana) {
-            bot.sendMessage(chatId, " Type To Token:");
-          }
-          if (isSolana) {
-            bot.once("message", async (outputMsg) => {
-              const output = outputMsg.text;
-              console.log("🚀 ~ bot.once ~ output:", output);
-              if (isSolana) {
-
-                bot.sendMessage(chatId, " Please enter the amount to swap:");
-              }
-              if (isSolana) {
-                bot.once("message", async (amountMsg) => {
-                  const amount = Number(amountMsg.text);
-                  console.log("🚀 ~ bot.once ~ amount:", amount);
-                  if (isSolana) {
-                    try {
-                      const response = await axios.post(`${API_URL}/solanaSwap`, {
-                        input,
-                        output,
-                        amount,
-                        chatId,
-                      });
-                      if (response.data.status === true) {
-                        bot.sendMessage(chatId, `Solona Swap successful!`);
-                        bot.sendMessage(
-                          chatId,
-                          `https://solscan.io/account/${response?.data?.transactionCreated?.txid}`
+        await bot.sendMessage(chatId, " Type From Token:");
+        if (isSolana) {
+          bot.once("message", async (inputMsg) => {
+            const input = inputMsg.text;
+            if (isSolana) {
+              await bot.sendMessage(chatId, " Type To Token:");
+            }
+            if (isSolana) {
+              bot.once("message", async (outputMsg) => {
+                const output = outputMsg.text;
+                if (isSolana) {
+                  await bot.sendMessage(
+                    chatId,
+                    " Please enter the amount to swap:"
+                  );
+                }
+                if (isSolana) {
+                  bot.once("message", async (amountMsg) => {
+                    const amount = Number(amountMsg.text);
+                    if (isSolana) {
+                      try {
+                        const response = await axios.post(
+                          `${API_URL}/solanaSwap`,
+                          {
+                            input,
+                            output,
+                            amount,
+                            chatId,
+                          }
                         );
-                      } else {
-                        bot.sendMessage(
+                        if (response.data.status === true) {
+                          await bot.sendMessage(
+                            chatId,
+                            `Solona Swap successful!`
+                          );
+                          await bot.sendMessage(
+                            chatId,
+                            `https://solscan.io/account/${response?.data?.transactionCreated?.txid}`
+                          );
+                        } else {
+                          await bot.sendMessage(
+                            chatId,
+                            response.data.message ||
+                            "❌ Swap failed. Please try again."
+                          );
+                        }
+                      } catch (error) {
+                        await bot.sendMessage(
                           chatId,
-                          response.data.message || "❌ Swap failed. Please try again."
-                        );
+                          `❌ An error occurred: ${error.message}`
+                        ); // Provide more specific error message if possible
                       }
-                    } catch (error) {
-                      bot.sendMessage(chatId, `❌ An error occurred: ${error.message}`); // Provide more specific error message if possible
                     }
-                  }
-                });
-              }
-            });
-          }
+                  });
+                }
+              });
+            }
+          });
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
         });
       }
 
       break;
 
     case "1":
-      isSolana = false
-      is1 = true
-      is42161 = false
-      is10 = false
-      is137 = false
-      is8453 = false
-      is56 = false
-      is43114 = false
-      is42220 = false
-      is238 = false
-      if (is1) {
-        bot.sendMessage(chatId, "Ethereum is comming soon!!")
+      if (isUser) {
+        isSolana = false;
+        is1 = true;
+        is42161 = false;
+        is10 = false;
+        is137 = false;
+        is8453 = false;
+        is56 = false;
+        is43114 = false;
+        is42220 = false;
+        is238 = false;
+        if (is1) {
+          await bot.sendMessage(chatId, "Ethereum is comming soon!!");
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
       }
-      break
+      break;
     case "42161":
-      isSolana = false
-      is1 = false
-      is42161 = true
-      is10 = false
-      is137 = false
-      is8453 = false
-      is56 = false
-      is43114 = false
-      is42220 = false
-      is238 = false
-      bot.sendMessage(chatId, "Type From Token:");
-      if (is42161) {
-        bot.once("message", async (token0Msg) => {
-          const token0 = token0Msg.text;
-          console.log("🚀 ~ bot.once ~ token0:", token0);
-          if (is42161) {
-            bot.sendMessage(chatId, "Type To Token:");
-          }
-          if (is42161) {
-            bot.once("message", async (token1Msg) => {
-              const token1 = token1Msg.text;
-              console.log("🚀 ~ bot.once ~ token1:", token1);
-              if (is42161) {
-                bot.sendMessage(chatId, "Please enter the amount to swap:");
-              }
-              if (is42161) {
-                bot.once("message", async (amountInMsg) => {
-                  const amountIn = Number(amountInMsg.text);
-                  console.log("🚀 ~ bot.once ~ amountIn:", amountIn);
-                  if (is42161) {
-                    startAmountEntry(chatId, 42161, token0, token1, amountIn);
-                  }
-                });
-              }
-            });
-          }
+      if (isUser) {
+        isSolana = false;
+        is1 = false;
+        is42161 = true;
+        is10 = false;
+        is137 = false;
+        is8453 = false;
+        is56 = false;
+        is43114 = false;
+        is42220 = false;
+        is238 = false;
+        await bot.sendMessage(chatId, "Type From Token:");
+        if (is42161) {
+          bot.once("message", async (token0Msg) => {
+            const token0 = token0Msg.text;
+            if (is42161) {
+              await bot.sendMessage(chatId, "Type To Token:");
+            }
+            if (is42161) {
+              bot.once("message", async (token1Msg) => {
+                const token1 = token1Msg.text;
+                if (is42161) {
+                  await bot.sendMessage(
+                    chatId,
+                    "Please enter the amount to swap:"
+                  );
+                }
+                if (is42161) {
+                  bot.once("message", async (amountInMsg) => {
+                    const amountIn = Number(amountInMsg.text);
+                    if (is42161) {
+                      startAmountEntry(chatId, 42161, token0, token1, amountIn);
+                    }
+                  });
+                }
+              });
+            }
+          });
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
         });
       }
       break;
 
     case "10":
-      isSolana = false
-      is1 = false
-      is42161 = false
-      is10 = true
-      is137 = false
-      is8453 = false
-      is56 = false
-      is43114 = false
-      is42220 = false
-      is238 = false
-      if (is10) {
-        bot.sendMessage(chatId, "Optimism is comming soon...")
+      if (isUser) {
+        isSolana = false;
+        is1 = false;
+        is42161 = false;
+        is10 = true;
+        is137 = false;
+        is8453 = false;
+        is56 = false;
+        is43114 = false;
+        is42220 = false;
+        is238 = false;
+        if (is10) {
+          await bot.sendMessage(chatId, "Optimism is comming soon...");
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
       }
       break;
 
     case "137":
-      isSolana = false
-      is1 = false
-      is42161 = false
-      is10 = false
-      is137 = true
-      is8453 = false
-      is56 = false
-      is43114 = false
-      is42220 = false
-      is238 = false
-      if (is137) {
-        bot.sendMessage(chatId, "Polygon is comming soon!!")
+      if (isUser) {
+        isSolana = false;
+        is1 = false;
+        is42161 = false;
+        is10 = false;
+        is137 = true;
+        is8453 = false;
+        is56 = false;
+        is43114 = false;
+        is42220 = false;
+        is238 = false;
+        await bot.sendMessage(chatId, "Type From Token:");
+        if (is137) {
+          bot.once("message", async (token0Msg) => {
+            const token0 = token0Msg.text;
+            if (is137) {
+              await bot.sendMessage(chatId, "Type To Token:");
+            }
+            if (is137) {
+              bot.once("message", async (token1Msg) => {
+                const token1 = token1Msg.text;
+                if (is137) {
+                  await bot.sendMessage(
+                    chatId,
+                    "Please enter the amount to swap:"
+                  );
+                }
+                if (is137) {
+                  bot.once("message", async (amountInMsg) => {
+                    const amountIn = Number(amountInMsg.text);
+                    if (is137) {
+                      startAmountEntry(chatId, 137, token0, token1, amountIn);
+                    }
+                  });
+                }
+              });
+            }
+          });
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
       }
       break;
 
     case "8453":
-      isSolana = false
-      is1 = false
-      is42161 = false
-      is10 = false
-      is137 = false
-      is8453 = true
-      is56 = false
-      is43114 = false
-      is42220 = false
-      is238 = false
-      if (is8453) {
-        bot.sendMessage(chatId, "Base is comming soon!!")
+      if (isUser) {
+        isSolana = false;
+        is1 = false;
+        is42161 = false;
+        is10 = false;
+        is137 = false;
+        is8453 = true;
+        is56 = false;
+        is43114 = false;
+        is42220 = false;
+        is238 = false;
+        if (is8453) {
+          await bot.sendMessage(chatId, "Base is comming soon!!");
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
       }
       break;
 
     case "56":
-      isSolana = false
-      is1 = false
-      is42161 = false
-      is10 = false
-      is137 = false
-      is8453 = false
-      is56 = true
-      is43114 = false
-      is42220 = false
-      is238 = false
-      if (is56) {
-        bot.sendMessage(chatId, "BNB chain is comming soon !!")
+      if (isUser) {
+        isSolana = false;
+        is1 = false;
+        is42161 = false;
+        is10 = false;
+        is137 = false;
+        is8453 = false;
+        is56 = true;
+        is43114 = false;
+        is42220 = false;
+        is238 = false;
+        if (is56) {
+          await bot.sendMessage(chatId, "BNB chain is comming soon !!");
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
       }
       break;
 
     case "43114":
-      isSolana = false
-      is1 = false
-      is42161 = false
-      is10 = false
-      is137 = false
-      is8453 = false
-      is56 = false
-      is43114 = true
-      is42220 = false
-      is238 = false
-      if (is43114) {
-        bot.sendMessage(chatId, "Avalanche is comming soon")
+      if (isUser) {
+        isSolana = false;
+        is1 = false;
+        is42161 = false;
+        is10 = false;
+        is137 = false;
+        is8453 = false;
+        is56 = false;
+        is43114 = true;
+        is42220 = false;
+        is238 = false;
+        if (is43114) {
+          await bot.sendMessage(chatId, "Avalanche is comming soon");
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
       }
       break;
 
     case "42220":
-      isSolana = false
-      is1 = false
-      is42161 = false
-      is10 = false
-      is137 = false
-      is8453 = false
-      is56 = false
-      is43114 = false
-      is42220 = true
-      is238 = false
-      if (is42220) {
-        bot.sendMessage(chatId, "Celo is comming soon")
+      if (isUser) {
+        isSolana = false;
+        is1 = false;
+        is42161 = false;
+        is10 = false;
+        is137 = false;
+        is8453 = false;
+        is56 = false;
+        is43114 = false;
+        is42220 = true;
+        is238 = false;
+        if (is42220) {
+          await bot.sendMessage(chatId, "Celo is comming soon");
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
       }
       break;
 
     case "238":
-      isSolana = false
-      is1 = false
-      is42161 = false
-      is10 = false
-      is137 = false
-      is8453 = false
-      is56 = false
-      is43114 = false
-      is42220 = false
-      is238 = true
-      if (is238) {
-        bot.sendMessage(chatId, "Blast is comming soon")
+      if (isUser) {
+        isSolana = false;
+        is1 = false;
+        is42161 = false;
+        is10 = false;
+        is137 = false;
+        is8453 = false;
+        is56 = false;
+        is43114 = false;
+        is42220 = false;
+        is238 = true;
+        if (is238) {
+          await bot.sendMessage(chatId, "Blast is comming soon");
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
       }
       break;
-
 
     default:
       console.log(`Unknown button clicked meet: ${data}`);
@@ -1445,4 +2474,3 @@ app.listen(PORT, () => {
   console.log(`Our app is running on port ${PORT}`);
 });
 console.log("Bot started!");
-
