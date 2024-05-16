@@ -43,6 +43,25 @@ const buyKeyboard = {
   ],
 };
 
+const evmWalletBalance = {
+  inline_keyboard: [
+    [
+      { text: "Ethereum", callback_data: "1b" },
+      { text: "Arbitrum", callback_data: "42161b" },
+      { text: "Optimism", callback_data: "10b" },
+    ],
+    [
+      { text: "Polygon", callback_data: "137b" },
+      { text: "Base", callback_data: "8453b" },
+      { text: "BNB Chain", callback_data: "56b" },
+    ],
+    [
+      { text: "Avalanche", callback_data: "43114b" },
+      { text: "Celo", callback_data: "42220b" },
+      { text: "Blast", callback_data: "238b" },
+    ],
+  ],
+};
 const blockchainKeyboard = {
   inline_keyboard: [
     [{ text: "Solona", callback_data: "solana" }],
@@ -654,16 +673,18 @@ async function fetchSolanaBalance(chatId) {
 }
 
 // Function to fetch token balances
-async function fetchTokenBalances(chatId) {
+async function fetchTokenBalances(chatId, chainId) {
   try {
     const response = await axios.post(`${API_URL}/fetchbalance`, {
       chatId: chatId,
+      chainId: chainId,
     });
     const balances = response.data;
+    console.log("🚀 ~ fetchTokenBalances ~ balances:", balances);
     let message = "Your token balances:\n\n";
-    balances?.slice(0, 4)?.forEach((balance) => {
+    balances?.data?.forEach((balance) => {
       message += `Token Name: ${balance.name}\n`;
-      message += `Balance: ${balance.balance}\n\n`;
+      message += `Balance: ${balance.balance_formatted}\n\n`;
     });
     message += "Thank you for using our service! ✌️";
     await bot.sendMessage(chatId, message);
@@ -773,7 +794,9 @@ bot.on("callback_query", async (callbackQuery) => {
 
     case "balanceButton":
       if (isUser) {
-        fetchTokenBalances(chatId);
+        await bot.sendMessage(chatId, `🌟 Choose a network 🌟`, {
+          reply_markup: JSON.stringify(evmWalletBalance),
+        });
       } else {
         await bot.sendMessage(chatId, "please login!!", {
           reply_markup: {
@@ -2221,12 +2244,330 @@ bot.on("callback_query", async (callbackQuery) => {
       }
       break;
 
+    case "1b":
+      if (isUser) {
+        flag = "1b";
+        if (flag == "1b") {
+          fetchTokenBalances(chatId, "0x1");
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
+      break;
+    case "42161b":
+      if (isUser) {
+        flag = "42161b";
+        if (flag == "42161b") {
+          fetchTokenBalances(chatId, "0xa4b1");
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
+      break;
+    case "10b":
+      if (isUser) {
+        flag = "10b";
+        if (flag == "10b") {
+          fetchTokenBalances(chatId, "0xa");
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
+      break;
+    case "137b":
+      if (isUser) {
+        flag = "137b";
+        if (flag == "137b") {
+          fetchTokenBalances(chatId, "0x89");
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
+      break;
+    case "8453b":
+      if (isUser) {
+        flag = "8453b";
+        if (flag == "8453b") {
+          fetchTokenBalances(chatId, "0x2105");
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
+      break;
+    case "56b":
+      if (isUser) {
+        flag = "56b";
+        if (flag == "56b") {
+          fetchTokenBalances(chatId, "0x38");
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
+      break;
+    case "43114b":
+      if (isUser) {
+        flag = "43114b";
+        if (flag == "43114b") {
+          fetchTokenBalances(chatId, "0xa86a");
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
+      break;
+    case "42220b":
+      if (isUser) {
+        flag = "42220b";
+        if (flag == "42220b") {
+          const userInfo = await getEmailAndWalletFromBackend(chatId);
+          bot.sendMessage(
+            chatId,
+            `https://celoscan.io/address/${userInfo?.EVMwallet}`
+          );
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
+      break;
+    case "238b":
+      if (isUser) {
+        flag = "238b";
+        if (flag == "238b") {
+          const userInfo = await getEmailAndWalletFromBackend(chatId);
+          bot.sendMessage(
+            chatId,
+            `https://blastscan.io/address/${userInfo?.EVMwallet}`
+          );
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
+      break;
+
     default:
       console.log(`Unknown button clicked meet: ${data}`);
   }
 });
-
 app.listen(PORT, () => {
   console.log(`Our app is running on port ${PORT}`);
 });
 console.log("Bot started!");
+
+// fetchTokenBalances(chatId,chainId)
+
+// const evmWalletBalance = {
+//   inline_keyboard: [
+//     [
+//       { text: "Ethereum", callback_data: "1b" },
+//       { text: "Arbitrum", callback_data: "42161b" },
+//       { text: "Optimism", callback_data: "10b" },
+//     ],
+//     [
+//       { text: "Polygon", callback_data: "137b" },
+//       { text: "Base", callback_data: "8453b" },
+//       { text: "BNB Chain", callback_data: "56b" },
+//     ],
+//     [
+//       { text: "Avalanche", callback_data: "43114b" },
+//       { text: "Celo", callback_data: "42220b" },
+//       { text: "Blast", callback_data: "238b" },
+//     ],
+//   ],
+// };
