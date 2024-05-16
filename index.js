@@ -1,6 +1,6 @@
 const TelegramBot = require("node-telegram-bot-api");
 require("dotenv").config();
-const axios = require("axios");
+const { default: axios } = require("axios");
 const express = require("express");
 const app = express();
 
@@ -9,49 +9,12 @@ const TOKEN = process.env.TOKEN; // Telegram Token
 const API_URL = process.env.BACKEND_URL; // Backend URL
 
 const bot = new TelegramBot(TOKEN, { polling: true });
-let isloginKeyboard = false;
+
+// ================================ main flag ===========================================
+let flag = null;
+
 let isSigningUp = false;
 let isLoggingIn = false;
-let isLogout = false;
-let isSwap = false;
-
-// ------------------------------ buy-----------------------------
-
-let isSolBuy = false;
-let is1Buy = false;
-let is42161Buy = false;
-let is10Buy = false;
-let is137Buy = false;
-let is8453Buy = false;
-let is56Buy = false;
-let is43114Buy = false;
-let is42220Buy = false;
-let is238Buy = false;
-
-// -------------------------------------- sell -----------------------------------
-
-let isSolSell = false;
-let is1Sell = false;
-let is42161Sell = false;
-let is10Sell = false;
-let is137Sell = false;
-let is8453Sell = false;
-let is56Sell = false;
-let is43114Sell = false;
-let is42220Sell = false;
-let is238Sell = false;
-
-// --------------------------------------- swap --------------------------------------
-let isSolana = false;
-let is1 = false;
-let is42161 = false;
-let is10 = false;
-let is137 = false;
-let is8453 = false;
-let is56 = false;
-let is43114 = false;
-let is42220 = false;
-let is238 = false;
 
 const buyKeyboard = {
   inline_keyboard: [
@@ -438,7 +401,7 @@ const startAmountEntry = async (chatId, chainId, token0, token1, amountIn) => {
     if (response.data.status === true) {
       await bot.sendMessage(
         chatId,
-        `Swap successful Your Hash is ${response.data.data}`
+        `Transaction successful Your Hash is ${response.data.data}`
       );
     } else {
       await bot.sendMessage(
@@ -537,9 +500,9 @@ async function sendWelcomeMessage(chatId) {
   const keyboard = isUser
     ? [[{ text: "Start", request_contact: false, request_location: false }]]
     : [
-      [{ text: "SignUp", request_contact: false, request_location: false }],
-      [{ text: "Login", request_contact: false, request_location: false }],
-    ];
+        [{ text: "SignUp", request_contact: false, request_location: false }],
+        [{ text: "Login", request_contact: false, request_location: false }],
+      ];
   await bot.sendMessage(
     chatId,
     `👋 Welcome to the Wavebot! 👋
@@ -840,38 +803,9 @@ bot.on("callback_query", async (callbackQuery) => {
 
     case "logoutButton":
       if (isUser) {
-        isSolana = false;
-        is1 = false;
-        is42161 = false;
-        is10 = false;
-        is137 = false;
-        is8453 = false;
-        is56 = false;
-        is43114 = false;
-        is42220 = false;
-        is238 = false;
         isSigningUp = false;
         isLoggingIn = false;
-        isSolSell = false;
-        is1Sell = false;
-        is42161Sell = false;
-        is10Sell = false;
-        is137Sell = false;
-        is8453Sell = false;
-        is56Sell = false;
-        is43114Sell = false;
-        is42220Sell = false;
-        is238Sell = false;
-        isSolBuy = false;
-        is1Buy = false;
-        is42161Buy = false;
-        is10Buy = false;
-        is137Buy = false;
-        is8453Buy = false;
-        is56Buy = false;
-        is43114Buy = false;
-        is42220Buy = false;
-        is238Buy = false;
+        flag = null;
         await logoutfunaction(chatId).then(async (res) => {
           await bot.sendMessage(chatId, "logout successfull!", {
             reply_markup: {
@@ -898,6 +832,7 @@ bot.on("callback_query", async (callbackQuery) => {
           });
         });
       } else {
+        flag = null;
         await bot.sendMessage(chatId, "please login!!", {
           reply_markup: {
             keyboard: [
@@ -989,33 +924,28 @@ bot.on("callback_query", async (callbackQuery) => {
 
     case "solBuy":
       if (isUser) {
-        isSolBuy = true;
-        is1Buy = false;
-        is42161Buy = false;
-        is10Buy = false;
-        is137Buy = false;
-        is8453Buy = false;
-        is56Buy = false;
-        is43114Buy = false;
-        is42220Buy = false;
-        is238Buy = false;
+        flag = "solBuy";
         await bot.sendMessage(
           chatId,
           "Enter solBuy a Token that you want to Buy:"
         );
-        if (isSolBuy) {
+        if (flag == "solBuy") {
           bot.once("message", async (outputMsg) => {
             const output = outputMsg.text;
-            if (isSolBuy) {
+            if (flag == "solBuy") {
               await bot.sendMessage(
                 chatId,
                 " Please enter the solBuy amount to Buy:"
               );
             }
-            if (isSolBuy) {
+            if (flag == "solBuy") {
               bot.once("message", async (amountMsg) => {
                 const amount = amountMsg.text;
-                if (isSolBuy) {
+                if (flag == "solBuy") {
+                  await bot.sendMessage(
+                    chatId,
+                    `please wait your transaction is processing...`
+                  );
                   try {
                     const tokenRes = await axios.post(
                       `${API_URL}/getSolanaTokenPrice`,
@@ -1034,8 +964,8 @@ bot.on("callback_query", async (callbackQuery) => {
                       chatId,
                       desBot: 9,
                     });
-                    if (response.data.status === true) {
-                      await bot.sendMessage(chatId, `Solona Swap successful!`);
+                    if (response?.data?.status) {
+                      await bot.sendMessage(chatId, `Token buy successful!`);
                       await bot.sendMessage(
                         chatId,
                         `https://solscan.io/account/${response?.data?.transactionCreated?.txid}`
@@ -1044,10 +974,10 @@ bot.on("callback_query", async (callbackQuery) => {
                       await bot.sendMessage(
                         chatId,
                         response.data.message ||
-                        "❌ Swap failed. Please try again."
+                          "❌ Swap failed. Please try again."
                       );
                     }
-                  } catch (error) { }
+                  } catch (error) {}
                 }
                 //
               });
@@ -1083,34 +1013,29 @@ bot.on("callback_query", async (callbackQuery) => {
 
     case "42161buy":
       if (isUser) {
-        isSolBuy = false;
-        is1Buy = false;
-        is42161Buy = true;
-        is10Buy = false;
-        is137Buy = false;
-        is8453Buy = false;
-        is56Buy = false;
-        is43114Buy = false;
-        is42220Buy = false;
-        is238Buy = false;
+        flag = "42161buy";
         console.log("-------------- EVM--------------------");
         await bot.sendMessage(
           chatId,
           "Enter a ARB token that you want to buy from :"
         );
-        if (is42161Buy) {
+        if (flag == "42161buy") {
           bot.once("message", async (token1Msg) => {
             const token1 = token1Msg.text;
-            if (is42161Buy) {
+            if (flag == "42161buy") {
               await bot.sendMessage(
                 chatId,
                 "Please enter the ARB amount that you want to buy:"
               );
             }
-            if (is42161Buy) {
+            if (flag == "42161buy") {
               bot.once("message", async (amountInMsg) => {
                 const amountIn = Number(amountInMsg.text);
-                if (is42161Buy) {
+                if (flag == "42161buy") {
+                  await bot.sendMessage(
+                    chatId,
+                    `please wait your transaction is processing...`
+                  );
                   buyToken(
                     chatId,
                     42161,
@@ -1152,17 +1077,8 @@ bot.on("callback_query", async (callbackQuery) => {
 
     case "1buy":
       if (isUser) {
-        isSolBuy = false;
-        is1Buy = true;
-        is42161Buy = false;
-        is10Buy = false;
-        is137Buy = false;
-        is8453Buy = false;
-        is56Buy = false;
-        is43114Buy = false;
-        is42220Buy = false;
-        is238Buy = false;
-        if (is1Buy) {
+        flag = "1buy";
+        if (flag == "1buy") {
           await bot.sendMessage(chatId, "Ethereum is comming soon....");
         }
       } else {
@@ -1194,18 +1110,12 @@ bot.on("callback_query", async (callbackQuery) => {
 
     case "10buy":
       if (isUser) {
-        isSolBuy = false;
-        is1Buy = false;
-        is42161Buy = false;
-        is10Buy = true;
-        is137Buy = false;
-        is8453Buy = false;
-        is56Buy = false;
-        is43114Buy = false;
-        is42220Buy = false;
-        is238Buy = false;
-        if (is10Buy) {
-          await bot.sendMessage(chatId, "Optimism Ethereum is comming soon....");
+        flag = "10buy";
+        if (flag == "10buy") {
+          await bot.sendMessage(
+            chatId,
+            "Optimism Ethereum is comming soon...."
+          );
         }
       } else {
         await bot.sendMessage(chatId, "please login!!", {
@@ -1236,17 +1146,8 @@ bot.on("callback_query", async (callbackQuery) => {
 
     case "137buy":
       if (isUser) {
-        isSolBuy = false;
-        is1Buy = false;
-        is42161Buy = false;
-        is10Buy = false;
-        is137Buy = true;
-        is8453Buy = false;
-        is56Buy = false;
-        is43114Buy = false;
-        is42220Buy = false;
-        is238Buy = false;
-        if (is137Buy) {
+        flag = "137buy";
+        if (flag == "137buy") {
           await bot.sendMessage(chatId, "Polygon Ethereum is comming soon....");
         }
       } else {
@@ -1277,17 +1178,8 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     case "8453buy":
       if (isUser) {
-        isSolBuy = false;
-        is1Buy = false;
-        is42161Buy = false;
-        is10Buy = false;
-        is137Buy = false;
-        is8453Buy = true;
-        is56Buy = false;
-        is43114Buy = false;
-        is42220Buy = false;
-        is238Buy = false;
-        if (is8453Buy) {
+        flag = "8453buy";
+        if (flag == "8453buy") {
           await bot.sendMessage(chatId, "Base Ethereum is comming soon....");
         }
       } else {
@@ -1318,18 +1210,12 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     case "56buy":
       if (isUser) {
-        isSolBuy = false;
-        is1Buy = false;
-        is42161Buy = false;
-        is10Buy = false;
-        is137Buy = false;
-        is8453Buy = false;
-        is56Buy = true;
-        is43114Buy = false;
-        is42220Buy = false;
-        is238Buy = false;
-        if (is56Buy) {
-          await bot.sendMessage(chatId, "BNB Chain Ethereum is comming soon....");
+        flag = "56buy";
+        if (flag == "56buy") {
+          await bot.sendMessage(
+            chatId,
+            "BNB Chain Ethereum is comming soon...."
+          );
         }
       } else {
         await bot.sendMessage(chatId, "please login!!", {
@@ -1359,18 +1245,12 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     case "43114buy":
       if (isUser) {
-        isSolBuy = false;
-        is1Buy = false;
-        is42161Buy = false;
-        is10Buy = false;
-        is137Buy = false;
-        is8453Buy = false;
-        is56Buy = false;
-        is43114Buy = true;
-        is42220Buy = false;
-        is238Buy = false;
-        if (is43114Buy) {
-          await bot.sendMessage(chatId, "AvakancheEthereum is comming soon....");
+        flag = "43114buy";
+        if (flag == "43114buy") {
+          await bot.sendMessage(
+            chatId,
+            "AvakancheEthereum is comming soon...."
+          );
         }
       } else {
         await bot.sendMessage(chatId, "please login!!", {
@@ -1400,17 +1280,8 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     case "42220buy":
       if (isUser) {
-        isSolBuy = false;
-        is1Buy = false;
-        is42161Buy = false;
-        is10Buy = false;
-        is137Buy = false;
-        is8453Buy = false;
-        is56Buy = false;
-        is43114Buy = false;
-        is42220Buy = true;
-        is238Buy = false;
-        if (is42220Buy) {
+        flag = "42220buy";
+        if (flag == "42220buy") {
           await bot.sendMessage(chatId, "Celo Ethereum is comming soon....");
         }
       } else {
@@ -1441,17 +1312,8 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     case "238buy":
       if (isUser) {
-        isSolBuy = false;
-        is1Buy = false;
-        is42161Buy = false;
-        is10Buy = false;
-        is137Buy = false;
-        is8453Buy = false;
-        is56Buy = false;
-        is43114Buy = false;
-        is42220Buy = false;
-        is238Buy = true;
-        if (is238Buy) {
+        flag = "238buy";
+        if (flag == "238buy") {
           await bot.sendMessage(chatId, "Blast Ethereum is comming soon....");
         }
       } else {
@@ -1485,34 +1347,29 @@ bot.on("callback_query", async (callbackQuery) => {
 
     case "solSell":
       if (isUser) {
-        isSolSell = true;
-        is1Sell = false;
-        is42161Sell = false;
-        is10Sell = false;
-        is137Sell = false;
-        is8453Sell = false;
-        is56Sell = false;
-        is43114Sell = false;
-        is42220Sell = false;
-        is238Sell = false;
+        flag = "solSell";
         console.log("--------------------- Sellllllllllllllllll ");
         await bot.sendMessage(
           chatId,
           "solSell Enter a Token that you want to sell:"
         );
-        if (isSolSell) {
+        if (flag == "solSell") {
           bot.once("message", async (inputMsg) => {
             const input = inputMsg.text;
-            if (isSolSell) {
+            if (flag == "solSell") {
               await bot.sendMessage(
                 chatId,
                 "Please enter the solSell amount to Buy:"
               );
             }
-            if (isSolSell) {
+            if (flag == "solSell") {
               bot.once("message", async (amountMsg) => {
                 const amount = amountMsg.text;
-                if (isSolSell) {
+                if (flag == "solSell") {
+                  await bot.sendMessage(
+                    chatId,
+                    `please wait your transaction is processing...`
+                  );
                   try {
                     const response = await axios.post(`${API_URL}/solanaSwap`, {
                       input,
@@ -1521,7 +1378,7 @@ bot.on("callback_query", async (callbackQuery) => {
                       chatId,
                     });
                     if (response.data.status === true) {
-                      await bot.sendMessage(chatId, `Solona Swap successful!`);
+                      await bot.sendMessage(chatId, `Token sell successful!`);
                       await bot.sendMessage(
                         chatId,
                         `https://solscan.io/account/${response?.data?.transactionCreated?.txid}`
@@ -1530,10 +1387,10 @@ bot.on("callback_query", async (callbackQuery) => {
                       await bot.sendMessage(
                         chatId,
                         response.data.message ||
-                        "❌ Swap failed. Please try again."
+                          "❌ Swap failed. Please try again."
                       );
                     }
-                  } catch (error) { }
+                  } catch (error) {}
                 } //
               });
             }
@@ -1568,17 +1425,8 @@ bot.on("callback_query", async (callbackQuery) => {
 
     case "1sell":
       if (isUser) {
-        isSolSell = false;
-        is1Sell = true;
-        is42161Sell = false;
-        is10Sell = false;
-        is137Sell = false;
-        is8453Sell = false;
-        is56Sell = false;
-        is43114Sell = false;
-        is42220Sell = false;
-        is238Sell = false;
-        if (is1Sell) {
+        flag = "1sell";
+        if (flag == "1sell") {
           await bot.sendMessage(chatId, "Ethereum is comming soon!!");
         }
       } else {
@@ -1609,32 +1457,29 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     case "42161sell":
       if (isUser) {
-        isSolSell = false;
-        is1Sell = false;
-        is42161Sell = true;
-        is10Sell = false;
-        is137Sell = false;
-        is8453Sell = false;
-        is56Sell = false;
-        is43114Sell = false;
-        is42220Sell = false;
-        is238Sell = false;
-
+        flag = "42161sell";
         await bot.sendMessage(chatId, "Enter ARB token that you want to sell:");
-        if (is42161Sell) {
+        if (flag == "42161sell") {
           bot.once("message", async (token1Msg) => {
             const token1 = token1Msg.text;
-            if (is42161Sell) {
-              await bot.sendMessage(
-                chatId,
-                "Please enter the sell amount :"
-              );
+            if (flag == "42161sell") {
+              await bot.sendMessage(chatId, "Please enter the sell amount :");
             }
-            if (is42161Sell) {
+            if (flag == "42161sell") {
               bot.once("message", async (amountInMsg) => {
                 const amountIn = Number(amountInMsg.text);
-                if (is42161Sell) {
-                  startAmountEntry(chatId, 42161, token1, "0x912CE59144191C1204E64559FE8253a0e49E6548", amountIn);
+                if (flag == "42161sell") {
+                  await bot.sendMessage(
+                    chatId,
+                    `please wait your transaction is processing...`
+                  );
+                  startAmountEntry(
+                    chatId,
+                    42161,
+                    token1,
+                    "0x912CE59144191C1204E64559FE8253a0e49E6548",
+                    amountIn
+                  );
                 }
               });
             }
@@ -1668,17 +1513,8 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     case "10sell":
       if (isUser) {
-        isSolSell = false;
-        is1Sell = false;
-        is42161Sell = false;
-        is10Sell = true;
-        is137Sell = false;
-        is8453Sell = false;
-        is56Sell = false;
-        is43114Sell = false;
-        is42220Sell = false;
-        is238Sell = false;
-        if (is10Sell) {
+        flag = "10sell";
+        if (flag == "10sell") {
           await bot.sendMessage(chatId, "Optimism is comming soon!!");
         }
       } else {
@@ -1709,17 +1545,8 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     case "137sell":
       if (isUser) {
-        isSolSell = false;
-        is1Sell = false;
-        is42161Sell = false;
-        is10Sell = false;
-        is137Sell = true;
-        is8453Sell = false;
-        is56Sell = false;
-        is43114Sell = false;
-        is42220Sell = false;
-        is238Sell = false;
-        if (is137Sell) {
+        flag = "137sell";
+        if (flag == "137sell") {
           await bot.sendMessage(chatId, "Polygon is comming soon!!");
         }
       } else {
@@ -1750,17 +1577,8 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     case "8453sell":
       if (isUser) {
-        isSolSell = false;
-        is1Sell = false;
-        is42161Sell = false;
-        is10Sell = false;
-        is137Sell = false;
-        is8453Sell = true;
-        is56Sell = false;
-        is43114Sell = false;
-        is42220Sell = false;
-        is238Sell = false;
-        if (is8453Sell) {
+        flag = "8453sell";
+        if (flag == "8453sell") {
           await bot.sendMessage(chatId, "Base is comming soon!!");
         }
       } else {
@@ -1791,17 +1609,8 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     case "56sell":
       if (isUser) {
-        isSolSell = false;
-        is1Sell = false;
-        is42161Sell = false;
-        is10Sell = false;
-        is137Sell = false;
-        is8453Sell = false;
-        is56Sell = true;
-        is43114Sell = false;
-        is42220Sell = false;
-        is238Sell = false;
-        if (is56Sell) {
+        flag = "56sell";
+        if (flag == "56sell") {
           await bot.sendMessage(chatId, "BNB Chain is comming soon!!");
         }
       } else {
@@ -1832,17 +1641,8 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     case "43114sell":
       if (isUser) {
-        isSolSell = false;
-        is1Sell = false;
-        is42161Sell = false;
-        is10Sell = false;
-        is137Sell = false;
-        is8453Sell = false;
-        is56Sell = false;
-        is43114Sell = true;
-        is42220Sell = false;
-        is238Sell = false;
-        if (is43114Sell) {
+        flag = "43114sell";
+        if (flag == "43114sell") {
           await bot.sendMessage(chatId, "Avalanche is comming soon!!");
         }
       } else {
@@ -1873,17 +1673,8 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     case "42220sell":
       if (isUser) {
-        isSolSell = false;
-        is1Sell = false;
-        is42161Sell = false;
-        is10Sell = false;
-        is137Sell = false;
-        is8453Sell = false;
-        is56Sell = false;
-        is43114Sell = false;
-        is42220Sell = true;
-        is238Sell = false;
-        if (is42220Sell) {
+        flag = "42220sell";
+        if (flag == "42220sell") {
           await bot.sendMessage(chatId, "Celo is comming soon!!");
         }
       } else {
@@ -1914,17 +1705,8 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     case "238sell":
       if (isUser) {
-        isSolSell = false;
-        is1Sell = false;
-        is42161Sell = false;
-        is10Sell = false;
-        is137Sell = false;
-        is8453Sell = false;
-        is56Sell = false;
-        is43114Sell = false;
-        is42220Sell = false;
-        is238Sell = true;
-        if (is238Sell) {
+        flag = "238sell";
+        if (flag == "238sell") {
           await bot.sendMessage(chatId, "Blast is comming soon!!");
         }
       } else {
@@ -1958,37 +1740,31 @@ bot.on("callback_query", async (callbackQuery) => {
 
     case "solana":
       if (isUser) {
-        isSolana = true;
-        is1 = false;
-        is42161 = false;
-        is10 = false;
-        is137 = false;
-        is8453 = false;
-        is56 = false;
-        is43114 = false;
-        is42220 = false;
-        is238 = false;
-
+        flag = "solana";
         await bot.sendMessage(chatId, " Type From Token:");
-        if (isSolana) {
+        if (flag == "solana") {
           bot.once("message", async (inputMsg) => {
             const input = inputMsg.text;
-            if (isSolana) {
+            if (flag == "solana") {
               await bot.sendMessage(chatId, " Type To Token:");
             }
-            if (isSolana) {
+            if (flag == "solana") {
               bot.once("message", async (outputMsg) => {
                 const output = outputMsg.text;
-                if (isSolana) {
+                if (flag == "solana") {
                   await bot.sendMessage(
                     chatId,
                     " Please enter the amount to swap:"
                   );
                 }
-                if (isSolana) {
+                if (flag == "solana") {
                   bot.once("message", async (amountMsg) => {
                     const amount = Number(amountMsg.text);
-                    if (isSolana) {
+                    if (flag == "solana") {
+                      await bot.sendMessage(
+                        chatId,
+                        `please wait your transaction is processing...`
+                      );
                       try {
                         const response = await axios.post(
                           `${API_URL}/solanaSwap`,
@@ -2012,7 +1788,7 @@ bot.on("callback_query", async (callbackQuery) => {
                           await bot.sendMessage(
                             chatId,
                             response.data.message ||
-                            "❌ Swap failed. Please try again."
+                              "❌ Swap failed. Please try again."
                           );
                         }
                       } catch (error) {
@@ -2058,17 +1834,8 @@ bot.on("callback_query", async (callbackQuery) => {
 
     case "1":
       if (isUser) {
-        isSolana = false;
-        is1 = true;
-        is42161 = false;
-        is10 = false;
-        is137 = false;
-        is8453 = false;
-        is56 = false;
-        is43114 = false;
-        is42220 = false;
-        is238 = false;
-        if (is1) {
+        flag = "1";
+        if (flag == "1") {
           await bot.sendMessage(chatId, "Ethereum is comming soon!!");
         }
       } else {
@@ -2099,36 +1866,31 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     case "42161":
       if (isUser) {
-        isSolana = false;
-        is1 = false;
-        is42161 = true;
-        is10 = false;
-        is137 = false;
-        is8453 = false;
-        is56 = false;
-        is43114 = false;
-        is42220 = false;
-        is238 = false;
+        flag = "42161";
         await bot.sendMessage(chatId, "Type From Token:");
-        if (is42161) {
+        if (flag == "42161") {
           bot.once("message", async (token0Msg) => {
             const token0 = token0Msg.text;
-            if (is42161) {
+            if (flag == "42161") {
               await bot.sendMessage(chatId, "Type To Token:");
             }
-            if (is42161) {
+            if (flag == "42161") {
               bot.once("message", async (token1Msg) => {
                 const token1 = token1Msg.text;
-                if (is42161) {
+                if (flag == "42161") {
                   await bot.sendMessage(
                     chatId,
                     "Please enter the amount to swap:"
                   );
                 }
-                if (is42161) {
+                if (flag == "42161") {
                   bot.once("message", async (amountInMsg) => {
                     const amountIn = Number(amountInMsg.text);
-                    if (is42161) {
+                    if (flag == "42161") {
+                      await bot.sendMessage(
+                        chatId,
+                        `please wait your transaction is processing...`
+                      );
                       startAmountEntry(chatId, 42161, token0, token1, amountIn);
                     }
                   });
@@ -2166,17 +1928,8 @@ bot.on("callback_query", async (callbackQuery) => {
 
     case "10":
       if (isUser) {
-        isSolana = false;
-        is1 = false;
-        is42161 = false;
-        is10 = true;
-        is137 = false;
-        is8453 = false;
-        is56 = false;
-        is43114 = false;
-        is42220 = false;
-        is238 = false;
-        if (is10) {
+        flag = "10";
+        if (flag == "10") {
           await bot.sendMessage(chatId, "Optimism is comming soon...");
         }
       } else {
@@ -2208,37 +1961,67 @@ bot.on("callback_query", async (callbackQuery) => {
 
     case "137":
       if (isUser) {
-        isSolana = false;
-        is1 = false;
-        is42161 = false;
-        is10 = false;
-        is137 = true;
-        is8453 = false;
-        is56 = false;
-        is43114 = false;
-        is42220 = false;
-        is238 = false;
+        flag = "137";
         await bot.sendMessage(chatId, "Type From Token:");
-        if (is137) {
+        if (flag == "137") {
           bot.once("message", async (token0Msg) => {
             const token0 = token0Msg.text;
-            if (is137) {
+            if (flag == "137") {
               await bot.sendMessage(chatId, "Type To Token:");
             }
-            if (is137) {
+            if (flag == "137") {
               bot.once("message", async (token1Msg) => {
                 const token1 = token1Msg.text;
-                if (is137) {
+                if (flag == "137") {
                   await bot.sendMessage(
                     chatId,
                     "Please enter the amount to swap:"
                   );
                 }
-                if (is137) {
+                if (flag == "137") {
                   bot.once("message", async (amountInMsg) => {
                     const amountIn = Number(amountInMsg.text);
-                    if (is137) {
-                      startAmountEntry(chatId, 137, token0, token1, amountIn);
+                    if (flag == "137") {
+                      await bot.sendMessage(
+                        chatId,
+                        `please wait your transaction is processing...`
+                      );
+                      await axios({
+                        url: `${API_URL}/EVMswap`,
+                        method: "post",
+                        data: {
+                          tokenIn: token0,
+                          tokenOut: token1,
+                          chainId: "polygon",
+                          amount: amountIn,
+                          chain: 137,
+                          chatId: chatId,
+                          desCode: "0x89",
+                        },
+                      })
+                        .then(async (response) => {
+                          if (response?.data?.status) {
+                            await bot.sendMessage(
+                              chatId,
+                              response?.data?.message
+                            );
+                            await bot.sendMessage(
+                              chatId,
+                              `https://polygonscan.com/tx/${response?.data?.tx}`
+                            );
+                          } else {
+                            await bot.sendMessage(
+                              chatId,
+                              response?.data?.message
+                            );
+                          }
+                        })
+                        .catch(async (error) => {
+                          await bot.sendMessage(
+                            chatId,
+                            `due to some reason you transaction failed!!`
+                          );
+                        });
                     }
                   });
                 }
@@ -2275,17 +2058,8 @@ bot.on("callback_query", async (callbackQuery) => {
 
     case "8453":
       if (isUser) {
-        isSolana = false;
-        is1 = false;
-        is42161 = false;
-        is10 = false;
-        is137 = false;
-        is8453 = true;
-        is56 = false;
-        is43114 = false;
-        is42220 = false;
-        is238 = false;
-        if (is8453) {
+        flag = "8453";
+        if (flag == "8453") {
           await bot.sendMessage(chatId, "Base is comming soon!!");
         }
       } else {
@@ -2317,17 +2091,8 @@ bot.on("callback_query", async (callbackQuery) => {
 
     case "56":
       if (isUser) {
-        isSolana = false;
-        is1 = false;
-        is42161 = false;
-        is10 = false;
-        is137 = false;
-        is8453 = false;
-        is56 = true;
-        is43114 = false;
-        is42220 = false;
-        is238 = false;
-        if (is56) {
+        flag = "56";
+        if (flag == "56") {
           await bot.sendMessage(chatId, "BNB chain is comming soon !!");
         }
       } else {
@@ -2359,17 +2124,8 @@ bot.on("callback_query", async (callbackQuery) => {
 
     case "43114":
       if (isUser) {
-        isSolana = false;
-        is1 = false;
-        is42161 = false;
-        is10 = false;
-        is137 = false;
-        is8453 = false;
-        is56 = false;
-        is43114 = true;
-        is42220 = false;
-        is238 = false;
-        if (is43114) {
+        flag = "43114";
+        if (flag == "43114") {
           await bot.sendMessage(chatId, "Avalanche is comming soon");
         }
       } else {
@@ -2401,17 +2157,8 @@ bot.on("callback_query", async (callbackQuery) => {
 
     case "42220":
       if (isUser) {
-        isSolana = false;
-        is1 = false;
-        is42161 = false;
-        is10 = false;
-        is137 = false;
-        is8453 = false;
-        is56 = false;
-        is43114 = false;
-        is42220 = true;
-        is238 = false;
-        if (is42220) {
+        flag = "42220";
+        if (flag == "42220") {
           await bot.sendMessage(chatId, "Celo is comming soon");
         }
       } else {
@@ -2443,17 +2190,8 @@ bot.on("callback_query", async (callbackQuery) => {
 
     case "238":
       if (isUser) {
-        isSolana = false;
-        is1 = false;
-        is42161 = false;
-        is10 = false;
-        is137 = false;
-        is8453 = false;
-        is56 = false;
-        is43114 = false;
-        is42220 = false;
-        is238 = true;
-        if (is238) {
+        flag = "238";
+        if (flag == "238") {
           await bot.sendMessage(chatId, "Blast is comming soon");
         }
       } else {
