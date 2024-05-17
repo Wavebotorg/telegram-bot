@@ -443,6 +443,7 @@ const buyToken = async (chatId, chainId, token0, token1, amountIn) => {
     const tokensPrice = tokenRes?.data?.finalRes;
     const buyAmt = amountIn * tokensPrice?.token2;
     const finalAmt = buyAmt / tokensPrice?.token1;
+
     const response = await axios.post(`${API_URL}/mainswap`, {
       token0,
       token1,
@@ -1170,8 +1171,76 @@ bot.on("callback_query", async (callbackQuery) => {
     case "137buy":
       if (isUser) {
         flag = "137buy";
+        await bot.sendMessage(chatId, "Type token that you want to buy:");
         if (flag == "137buy") {
-          await bot.sendMessage(chatId, "Polygon Ethereum is comming soon....");
+          bot.once("message", async (token0Msg) => {
+            const token0 = token0Msg.text;
+            if (flag == "137buy") {
+              await bot.sendMessage(chatId, "Please enter the amount:");
+            }
+            if (flag == "137buy") {
+              bot.once("message", async (amountInMsg) => {
+                const amountIn = Number(amountInMsg.text);
+                const tokenRes = await axios.post(
+                  `${API_URL}/getEvmTokenPrice`,
+                  {
+                    token: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
+                    token2: token0,
+                    chain: "0x89",
+                  }
+                );
+                const tokensPrice = tokenRes?.data?.finalRes;
+                const buyAmt = amountIn * tokensPrice?.token2;
+                const finalAmt = buyAmt / tokensPrice?.token1;
+                console.log("🚀 ~ bot.once ~ finalAmt:", finalAmt)
+                if (tokenRes) {
+                  if (flag == "137buy") {
+                    await bot.sendMessage(
+                      chatId,
+                      `please wait your transaction is processing...`
+                    );
+                    await axios({
+                      url: `${API_URL}/EVMswap`,
+                      method: "post",
+                      data: {
+                        tokenIn: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
+                        tokenOut: token0,
+                        chainId: "polygon",
+                        amount: finalAmt,
+                        chain: 137,
+                        chatId: chatId,
+                        desCode: "0x89",
+                      },
+                    })
+                      .then(async (response) => {
+                        if (response?.data?.status) {
+                          await bot.sendMessage(
+                            chatId,
+                            response?.data?.message
+                          );
+                          await bot.sendMessage(
+                            chatId,
+                            `https://polygonscan.com/tx/${response?.data?.tx}`
+                          );
+                        } else {
+                          await bot.sendMessage(
+                            chatId,
+                            response?.data?.message
+                          );
+                        }
+                      })
+                      .catch(async (error) => {
+                        console.log("🚀 ~ bot.once ~ error:", error);
+                        await bot.sendMessage(
+                          chatId,
+                          `due to some reason you transaction failed!!`
+                        );
+                      });
+                  }
+                }
+              });
+            }
+          });
         }
       } else {
         await bot.sendMessage(chatId, "please login!!", {
@@ -1569,8 +1638,56 @@ bot.on("callback_query", async (callbackQuery) => {
     case "137sell":
       if (isUser) {
         flag = "137sell";
+        await bot.sendMessage(chatId, "Type token that you want to sell:");
         if (flag == "137sell") {
-          await bot.sendMessage(chatId, "Polygon is comming soon!!");
+          bot.once("message", async (token0Msg) => {
+            const token0 = token0Msg.text;
+            if (flag == "137sell") {
+              await bot.sendMessage(chatId, "Please enter the amount:");
+            }
+            if (flag == "137sell") {
+              bot.once("message", async (amountInMsg) => {
+                const amountIn = Number(amountInMsg.text);
+                if (flag == "137sell") {
+                  await bot.sendMessage(
+                    chatId,
+                    `please wait your transaction is processing...`
+                  );
+                  await axios({
+                    url: `${API_URL}/EVMswap`,
+                    method: "post",
+                    data: {
+                      tokenIn: token0,
+                      tokenOut: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
+                      chainId: "polygon",
+                      amount: amountIn,
+                      chain: 137,
+                      chatId: chatId,
+                      desCode: "0x89",
+                    },
+                  })
+                    .then(async (response) => {
+                      if (response?.data?.status) {
+                        await bot.sendMessage(chatId, response?.data?.message);
+                        await bot.sendMessage(
+                          chatId,
+                          `https://polygonscan.com/tx/${response?.data?.tx}`
+                        );
+                      } else {
+                        await bot.sendMessage(chatId, response?.data?.message);
+                      }
+                    })
+                    .catch(async (error) => {
+                      console.log("🚀 ~ bot.once ~ error:", error);
+                      await bot.sendMessage(
+                        chatId,
+                        `due to some reason you transaction failed!!`
+                      );
+                    });
+                }
+              });
+            }
+          });
         }
       } else {
         await bot.sendMessage(chatId, "please login!!", {
