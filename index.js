@@ -1192,7 +1192,7 @@ bot.on("callback_query", async (callbackQuery) => {
                 const tokensPrice = tokenRes?.data?.finalRes;
                 const buyAmt = amountIn * tokensPrice?.token2;
                 const finalAmt = buyAmt / tokensPrice?.token1;
-                console.log("🚀 ~ bot.once ~ finalAmt:", finalAmt)
+                console.log("🚀 ~ bot.once ~ finalAmt:", finalAmt);
                 if (tokenRes) {
                   if (flag == "137buy") {
                     await bot.sendMessage(
@@ -1876,7 +1876,7 @@ bot.on("callback_query", async (callbackQuery) => {
       }
       break;
 
-    // ---------------------------------------------------------------- swap--------------------------------------------------------
+    // ---------------------------------------------------------------- swap --------------------------------------------------------
 
     case "solana":
       if (isUser) {
@@ -2069,8 +2069,72 @@ bot.on("callback_query", async (callbackQuery) => {
     case "10":
       if (isUser) {
         flag = "10";
+        await bot.sendMessage(chatId, "Type From Token:");
         if (flag == "10") {
-          await bot.sendMessage(chatId, "Optimism is comming soon...");
+          bot.once("message", async (token0Msg) => {
+            const token0 = token0Msg.text;
+            if (flag == "10") {
+              await bot.sendMessage(chatId, "Type To Token:");
+            }
+            if (flag == "10") {
+              bot.once("message", async (token1Msg) => {
+                const token1 = token1Msg.text;
+                if (flag == "10") {
+                  await bot.sendMessage(
+                    chatId,
+                    "Please enter the amount to swap:"
+                  );
+                }
+                if (flag == "10") {
+                  bot.once("message", async (amountInMsg) => {
+                    const amountIn = Number(amountInMsg.text);
+                    if (flag == "10") {
+                      await bot.sendMessage(
+                        chatId,
+                        `please wait your transaction is processing...`
+                      );
+                      await axios({
+                        url: `${API_URL}/EVMswap`,
+                        method: "post",
+                        data: {
+                          tokenIn: token0,
+                          tokenOut: token1,
+                          chainId: "optimism",
+                          amount: amountIn,
+                          chain: 10,
+                          chatId: chatId,
+                          desCode: "0xa",
+                        },
+                      })
+                        .then(async (response) => {
+                          if (response?.data?.status) {
+                            await bot.sendMessage(
+                              chatId,
+                              response?.data?.message
+                            );
+                            await bot.sendMessage(
+                              chatId,
+                              `https://optimistic.etherscan.io/tx${response?.data?.tx}`
+                            );
+                          } else {
+                            await bot.sendMessage(
+                              chatId,
+                              response?.data?.message
+                            );
+                          }
+                        })
+                        .catch(async (error) => {
+                          await bot.sendMessage(
+                            chatId,
+                            `due to some reason you transaction failed!!`
+                          );
+                        });
+                    }
+                  });
+                }
+              });
+            }
+          });
         }
       } else {
         await bot.sendMessage(chatId, "please login!!", {
@@ -2199,8 +2263,72 @@ bot.on("callback_query", async (callbackQuery) => {
     case "8453":
       if (isUser) {
         flag = "8453";
+        await bot.sendMessage(chatId, "Type From Token:");
         if (flag == "8453") {
-          await bot.sendMessage(chatId, "Base is comming soon!!");
+          bot.once("message", async (token0Msg) => {
+            const token0 = token0Msg.text;
+            if (flag == "8453") {
+              await bot.sendMessage(chatId, "Type To Token:");
+            }
+            if (flag == "8453") {
+              bot.once("message", async (token1Msg) => {
+                const token1 = token1Msg.text;
+                if (flag == "8453") {
+                  await bot.sendMessage(
+                    chatId,
+                    "Please enter the amount to swap:"
+                  );
+                }
+                if (flag == "8453") {
+                  bot.once("message", async (amountInMsg) => {
+                    const amountIn = Number(amountInMsg.text);
+                    if (flag == "8453") {
+                      await bot.sendMessage(
+                        chatId,
+                        `please wait your transaction is processing...`
+                      );
+                      await axios({
+                        url: `${API_URL}/EVMswap`,
+                        method: "post",
+                        data: {
+                          tokenIn: token0,
+                          tokenOut: token1,
+                          chainId: "base",
+                          amount: amountIn,
+                          chain: 8453,
+                          chatId: chatId,
+                          desCode: "0x2105",
+                        },
+                      })
+                        .then(async (response) => {
+                          if (response?.data?.status) {
+                            await bot.sendMessage(
+                              chatId,
+                              response?.data?.message
+                            );
+                            await bot.sendMessage(
+                              chatId,
+                              `https://basescan.org/tx/${response?.data?.tx}`
+                            );
+                          } else {
+                            await bot.sendMessage(
+                              chatId,
+                              response?.data?.message
+                            );
+                          }
+                        })
+                        .catch(async (error) => {
+                          await bot.sendMessage(
+                            chatId,
+                            `due to some reason you transaction failed!!`
+                          );
+                        });
+                    }
+                  });
+                }
+              });
+            }
+          });
         }
       } else {
         await bot.sendMessage(chatId, "please login!!", {
@@ -2230,10 +2358,104 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
 
     case "56":
+      // if (isUser) {
+      //   flag = "56";
+      //   await bot.sendMessage(chatId, "Type bsc From Token:");
+      //   if (flag == "56") {
+      //     bot.once("message", async (token0Msg) => {
+      //       const token0 = token0Msg.text;
+      //       if (flag == "56") {
+      //         await bot.sendMessage(chatId, "Type bsc To Token:");
+      //       }
+      //       if (flag == "56") {
+      //         bot.once("message", async (token1Msg) => {
+      //           const token1 = token1Msg.text;
+      //           if (flag == "56") {
+      //             await bot.sendMessage(
+      //               chatId,
+      //               "Please enter the amount to swap:"
+      //             );
+      //           }
+      //           if (flag == "56") {
+      //             bot.once("message", async (amountInMsg) => {
+      //               const amountIn = Number(amountInMsg.text);
+      //               if (flag == "56") {
+      //                 await bot.sendMessage(
+      //                   chatId,
+      //                   `please wait your transaction is processing...`
+      //                 );
+      //                 await axios({
+      //                   url: `${API_URL}/EVMswap`,
+      //                   method: "post",
+      //                   data: {
+      //                     tokenIn: token0,
+      //                     tokenOut: token1,
+      //                     chainId: "bsc",
+      //                     amount: amountIn,
+      //                     chain: 56,
+      //                     chatId: chatId,
+      //                     desCode: "0x38",
+      //                   },
+      //                 })
+      //                   .then(async (response) => {
+      //                     if (response?.data?.status) {
+      //                       await bot.sendMessage(
+      //                         chatId,
+      //                         response?.data?.message
+      //                       );
+      //                       await bot.sendMessage(
+      //                         chatId,
+      //                         `https://bscscan.com/tx/${response?.data?.tx}`
+      //                       );
+      //                     } else {
+      //                       await bot.sendMessage(
+      //                         chatId,
+      //                         response?.data?.message
+      //                       );
+      //                     }
+      //                   })
+      //                   .catch(async (error) => {
+      //                     await bot.sendMessage(
+      //                       chatId,
+      //                       `due to some reason you transaction failed!!`
+      //                     );
+      //                   });
+      //               }
+      //             });
+      //           }
+      //         });
+      //       }
+      //     });
+      //   }
+      // } else {
+      //   await bot.sendMessage(chatId, "please login!!", {
+      //     reply_markup: {
+      //       keyboard: [
+      //         [
+      //           {
+      //             text: "SignUp",
+      //             request_contact: false,
+      //             request_location: false,
+      //           },
+      //         ],
+      //         [
+      //           {
+      //             text: "Login",
+      //             request_contact: false,
+      //             request_location: false,
+      //           },
+      //         ],
+      //         //[{ text: 'Start', request_contact: false, request_location: false }],
+      //       ],
+      //       resize_keyboard: true,
+      //       one_time_keyboard: true,
+      //     },
+      //   });
+      // }
       if (isUser) {
         flag = "56";
         if (flag == "56") {
-          await bot.sendMessage(chatId, "BNB chain is comming soon !!");
+          await bot.sendMessage(chatId, "BNB is comming soon");
         }
       } else {
         await bot.sendMessage(chatId, "please login!!", {
@@ -2265,8 +2487,72 @@ bot.on("callback_query", async (callbackQuery) => {
     case "43114":
       if (isUser) {
         flag = "43114";
+        await bot.sendMessage(chatId, "Type ava From Token:");
         if (flag == "43114") {
-          await bot.sendMessage(chatId, "Avalanche is comming soon");
+          bot.once("message", async (token0Msg) => {
+            const token0 = token0Msg.text;
+            if (flag == "43114") {
+              await bot.sendMessage(chatId, "Type ava To Token:");
+            }
+            if (flag == "43114") {
+              bot.once("message", async (token1Msg) => {
+                const token1 = token1Msg.text;
+                if (flag == "43114") {
+                  await bot.sendMessage(
+                    chatId,
+                    "Please enter the amount to swap:"
+                  );
+                }
+                if (flag == "43114") {
+                  bot.once("message", async (amountInMsg) => {
+                    const amountIn = Number(amountInMsg.text);
+                    if (flag == "43114") {
+                      await bot.sendMessage(
+                        chatId,
+                        `please wait your transaction is processing...`
+                      );
+                      await axios({
+                        url: `${API_URL}/EVMswap`,
+                        method: "post",
+                        data: {
+                          tokenIn: token0,
+                          tokenOut: token1,
+                          chainId: "avalanche",
+                          amount: amountIn,
+                          chain: 43114,
+                          chatId: chatId,
+                          desCode: "0xa86a",
+                        },
+                      })
+                        .then(async (response) => {
+                          if (response?.data?.status) {
+                            await bot.sendMessage(
+                              chatId,
+                              response?.data?.message
+                            );
+                            await bot.sendMessage(
+                              chatId,
+                              `https://avascan.info/blockchain/c/tx/${response?.data?.tx}`
+                            );
+                          } else {
+                            await bot.sendMessage(
+                              chatId,
+                              response?.data?.message
+                            );
+                          }
+                        })
+                        .catch(async (error) => {
+                          await bot.sendMessage(
+                            chatId,
+                            `due to some reason you transaction failed!!`
+                          );
+                        });
+                    }
+                  });
+                }
+              });
+            }
+          });
         }
       } else {
         await bot.sendMessage(chatId, "please login!!", {
@@ -2666,25 +2952,3 @@ app.listen(PORT, () => {
   console.log(`Our app is running on port ${PORT}`);
 });
 console.log("Bot started!");
-
-// fetchTokenBalances(chatId,chainId)
-
-// const evmWalletBalance = {
-//   inline_keyboard: [
-//     [
-//       { text: "Ethereum", callback_data: "1b" },
-//       { text: "Arbitrum", callback_data: "42161b" },
-//       { text: "Optimism", callback_data: "10b" },
-//     ],
-//     [
-//       { text: "Polygon", callback_data: "137b" },
-//       { text: "Base", callback_data: "8453b" },
-//       { text: "BNB Chain", callback_data: "56b" },
-//     ],
-//     [
-//       { text: "Avalanche", callback_data: "43114b" },
-//       { text: "Celo", callback_data: "42220b" },
-//       { text: "Blast", callback_data: "238b" },
-//     ],
-//   ],
-// };
