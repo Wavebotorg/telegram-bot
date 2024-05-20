@@ -612,6 +612,7 @@ bot.on("message", async (msg) => {
     isLoggingIn = false;
     isSigningUp = false;
     const isUser = await getstartBot(chatId);
+    console.log("🚀 ~ bot.on ~ isUser:", isUser);
     if (!isUser) {
       await sendWelcomeMessage(chatId);
     } else {
@@ -1055,18 +1056,62 @@ bot.on("callback_query", async (callbackQuery) => {
             if (flag == "42161buy") {
               bot.once("message", async (amountInMsg) => {
                 const amountIn = Number(amountInMsg.text);
-                if (flag == "42161buy") {
-                  await bot.sendMessage(
-                    chatId,
-                    `please wait your transaction is processing...`
-                  );
-                  buyToken(
-                    chatId,
-                    42161,
-                    "0x912CE59144191C1204E64559FE8253a0e49E6548",
-                    token1,
-                    amountIn
-                  );
+                const tokenRes = await axios.post(
+                  `${API_URL}/getEvmTokenPrice`,
+                  {
+                    token: "0x912CE59144191C1204E64559FE8253a0e49E6548",
+                    token2: token1,
+                    chain: "0xa4b1",
+                  }
+                );
+                const tokensPrice = tokenRes?.data?.finalRes;
+                const buyAmt = amountIn * tokensPrice?.token2;
+                const finalAmt = buyAmt / tokensPrice?.token1;
+                console.log("🚀 ~ bot.once ~ finalAmt:", finalAmt);
+                if (tokenRes) {
+                  if (flag == "42161buy") {
+                    await bot.sendMessage(
+                      chatId,
+                      `please wait your transaction is processing...`
+                    );
+                    await axios({
+                      url: `${API_URL}/EVMswap`,
+                      method: "post",
+                      data: {
+                        tokenIn: "0x912CE59144191C1204E64559FE8253a0e49E6548",
+                        tokenOut: token1,
+                        chainId: "arbitrum",
+                        amount: finalAmt,
+                        chain: 42161,
+                        chatId: chatId,
+                        desCode: "0xa4b1",
+                      },
+                    })
+                      .then(async (response) => {
+                        if (response?.data?.status) {
+                          await bot.sendMessage(
+                            chatId,
+                            response?.data?.message
+                          );
+                          await bot.sendMessage(
+                            chatId,
+                            `https://arbiscan.io/tx/${response?.data?.tx}`
+                          );
+                        } else {
+                          await bot.sendMessage(
+                            chatId,
+                            response?.data?.message
+                          );
+                        }
+                      })
+                      .catch(async (error) => {
+                        console.log("🚀 ~ bot.once ~ error:", error);
+                        await bot.sendMessage(
+                          chatId,
+                          `due to some reason you transaction failed!!`
+                        );
+                      });
+                  }
                 }
               });
             }
@@ -1303,11 +1348,76 @@ bot.on("callback_query", async (callbackQuery) => {
     case "56buy":
       if (isUser) {
         flag = "56buy";
+        await bot.sendMessage(chatId, "Type token that you want to buy:");
         if (flag == "56buy") {
-          await bot.sendMessage(
-            chatId,
-            "BNB Chain Ethereum is comming soon...."
-          );
+          bot.once("message", async (token0Msg) => {
+            const token0 = token0Msg.text;
+            if (flag == "56buy") {
+              await bot.sendMessage(chatId, "Please enter the amount:");
+            }
+            if (flag == "56buy") {
+              bot.once("message", async (amountInMsg) => {
+                const amountIn = Number(amountInMsg.text);
+                const tokenRes = await axios.post(
+                  `${API_URL}/getEvmTokenPrice`,
+                  {
+                    token: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
+                    token2: token0,
+                    chain: "0x38",
+                  }
+                );
+                const tokensPrice = tokenRes?.data?.finalRes;
+                const buyAmt = amountIn * tokensPrice?.token2;
+                const finalAmt = buyAmt / tokensPrice?.token1;
+                console.log("🚀 ~ bot.once ~ finalAmt:", finalAmt);
+                if (tokenRes) {
+                  if (flag == "56buy") {
+                    await bot.sendMessage(
+                      chatId,
+                      `please wait your transaction is processing...`
+                    );
+                    await axios({
+                      url: `${API_URL}/EVMswap`,
+                      method: "post",
+                      data: {
+                        tokenIn: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
+                        tokenOut: token0,
+                        chainId: "bsc",
+                        amount: finalAmt,
+                        chain: 56,
+                        chatId: chatId,
+                        desCode: "0x38",
+                      },
+                    })
+                      .then(async (response) => {
+                        if (response?.data?.status) {
+                          await bot.sendMessage(
+                            chatId,
+                            response?.data?.message
+                          );
+                          await bot.sendMessage(
+                            chatId,
+                            `https://bscscan.com/tx/${response?.data?.tx}`
+                          );
+                        } else {
+                          await bot.sendMessage(
+                            chatId,
+                            response?.data?.message
+                          );
+                        }
+                      })
+                      .catch(async (error) => {
+                        console.log("🚀 ~ bot.once ~ error:", error);
+                        await bot.sendMessage(
+                          chatId,
+                          `due to some reason you transaction failed!!`
+                        );
+                      });
+                  }
+                }
+              });
+            }
+          });
         }
       } else {
         await bot.sendMessage(chatId, "please login!!", {
@@ -1565,13 +1675,37 @@ bot.on("callback_query", async (callbackQuery) => {
                     chatId,
                     `please wait your transaction is processing...`
                   );
-                  startAmountEntry(
-                    chatId,
-                    42161,
-                    token1,
-                    "0x912CE59144191C1204E64559FE8253a0e49E6548",
-                    amountIn
-                  );
+                  await axios({
+                    url: `${API_URL}/EVMswap`,
+                    method: "post",
+                    data: {
+                      tokenIn: token1,
+                      tokenOut: "0x912CE59144191C1204E64559FE8253a0e49E6548",
+                      chainId: "arbitrum",
+                      amount: amountIn,
+                      chain: 42161,
+                      chatId: chatId,
+                      desCode: "0xa4b1",
+                    },
+                  })
+                    .then(async (response) => {
+                      if (response?.data?.status) {
+                        await bot.sendMessage(chatId, response?.data?.message);
+                        await bot.sendMessage(
+                          chatId,
+                          `https://arbiscan.io/tx/${response?.data?.tx}`
+                        );
+                      } else {
+                        await bot.sendMessage(chatId, response?.data?.message);
+                      }
+                    })
+                    .catch(async (error) => {
+                      console.log("🚀 ~ bot.once ~ error:", error);
+                      await bot.sendMessage(
+                        chatId,
+                        `due to some reason you transaction failed!!`
+                      );
+                    });
                 }
               });
             }
@@ -1750,8 +1884,56 @@ bot.on("callback_query", async (callbackQuery) => {
     case "56sell":
       if (isUser) {
         flag = "56sell";
+        await bot.sendMessage(chatId, "Type BNB token that you want to sell:");
         if (flag == "56sell") {
-          await bot.sendMessage(chatId, "BNB Chain is comming soon!!");
+          bot.once("message", async (token0Msg) => {
+            const token0 = token0Msg.text;
+            if (flag == "56sell") {
+              await bot.sendMessage(chatId, "Please enter the amount:");
+            }
+            if (flag == "56sell") {
+              bot.once("message", async (amountInMsg) => {
+                const amountIn = Number(amountInMsg.text);
+                if (flag == "56sell") {
+                  await bot.sendMessage(
+                    chatId,
+                    `please wait your transaction is processing...`
+                  );
+                  await axios({
+                    url: `${API_URL}/EVMswap`,
+                    method: "post",
+                    data: {
+                      tokenIn: token0,
+                      tokenOut: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
+                      chainId: "bsc",
+                      amount: amountIn,
+                      chain: 56,
+                      chatId: chatId,
+                      desCode: "0x38",
+                    },
+                  })
+                    .then(async (response) => {
+                      if (response?.data?.status) {
+                        await bot.sendMessage(chatId, response?.data?.message);
+                        await bot.sendMessage(
+                          chatId,
+                          `https://bscscan.com/tx/${response?.data?.tx}`
+                        );
+                      } else {
+                        await bot.sendMessage(chatId, response?.data?.message);
+                      }
+                    })
+                    .catch(async (error) => {
+                      console.log("🚀 ~ bot.once ~ error:", error);
+                      await bot.sendMessage(
+                        chatId,
+                        `due to some reason you transaction failed!!`
+                      );
+                    });
+                }
+              });
+            }
+          });
         }
       } else {
         await bot.sendMessage(chatId, "please login!!", {
@@ -2031,7 +2213,42 @@ bot.on("callback_query", async (callbackQuery) => {
                         chatId,
                         `please wait your transaction is processing...`
                       );
-                      startAmountEntry(chatId, 42161, token0, token1, amountIn);
+                      await axios({
+                        url: `${API_URL}/EVMswap`,
+                        method: "post",
+                        data: {
+                          tokenIn: token0,
+                          tokenOut: token1,
+                          chainId: "arbitrum",
+                          amount: amountIn,
+                          chain: 42161,
+                          chatId: chatId,
+                          desCode: "0xa4b1",
+                        },
+                      })
+                        .then(async (response) => {
+                          if (response?.data?.status) {
+                            await bot.sendMessage(
+                              chatId,
+                              response?.data?.message
+                            );
+                            await bot.sendMessage(
+                              chatId,
+                              `https://arbiscan.io/tx/${response?.data?.tx}`
+                            );
+                          } else {
+                            await bot.sendMessage(
+                              chatId,
+                              response?.data?.message
+                            );
+                          }
+                        })
+                        .catch(async (error) => {
+                          await bot.sendMessage(
+                            chatId,
+                            `due to some reason you transaction failed!!`
+                          );
+                        });
                     }
                   });
                 }
@@ -2358,104 +2575,74 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
 
     case "56":
-      // if (isUser) {
-      //   flag = "56";
-      //   await bot.sendMessage(chatId, "Type bsc From Token:");
-      //   if (flag == "56") {
-      //     bot.once("message", async (token0Msg) => {
-      //       const token0 = token0Msg.text;
-      //       if (flag == "56") {
-      //         await bot.sendMessage(chatId, "Type bsc To Token:");
-      //       }
-      //       if (flag == "56") {
-      //         bot.once("message", async (token1Msg) => {
-      //           const token1 = token1Msg.text;
-      //           if (flag == "56") {
-      //             await bot.sendMessage(
-      //               chatId,
-      //               "Please enter the amount to swap:"
-      //             );
-      //           }
-      //           if (flag == "56") {
-      //             bot.once("message", async (amountInMsg) => {
-      //               const amountIn = Number(amountInMsg.text);
-      //               if (flag == "56") {
-      //                 await bot.sendMessage(
-      //                   chatId,
-      //                   `please wait your transaction is processing...`
-      //                 );
-      //                 await axios({
-      //                   url: `${API_URL}/EVMswap`,
-      //                   method: "post",
-      //                   data: {
-      //                     tokenIn: token0,
-      //                     tokenOut: token1,
-      //                     chainId: "bsc",
-      //                     amount: amountIn,
-      //                     chain: 56,
-      //                     chatId: chatId,
-      //                     desCode: "0x38",
-      //                   },
-      //                 })
-      //                   .then(async (response) => {
-      //                     if (response?.data?.status) {
-      //                       await bot.sendMessage(
-      //                         chatId,
-      //                         response?.data?.message
-      //                       );
-      //                       await bot.sendMessage(
-      //                         chatId,
-      //                         `https://bscscan.com/tx/${response?.data?.tx}`
-      //                       );
-      //                     } else {
-      //                       await bot.sendMessage(
-      //                         chatId,
-      //                         response?.data?.message
-      //                       );
-      //                     }
-      //                   })
-      //                   .catch(async (error) => {
-      //                     await bot.sendMessage(
-      //                       chatId,
-      //                       `due to some reason you transaction failed!!`
-      //                     );
-      //                   });
-      //               }
-      //             });
-      //           }
-      //         });
-      //       }
-      //     });
-      //   }
-      // } else {
-      //   await bot.sendMessage(chatId, "please login!!", {
-      //     reply_markup: {
-      //       keyboard: [
-      //         [
-      //           {
-      //             text: "SignUp",
-      //             request_contact: false,
-      //             request_location: false,
-      //           },
-      //         ],
-      //         [
-      //           {
-      //             text: "Login",
-      //             request_contact: false,
-      //             request_location: false,
-      //           },
-      //         ],
-      //         //[{ text: 'Start', request_contact: false, request_location: false }],
-      //       ],
-      //       resize_keyboard: true,
-      //       one_time_keyboard: true,
-      //     },
-      //   });
-      // }
       if (isUser) {
         flag = "56";
+        await bot.sendMessage(chatId, "Type bsc From Token:");
         if (flag == "56") {
-          await bot.sendMessage(chatId, "BNB is comming soon");
+          bot.once("message", async (token0Msg) => {
+            const token0 = token0Msg.text;
+            if (flag == "56") {
+              await bot.sendMessage(chatId, "Type bsc To Token:");
+            }
+            if (flag == "56") {
+              bot.once("message", async (token1Msg) => {
+                const token1 = token1Msg.text;
+                if (flag == "56") {
+                  await bot.sendMessage(
+                    chatId,
+                    "Please enter the amount to swap:"
+                  );
+                }
+                if (flag == "56") {
+                  bot.once("message", async (amountInMsg) => {
+                    const amountIn = Number(amountInMsg.text);
+                    if (flag == "56") {
+                      await bot.sendMessage(
+                        chatId,
+                        `please wait your transaction is processing...`
+                      );
+                      await axios({
+                        url: `${API_URL}/EVMswap`,
+                        method: "post",
+                        data: {
+                          tokenIn: token0,
+                          tokenOut: token1,
+                          chainId: "bsc",
+                          amount: amountIn,
+                          chain: 56,
+                          chatId: chatId,
+                          desCode: "0x38",
+                        },
+                      })
+                        .then(async (response) => {
+                          if (response?.data?.status) {
+                            await bot.sendMessage(
+                              chatId,
+                              response?.data?.message
+                            );
+                            await bot.sendMessage(
+                              chatId,
+                              `https://bscscan.com/tx/${response?.data?.tx}`
+                            );
+                          } else {
+                            await bot.sendMessage(
+                              chatId,
+                              response?.data?.message
+                            );
+                          }
+                        })
+                        .catch(async (error) => {
+                          await bot.sendMessage(
+                            chatId,
+                            `due to some reason you transaction failed!!`
+                          );
+                        });
+                    }
+                  });
+                }
+              });
+            }
+          });
         }
       } else {
         await bot.sendMessage(chatId, "please login!!", {
