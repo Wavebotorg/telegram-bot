@@ -2385,8 +2385,72 @@ bot.on("callback_query", async (callbackQuery) => {
     case "1":
       if (isUser) {
         flag = "1";
+        await bot.sendMessage(chatId, "Type ethereum From Token:");
         if (flag == "1") {
-          await bot.sendMessage(chatId, "Ethereum is comming soon!!");
+          bot.once("message", async (token0Msg) => {
+            const token0 = token0Msg.text;
+            if (flag == "1") {
+              await bot.sendMessage(chatId, "Type ethereum To Token:");
+            }
+            if (flag == "1") {
+              bot.once("message", async (token1Msg) => {
+                const token1 = token1Msg.text;
+                if (flag == "1") {
+                  await bot.sendMessage(
+                    chatId,
+                    "Please enter the amount to swap:"
+                  );
+                }
+                if (flag == "1") {
+                  bot.once("message", async (amountInMsg) => {
+                    const amountIn = Number(amountInMsg.text);
+                    if (flag == "1") {
+                      await bot.sendMessage(
+                        chatId,
+                        `please wait your transaction is processing...`
+                      );
+                      await axios({
+                        url: `${API_URL}/EVMswap`,
+                        method: "post",
+                        data: {
+                          tokenIn: token0,
+                          tokenOut: token1,
+                          chainId: "ethereum",
+                          amount: amountIn,
+                          chain: 1,
+                          chatId: chatId,
+                          desCode: "0x1",
+                        },
+                      })
+                        .then(async (response) => {
+                          if (response?.data?.status) {
+                            await bot.sendMessage(
+                              chatId,
+                              response?.data?.message
+                            );
+                            await bot.sendMessage(
+                              chatId,
+                              `https://etherscan.io/tx/${response?.data?.tx}`
+                            );
+                          } else {
+                            await bot.sendMessage(
+                              chatId,
+                              response?.data?.message
+                            );
+                          }
+                        })
+                        .catch(async (error) => {
+                          await bot.sendMessage(
+                            chatId,
+                            `due to some reason you transaction failed!!`
+                          );
+                        });
+                    }
+                  });
+                }
+              });
+            }
+          });
         }
       } else {
         await bot.sendMessage(chatId, "please login!!", {
