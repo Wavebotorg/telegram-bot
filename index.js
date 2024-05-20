@@ -3059,104 +3059,6 @@ bot.on("callback_query", async (callbackQuery) => {
         });
       }
       break;
-
-    case "59144":
-      if (isUser) {
-        flag = "59144";
-        await bot.sendMessage(chatId, "Type linea From Token:");
-        if (flag == "59144") {
-          bot.once("message", async (token0Msg) => {
-            const token0 = token0Msg.text;
-            if (flag == "59144") {
-              await bot.sendMessage(chatId, "Type linea To Token:");
-            }
-            if (flag == "59144") {
-              bot.once("message", async (token1Msg) => {
-                const token1 = token1Msg.text;
-                if (flag == "59144") {
-                  await bot.sendMessage(
-                    chatId,
-                    "Please enter the amount to swap:"
-                  );
-                }
-                if (flag == "59144") {
-                  bot.once("message", async (amountInMsg) => {
-                    const amountIn = Number(amountInMsg.text);
-                    if (flag == "59144") {
-                      await bot.sendMessage(
-                        chatId,
-                        `please wait your transaction is processing...`
-                      );
-                      await axios({
-                        url: `${API_URL}/EVMswap`,
-                        method: "post",
-                        data: {
-                          tokenIn: token0,
-                          tokenOut: token1,
-                          chainId: "linea",
-                          amount: amountIn,
-                          chain: 59144,
-                          chatId: chatId,
-                          desCode: "0xe705",
-                        },
-                      })
-                        .then(async (response) => {
-                          if (response?.data?.status) {
-                            await bot.sendMessage(
-                              chatId,
-                              response?.data?.message
-                            );
-                            await bot.sendMessage(
-                              chatId,
-                              `https://lineascan.build/tx/${response?.data?.tx}`
-                            );
-                          } else {
-                            await bot.sendMessage(
-                              chatId,
-                              response?.data?.message
-                            );
-                          }
-                        })
-                        .catch(async (error) => {
-                          await bot.sendMessage(
-                            chatId,
-                            `due to some reason you transaction failed!!`
-                          );
-                        });
-                    }
-                  });
-                }
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
-      break;
-
     case "25":
       if (isUser) {
         flag = "25";
@@ -3575,38 +3477,7 @@ bot.on("callback_query", async (callbackQuery) => {
         });
       }
       break;
-    case "59144b":
-      if (isUser) {
-        flag = "59144b";
-        if (flag == "59144b") {
-          fetchTokenBalances(chatId, "0xe705");
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
-      break;
+
     case "25b":
       if (isUser) {
         flag = "25b";
