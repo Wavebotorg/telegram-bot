@@ -1177,11 +1177,74 @@ bot.on("callback_query", async (callbackQuery) => {
     case "10buy":
       if (isUser) {
         flag = "10buy";
+        await bot.sendMessage(chatId, "Type OP token that you want to buy:");
         if (flag == "10buy") {
-          await bot.sendMessage(
-            chatId,
-            "Optimism Ethereum is comming soon...."
-          );
+          bot.once("message", async (token0Msg) => {
+            const token0 = token0Msg.text;
+            if (flag == "10buy") {
+              await bot.sendMessage(chatId, "Please enter the amount:");
+            }
+            if (flag == "10buy") {
+              bot.once("message", async (amountInMsg) => {
+                const amountIn = Number(amountInMsg.text);
+                const tokenRes = await axios.post(
+                  `${API_URL}/getEvmTokenPrice`,
+                  {
+                    token: "0x4200000000000000000000000000000000000042",
+                    token2: token0,
+                    chain: "0xa",
+                  }
+                );
+                const tokensPrice = tokenRes?.data?.finalRes;
+                const buyAmt = amountIn * tokensPrice?.token2;
+                const finalAmt = buyAmt / tokensPrice?.token1;
+                if (tokenRes) {
+                  if (flag == "10buy") {
+                    await bot.sendMessage(
+                      chatId,
+                      `please wait your transaction is processing...`
+                    );
+                    await axios({
+                      url: `${API_URL}/EVMswap`,
+                      method: "post",
+                      data: {
+                        tokenIn: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
+                        tokenOut: token0,
+                        chainId: "optimism",
+                        amount: finalAmt,
+                        chain: 10,
+                        chatId: chatId,
+                        desCode: "0xa",
+                      },
+                    })
+                      .then(async (response) => {
+                        if (response?.data?.status) {
+                          await bot.sendMessage(
+                            chatId,
+                            response?.data?.message
+                          );
+                          await bot.sendMessage(
+                            chatId,
+                            `https://optimistic.etherscan.io/tx/${response?.data?.tx}`
+                          );
+                        } else {
+                          await bot.sendMessage(
+                            chatId,
+                            response?.data?.message
+                          );
+                        }
+                      })
+                      .catch(async (error) => {
+                        await bot.sendMessage(
+                          chatId,
+                          `due to some reason you transaction failed!!`
+                        );
+                      });
+                  }
+                }
+              });
+            }
+          });
         }
       } else {
         await bot.sendMessage(chatId, "please login!!", {
@@ -1441,11 +1504,76 @@ bot.on("callback_query", async (callbackQuery) => {
     case "43114buy":
       if (isUser) {
         flag = "43114buy";
+        await bot.sendMessage(chatId, "Type AVAX token that you want to buy:");
         if (flag == "43114buy") {
-          await bot.sendMessage(
-            chatId,
-            "AvakancheEthereum is comming soon...."
-          );
+          bot.once("message", async (token0Msg) => {
+            const token0 = token0Msg.text;
+            if (flag == "43114buy") {
+              await bot.sendMessage(chatId, "Please enter the amount:");
+            }
+            if (flag == "43114buy") {
+              bot.once("message", async (amountInMsg) => {
+                const amountIn = Number(amountInMsg.text);
+                const tokenRes = await axios.post(
+                  `${API_URL}/getEvmTokenPrice`,
+                  {
+                    token: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
+                    token2: token0,
+                    chain: "0xa86a",
+                  }
+                );
+                const tokensPrice = tokenRes?.data?.finalRes;
+                const buyAmt = amountIn * tokensPrice?.token2;
+                const finalAmt = buyAmt / tokensPrice?.token1;
+                if (finalAmt) {
+                  if (flag == "43114buy") {
+                    await bot.sendMessage(
+                      chatId,
+                      `please wait your transaction is processing...`
+                    );
+                    await axios({
+                      url: `${API_URL}/EVMswap`,
+                      method: "post",
+                      data: {
+                        tokenIn: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
+                        tokenOut: token0,
+                        chainId: "avalanche",
+                        amount: finalAmt,
+                        chain: 43114,
+                        chatId: chatId,
+                        desCode: "0xa86a",
+                      },
+                    })
+                      .then(async (response) => {
+                        if (response?.data?.status) {
+                          await bot.sendMessage(
+                            chatId,
+                            response?.data?.message
+                          );
+                          await bot.sendMessage(
+                            chatId,
+                            `https://avascan.info/blockchain/c/tx/${response?.data?.tx}`
+                          );
+                        } else {
+                          await bot.sendMessage(
+                            chatId,
+                            response?.data?.message
+                          );
+                        }
+                      })
+                      .catch(async (error) => {
+                        await bot.sendMessage(
+                          chatId,
+                          `due to some reason you transaction failed!!`
+                        );
+                      });
+                  }
+                } else {
+                  await bot.sendMessage(chatId, `token is not supported!!`);
+                }
+              });
+            }
+          });
         }
       } else {
         await bot.sendMessage(chatId, "please login!!", {
@@ -1675,6 +1803,7 @@ bot.on("callback_query", async (callbackQuery) => {
         });
       }
       break;
+
     // ------------------------------------------------ sell -----------------------------------------------------------
 
     case "solSell":
@@ -1869,8 +1998,55 @@ bot.on("callback_query", async (callbackQuery) => {
     case "10sell":
       if (isUser) {
         flag = "10sell";
+        await bot.sendMessage(chatId, "Type OP token that you want to sell:");
         if (flag == "10sell") {
-          await bot.sendMessage(chatId, "Optimism is comming soon!!");
+          bot.once("message", async (token0Msg) => {
+            const token0 = token0Msg.text;
+            if (flag == "10sell") {
+              await bot.sendMessage(chatId, "Please enter the amount:");
+            }
+            if (flag == "10sell") {
+              bot.once("message", async (amountInMsg) => {
+                const amountIn = Number(amountInMsg.text);
+                if (flag == "10sell") {
+                  await bot.sendMessage(
+                    chatId,
+                    `please wait your transaction is processing...`
+                  );
+                  await axios({
+                    url: `${API_URL}/EVMswap`,
+                    method: "post",
+                    data: {
+                      tokenIn: token0,
+                      tokenOut: "0x4200000000000000000000000000000000000042",
+                      chainId: "optimism",
+                      amount: amountIn,
+                      chain: 10,
+                      chatId: chatId,
+                      desCode: "0xa",
+                    },
+                  })
+                    .then(async (response) => {
+                      if (response?.data?.status) {
+                        await bot.sendMessage(chatId, response?.data?.message);
+                        await bot.sendMessage(
+                          chatId,
+                          `https://optimistic.etherscan.io/tx/${response?.data?.tx}`
+                        );
+                      } else {
+                        await bot.sendMessage(chatId, response?.data?.message);
+                      }
+                    })
+                    .catch(async (error) => {
+                      await bot.sendMessage(
+                        chatId,
+                        `due to some reason you transaction failed!!`
+                      );
+                    });
+                }
+              });
+            }
+          });
         }
       } else {
         await bot.sendMessage(chatId, "please login!!", {
@@ -2091,8 +2267,55 @@ bot.on("callback_query", async (callbackQuery) => {
     case "43114sell":
       if (isUser) {
         flag = "43114sell";
+        await bot.sendMessage(chatId, "Type AVAX token that you want to sell:");
         if (flag == "43114sell") {
-          await bot.sendMessage(chatId, "Avalanche is comming soon!!");
+          bot.once("message", async (token0Msg) => {
+            const token0 = token0Msg.text;
+            if (flag == "43114sell") {
+              await bot.sendMessage(chatId, "Please enter the amount:");
+            }
+            if (flag == "43114sell") {
+              bot.once("message", async (amountInMsg) => {
+                const amountIn = Number(amountInMsg.text);
+                if (flag == "43114sell") {
+                  await bot.sendMessage(
+                    chatId,
+                    `please wait your transaction is processing...`
+                  );
+                  await axios({
+                    url: `${API_URL}/EVMswap`,
+                    method: "post",
+                    data: {
+                      tokenIn: token0,
+                      tokenOut: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
+                      chainId: "avalanche",
+                      amount: amountIn,
+                      chain: 43114,
+                      chatId: chatId,
+                      desCode: "0xa86a",
+                    },
+                  })
+                    .then(async (response) => {
+                      if (response?.data?.status) {
+                        await bot.sendMessage(chatId, response?.data?.message);
+                        await bot.sendMessage(
+                          chatId,
+                          `https://avascan.info/blockchain/c/tx/${response?.data?.tx}`
+                        );
+                      } else {
+                        await bot.sendMessage(chatId, response?.data?.message);
+                      }
+                    })
+                    .catch(async (error) => {
+                      await bot.sendMessage(
+                        chatId,
+                        `due to some reason you transaction failed!!`
+                      );
+                    });
+                }
+              });
+            }
+          });
         }
       } else {
         await bot.sendMessage(chatId, "please login!!", {
