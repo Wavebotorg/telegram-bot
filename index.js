@@ -987,6 +987,7 @@ bot.on("callback_query", async (callbackQuery) => {
                       amount: finalAmt,
                       chatId,
                       desBot: 9,
+                      method: "Buy",
                     });
                     if (response?.data?.status) {
                       await bot.sendMessage(chatId, `Token buy successful!`);
@@ -1083,6 +1084,7 @@ bot.on("callback_query", async (callbackQuery) => {
                         chain: 42161,
                         chatId: chatId,
                         desCode: "0xa4b1",
+                        method: "Buy",
                       },
                     })
                       .then(async (response) => {
@@ -1215,6 +1217,7 @@ bot.on("callback_query", async (callbackQuery) => {
                         chain: 10,
                         chatId: chatId,
                         desCode: "0xa",
+                        method: "Buy",
                       },
                     })
                       .then(async (response) => {
@@ -1314,6 +1317,7 @@ bot.on("callback_query", async (callbackQuery) => {
                         chain: 137,
                         chatId: chatId,
                         desCode: "0x89",
+                        method: "Buy",
                       },
                     })
                       .then(async (response) => {
@@ -1444,6 +1448,7 @@ bot.on("callback_query", async (callbackQuery) => {
                         chain: 56,
                         chatId: chatId,
                         desCode: "0x38",
+                        method: "Buy",
                       },
                     })
                       .then(async (response) => {
@@ -1542,6 +1547,7 @@ bot.on("callback_query", async (callbackQuery) => {
                         chain: 43114,
                         chatId: chatId,
                         desCode: "0xa86a",
+                        method: "Buy",
                       },
                     })
                       .then(async (response) => {
@@ -1645,6 +1651,7 @@ bot.on("callback_query", async (callbackQuery) => {
                         chain: 25,
                         chatId: chatId,
                         desCode: "0x19",
+                        method: "Buy",
                       },
                     })
                       .then(async (response) => {
@@ -1746,6 +1753,7 @@ bot.on("callback_query", async (callbackQuery) => {
                         chain: 250,
                         chatId: chatId,
                         desCode: "0xfa",
+                        method: "Buy",
                       },
                     })
                       .then(async (response) => {
@@ -1837,6 +1845,7 @@ bot.on("callback_query", async (callbackQuery) => {
                       output: "So11111111111111111111111111111111111111112",
                       amount,
                       chatId,
+                      method: "Sell",
                     });
                     if (response.data.status === true) {
                       await bot.sendMessage(chatId, `Token sell successful!`);
@@ -1945,6 +1954,7 @@ bot.on("callback_query", async (callbackQuery) => {
                       chain: 42161,
                       chatId: chatId,
                       desCode: "0xa4b1",
+                      method: "Sell",
                     },
                   })
                     .then(async (response) => {
@@ -2024,6 +2034,7 @@ bot.on("callback_query", async (callbackQuery) => {
                       chain: 10,
                       chatId: chatId,
                       desCode: "0xa",
+                      method: "Sell",
                     },
                   })
                     .then(async (response) => {
@@ -2103,6 +2114,7 @@ bot.on("callback_query", async (callbackQuery) => {
                       chain: 137,
                       chatId: chatId,
                       desCode: "0x89",
+                      method: "Sell",
                     },
                   })
                     .then(async (response) => {
@@ -2214,6 +2226,7 @@ bot.on("callback_query", async (callbackQuery) => {
                       chain: 56,
                       chatId: chatId,
                       desCode: "0x38",
+                      method: "Sell",
                     },
                   })
                     .then(async (response) => {
@@ -2293,6 +2306,7 @@ bot.on("callback_query", async (callbackQuery) => {
                       chain: 43114,
                       chatId: chatId,
                       desCode: "0xa86a",
+                      method: "Sell",
                     },
                   })
                     .then(async (response) => {
@@ -2376,6 +2390,7 @@ bot.on("callback_query", async (callbackQuery) => {
                       chain: 25,
                       chatId: chatId,
                       desCode: "0x19",
+                      method: "Sell",
                     },
                   })
                     .then(async (response) => {
@@ -2458,6 +2473,7 @@ bot.on("callback_query", async (callbackQuery) => {
                       chain: 250,
                       chatId: chatId,
                       desCode: "0xfa",
+                      method: "Sell",
                     },
                   })
                     .then(async (response) => {
@@ -2546,6 +2562,7 @@ bot.on("callback_query", async (callbackQuery) => {
                             output,
                             amount,
                             chatId,
+                            method: "Swap",
                           }
                         );
                         if (response.data.status === true) {
@@ -2643,6 +2660,7 @@ bot.on("callback_query", async (callbackQuery) => {
                           chain: 1,
                           chatId: chatId,
                           desCode: "0x1",
+                          method: "Swap",
                         },
                       })
                         .then(async (response) => {
@@ -2739,6 +2757,7 @@ bot.on("callback_query", async (callbackQuery) => {
                           chain: 42161,
                           chatId: chatId,
                           desCode: "0xa4b1",
+                          method: "Swap",
                         },
                       })
                         .then(async (response) => {
@@ -2836,6 +2855,7 @@ bot.on("callback_query", async (callbackQuery) => {
                           chain: 10,
                           chatId: chatId,
                           desCode: "0xa",
+                          method: "Swap",
                         },
                       })
                         .then(async (response) => {
@@ -2933,6 +2953,7 @@ bot.on("callback_query", async (callbackQuery) => {
                           chain: 137,
                           chatId: chatId,
                           desCode: "0x89",
+                          method: "Swap",
                         },
                       })
                         .then(async (response) => {
@@ -3030,6 +3051,7 @@ bot.on("callback_query", async (callbackQuery) => {
                           chain: 8453,
                           chatId: chatId,
                           desCode: "0x2105",
+                          method: "Swap",
                         },
                       })
                         .then(async (response) => {
@@ -3127,6 +3149,7 @@ bot.on("callback_query", async (callbackQuery) => {
                           chain: 56,
                           chatId: chatId,
                           desCode: "0x38",
+                          method: "Swap",
                         },
                       })
                         .then(async (response) => {
@@ -3224,6 +3247,7 @@ bot.on("callback_query", async (callbackQuery) => {
                           chain: 43114,
                           chatId: chatId,
                           desCode: "0xa86a",
+                          method: "Swap",
                         },
                       })
                         .then(async (response) => {
@@ -3320,6 +3344,7 @@ bot.on("callback_query", async (callbackQuery) => {
                           chain: 25,
                           chatId: chatId,
                           desCode: "0x19",
+                          method: "Swap",
                         },
                       })
                         .then(async (response) => {
@@ -3416,6 +3441,7 @@ bot.on("callback_query", async (callbackQuery) => {
                           chain: 250,
                           chatId: chatId,
                           desCode: "0xfa",
+                          method: "Swap",
                         },
                       })
                         .then(async (response) => {
