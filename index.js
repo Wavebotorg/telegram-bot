@@ -15,7 +15,7 @@ let flag = null;
 
 let isSigningUp = false;
 let isLoggingIn = false;
-
+// main keyboard
 const buyKeyboard = {
   inline_keyboard: [
     [
@@ -34,6 +34,7 @@ const buyKeyboard = {
     [
       { text: "💼Balance EVM", callback_data: "balanceButton" },
       { text: "💼Balance Solona", callback_data: "SolonabalanceButton" },
+      { text: "💼Wallet Address", callback_data: "walletAddresses" },
     ],
     [
       { text: "🔄Refresh", callback_data: "refreshButton" },
@@ -43,6 +44,7 @@ const buyKeyboard = {
   ],
 };
 
+// wallet balance keyboard
 const evmWalletBalance = {
   inline_keyboard: [
     [
@@ -62,6 +64,30 @@ const evmWalletBalance = {
     ],
   ],
 };
+
+// wallet addresses keyboard
+const walletAddressKeyboard = {
+  inline_keyboard: [
+    [{ text: "Solona", callback_data: "solanaAddress" }],
+    [
+      { text: "Ethereum", callback_data: "1Address" },
+      { text: "Arbitrum", callback_data: "42161Address" },
+      { text: "Optimism", callback_data: "10Address" },
+    ],
+    [
+      { text: "Polygon", callback_data: "137Address" },
+      { text: "Base", callback_data: "8453Address" },
+      { text: "BNB Chain", callback_data: "56Address" },
+    ],
+    [
+      { text: "Avalanche", callback_data: "43114Address" },
+      { text: "Cronos", callback_data: "25Address" },
+      { text: "Fantom", callback_data: "250Address" },
+    ],
+  ],
+};
+
+// swap keyboard
 const blockchainKeyboard = {
   inline_keyboard: [
     [{ text: "Solona", callback_data: "solana" }],
@@ -83,6 +109,7 @@ const blockchainKeyboard = {
   ],
 };
 
+// buy token keyboard
 const buyblockchainKeyboard = {
   inline_keyboard: [
     [{ text: "Solona", callback_data: "solBuy" }],
@@ -104,6 +131,7 @@ const buyblockchainKeyboard = {
   ],
 };
 
+// sell token keyboard
 const sellblockchainKeyboard = {
   inline_keyboard: [
     [{ text: "Solona", callback_data: "solSell" }],
@@ -208,6 +236,46 @@ const startPasswordRegistration = (chatId, name, email) => {
     }
   });
 };
+
+// get evm qr code
+async function getQrCode(chatId) {
+  await axios({
+    url: `${API_URL}/getQrCode`,
+    method: "post",
+    data: {
+      chatId,
+      wallet: 1,
+    },
+  }).then((res) => {
+    if (res?.data?.status) {
+      bot.sendPhoto(chatId, res?.data?.path, {
+        caption: `wallet:- ${res?.data?.walletAddress}`,
+      });
+    } else {
+      bot.sendMessage(chatId, "somthing has been wrong!!");
+    }
+  });
+}
+
+// get solana qr code
+async function getQrCodeSolana(chatId) {
+  await axios({
+    url: `${API_URL}/getQrCode`,
+    method: "post",
+    data: {
+      chatId,
+      wallet: 2,
+    },
+  }).then((res) => {
+    if (res?.data?.status) {
+      bot.sendPhoto(chatId, res?.data?.path, {
+        caption: `wallet:- ${res?.data?.walletAddress}`,
+      });
+    } else {
+      bot.sendMessage(chatId, "somthing has been wrong!!");
+    }
+  });
+}
 
 // Signup Funaction
 const startConfirmPasswordRegistration = (chatId, name, email, password) => {
@@ -433,39 +501,39 @@ const startSwapProcess = async (chatId) => {
 //   }
 // };
 
-const buyToken = async (chatId, chainId, token0, token1, amountIn) => {
-  try {
-    const tokenRes = await axios.post(`${API_URL}/getEvmTokenPrice`, {
-      token: token0,
-      token2: token1,
-      chain: chainId,
-    });
-    const tokensPrice = tokenRes?.data?.finalRes;
-    const buyAmt = amountIn * tokensPrice?.token2;
-    const finalAmt = buyAmt / tokensPrice?.token1;
+// const buyToken = async (chatId, chainId, token0, token1, amountIn) => {
+//   try {
+//     const tokenRes = await axios.post(`${API_URL}/getEvmTokenPrice`, {
+//       token: token0,
+//       token2: token1,
+//       chain: chainId,
+//     });
+//     const tokensPrice = tokenRes?.data?.finalRes;
+//     const buyAmt = amountIn * tokensPrice?.token2;
+//     const finalAmt = buyAmt / tokensPrice?.token1;
 
-    const response = await axios.post(`${API_URL}/mainswap`, {
-      token0,
-      token1,
-      amountIn: finalAmt,
-      chainId,
-      chatId,
-    });
-    if (response.data.status === true) {
-      await bot.sendMessage(
-        chatId,
-        `Swap successful Your Hash is ${response.data.data}`
-      );
-    } else {
-      await bot.sendMessage(
-        chatId,
-        response.data.message || "❌ Swap failed. Please try again."
-      );
-    }
-  } catch (error) {
-    await bot.sendMessage(chatId, `❌ An error occurred: ${error.message}`); // Provide more specific error message if possible
-  }
-};
+//     const response = await axios.post(`${API_URL}/mainswap`, {
+//       token0,
+//       token1,
+//       amountIn: finalAmt,
+//       chainId,
+//       chatId,
+//     });
+//     if (response.data.status === true) {
+//       await bot.sendMessage(
+//         chatId,
+//         `Swap successful Your Hash is ${response.data.data}`
+//       );
+//     } else {
+//       await bot.sendMessage(
+//         chatId,
+//         response.data.message || "❌ Swap failed. Please try again."
+//       );
+//     }
+//   } catch (error) {
+//     await bot.sendMessage(chatId, `❌ An error occurred: ${error.message}`); // Provide more specific error message if possible
+//   }
+// };
 
 // get User Data
 async function getEmailAndWalletFromBackend(chatId) {
@@ -489,6 +557,12 @@ async function getEmailAndWalletFromBackend(chatId) {
 const buyStartTokenSelection = async (chatId) => {
   await bot.sendMessage(chatId, `Buy Token`, {
     reply_markup: JSON.stringify(buyblockchainKeyboard),
+  });
+};
+// wallet addresses button
+const walletAddressSelection = async (chatId) => {
+  await bot.sendMessage(chatId, `Select Token`, {
+    reply_markup: JSON.stringify(walletAddressKeyboard),
   });
 };
 
@@ -697,6 +771,8 @@ async function fetchTokenBalances(chatId, chainId) {
     );
   }
 }
+
+// all keyborad button handler
 
 bot.on("callback_query", async (callbackQuery) => {
   const chatId = callbackQuery.message.chat.id;
@@ -916,8 +992,36 @@ bot.on("callback_query", async (callbackQuery) => {
 
     case "sellButton":
       if (isUser) {
-        isSwap = false;
         sellStartTokenSelection(chatId);
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
+      break;
+    case "walletAddresses":
+      if (isUser) {
+        walletAddressSelection(chatId);
       } else {
         await bot.sendMessage(chatId, "please login!!", {
           reply_markup: {
@@ -3790,6 +3894,37 @@ bot.on("callback_query", async (callbackQuery) => {
           },
         });
       }
+      break;
+    // ========================================================= wallet address =====================================================
+    case "solanaAddress":
+      await getQrCodeSolana(chatId);
+      break;
+    case "1Address":
+      await getQrCode(chatId);
+      break;
+    case "42161Address":
+      await getQrCode(chatId);
+      break;
+    case "10Address":
+      await getQrCode(chatId);
+      break;
+    case "137Address":
+      await getQrCode(chatId);
+      break;
+    case "8453Address":
+      await getQrCode(chatId);
+      break;
+    case "56Address":
+      await getQrCode(chatId);
+      break;
+    case "43114Address":
+      await getQrCode(chatId);
+      break;
+    case "25Address":
+      await getQrCode(chatId);
+      break;
+    case "250Address":
+      await getQrCode(chatId);
       break;
     default:
       console.log(`Unknown button clicked meet: ${data}`);
