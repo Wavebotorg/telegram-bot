@@ -25,7 +25,7 @@ const buyKeyboard = {
     [
       { text: "Buy", callback_data: "buyButton" },
       { text: "Sell", callback_data: "sellButton" },
-      { text: "withraw", callback_data: "withrawButton" },
+      { text: "Transfer", callback_data: "withrawButton" },
     ],
     [
       { text: "Position", callback_data: "positionButton" },
@@ -504,7 +504,7 @@ const sellStartTokenSelection = async (chatId) => {
 };
 // withraw token Token
 const withrawStartTokenSelection = async (chatId) => {
-  await bot.sendMessage(chatId, `select chain taht you want to withraw from`, {
+  await bot.sendMessage(chatId, `select chain taht you want to transfer from`, {
     reply_markup: JSON.stringify(withrawblockchainKeyboard),
   });
 };
@@ -591,7 +591,25 @@ async function getstartBot(chatId) {
     console.error("Error fetching data:", error);
   }
 }
-
+// transfer token function
+async function transferEvmToken(chatId, token, toWallet, chain, amount) {
+  const receipt = await axios({
+    url: `${API_URL}/transferEvmToken`,
+    method: "post",
+    data: {
+      chatId,
+      token,
+      toWallet,
+      chain,
+      amount,
+    },
+  });
+  if (!receipt?.data?.status) {
+    console.log("🚀 ~ transferEvmToken ~ receipt:", receipt);
+    return null;
+  }
+  return receipt?.data;
+}
 // Function to start the bot session
 async function start(chatId) {
   flag = null;
@@ -3862,34 +3880,1010 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     // ========================================================= wallet address =====================================================
     case "solanaAddress":
-      await getQrCode(chatId, 2);
+      if (isUser) {
+        await getQrCode(chatId, 2);
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
       break;
     case "1Address":
-      await getQrCode(chatId, 1);
+      if (isUser) {
+        await getQrCode(chatId, 1);
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
       break;
     case "42161Address":
-      await getQrCode(chatId, 1);
+      if (isUser) {
+        await getQrCode(chatId, 1);
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
       break;
     case "10Address":
-      await getQrCode(chatId, 1);
+      if (isUser) {
+        await getQrCode(chatId, 1);
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
       break;
     case "137Address":
-      await getQrCode(chatId, 1);
+      if (isUser) {
+        await getQrCode(chatId, 1);
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
       break;
     case "8453Address":
-      await getQrCode(chatId, 1);
+      if (isUser) {
+        await getQrCode(chatId, 1);
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
       break;
     case "56Address":
-      await getQrCode(chatId, 1);
+      if (isUser) {
+        await getQrCode(chatId, 1);
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
       break;
     case "43114Address":
-      await getQrCode(chatId, 1);
+      if (isUser) {
+        await getQrCode(chatId, 1);
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
       break;
     case "25Address":
-      await getQrCode(chatId, 1);
+      if (isUser) {
+        await getQrCode(chatId, 1);
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
       break;
     case "250Address":
-      await getQrCode(chatId, 1);
+      if (isUser) {
+        await getQrCode(chatId, 1);
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
+      break;
+
+    // ------------------------------------------------------ transfer token --------------------------------------------------------
+    case "1withraw":
+      if (isUser) {
+        flag = "1withraw";
+        await bot.sendMessage(
+          chatId,
+          "Enter token address that you want to transfer:"
+        );
+        if (flag == "1withraw") {
+          bot.once("message", async (token0Msg) => {
+            const token = token0Msg.text;
+            if (flag == "1withraw") {
+              await bot.sendMessage(
+                chatId,
+                "Enter the wallet address where you want to get transferred tokens:"
+              );
+            }
+            if (flag == "1withraw") {
+              await bot.once("message", async (toWalletAdd) => {
+                const toWallet = Number(toWalletAdd.text);
+                if (flag == "1withraw") {
+                  await bot.sendMessage(chatId, `Enter amount`);
+                  if (flag == "1withraw") {
+                    await bot.once("message", async (amountIn) => {
+                      if (flag == "1withraw") {
+                        const amount = Number(amountIn.text);
+                        await transferEvmToken(
+                          chatId,
+                          token,
+                          toWallet,
+                          1,
+                          amount
+                        )
+                          .then(async (res) => {
+                            await bot.sendMessage(chatId, res?.message);
+                            await bot.sendMessage(
+                              chatId,
+                              `https://etherscan.io/tx/${res?.tx}`
+                            );
+                          })
+                          .catch(async (err) => {
+                            console.log("🚀 ~ bot.once ~ err:", err);
+                            await bot.sendMessage(
+                              chatId,
+                              "somthing has been wrong please try agin latter!!"
+                            );
+                          });
+                      }
+                    });
+                  }
+                }
+              });
+            }
+          });
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
+      break;
+    case "42161withraw":
+      if (isUser) {
+        flag = "42161withraw";
+        await bot.sendMessage(
+          chatId,
+          "Enter token address that you want to transfer:"
+        );
+        if (flag == "42161withraw") {
+          bot.once("message", async (token0Msg) => {
+            const token = token0Msg.text;
+            if (flag == "42161withraw") {
+              await bot.sendMessage(
+                chatId,
+                "Enter the wallet address where you want to get transferred tokens:"
+              );
+            }
+            if (flag == "42161withraw") {
+              await bot.once("message", async (toWalletAdd) => {
+                const toWallet = toWalletAdd.text;
+                if (flag == "42161withraw") {
+                  await bot.sendMessage(chatId, `Enter amount`);
+                  if (flag == "42161withraw") {
+                    await bot.once("message", async (amountIn) => {
+                      if (flag == "42161withraw") {
+                        const amount = Number(amountIn.text);
+                        await transferEvmToken(
+                          chatId,
+                          token,
+                          toWallet,
+                          42161,
+                          amount
+                        )
+                          // transferEvmToken(chatId, token, toWallet, chain, amount)
+                          .then(async (res) => {
+                            await bot.sendMessage(chatId, res?.message);
+                            await bot.sendMessage(
+                              chatId,
+                              `https://arbiscan.io/tx/${res?.tx}`
+                            );
+                          })
+                          .catch(async (err) => {
+                            console.log("🚀 ~ bot.once ~ err:", err);
+                            await bot.sendMessage(
+                              chatId,
+                              "somthing has been wrong please try agin latter!!"
+                            );
+                          });
+                      }
+                    });
+                  }
+                }
+              });
+            }
+          });
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
+      break;
+    case "10withraw":
+      if (isUser) {
+        flag = "10withraw";
+        await bot.sendMessage(
+          chatId,
+          "Enter token address that you want to transfer:"
+        );
+        if (flag == "10withraw") {
+          bot.once("message", async (token0Msg) => {
+            const token = token0Msg.text;
+            if (flag == "10withraw") {
+              await bot.sendMessage(
+                chatId,
+                "Enter the wallet address where you want to get transferred tokens:"
+              );
+            }
+            if (flag == "10withraw") {
+              await bot.once("message", async (toWalletAdd) => {
+                const toWallet = toWalletAdd.text;
+                if (flag == "10withraw") {
+                  await bot.sendMessage(chatId, `Enter amount`);
+                  if (flag == "10withraw") {
+                    await bot.once("message", async (amountIn) => {
+                      if (flag == "10withraw") {
+                        const amount = Number(amountIn.text);
+                        await transferEvmToken(
+                          chatId,
+                          token,
+                          toWallet,
+                          137,
+                          amount
+                        )
+                          .then(async (res) => {
+                            await bot.sendMessage(chatId, res?.message);
+                            await bot.sendMessage(
+                              chatId,
+                              `https://polygonscan.com/tx/${res?.tx}`
+                            );
+                          })
+                          .catch(async (err) => {
+                            console.log("🚀 ~ bot.once ~ err:", err);
+                            await bot.sendMessage(
+                              chatId,
+                              "somthing has been wrong please try agin latter!!"
+                            );
+                          });
+                      }
+                    });
+                  }
+                }
+              });
+            }
+          });
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
+      break;
+    case "137withraw":
+      if (isUser) {
+        flag = "137withraw";
+        await bot.sendMessage(
+          chatId,
+          "Enter token address that you want to transfer:"
+        );
+        if (flag == "137withraw") {
+          bot.once("message", async (token0Msg) => {
+            const token = token0Msg.text;
+            if (flag == "137withraw") {
+              await bot.sendMessage(
+                chatId,
+                "Enter the wallet address where you want to get transferred tokens:"
+              );
+            }
+            if (flag == "137withraw") {
+              await bot.once("message", async (toWalletAdd) => {
+                const toWallet = toWalletAdd.text;
+                if (flag == "137withraw") {
+                  await bot.sendMessage(chatId, `Enter amount`);
+                  if (flag == "137withraw") {
+                    await bot.once("message", async (amountIn) => {
+                      if (flag == "137withraw") {
+                        const amount = Number(amountIn.text);
+                        await transferEvmToken(
+                          chatId,
+                          token,
+                          toWallet,
+                          137,
+                          amount
+                        )
+                          .then(async (res) => {
+                            await bot.sendMessage(chatId, res?.message);
+                            await bot.sendMessage(
+                              chatId,
+                              `https://polygonscan.com/tx/${res?.tx}`
+                            );
+                          })
+                          .catch(async (err) => {
+                            console.log("🚀 ~ bot.once ~ err:", err);
+                            await bot.sendMessage(
+                              chatId,
+                              "somthing has been wrong please try agin latter!!"
+                            );
+                          });
+                      }
+                    });
+                  }
+                }
+              });
+            }
+          });
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
+      break;
+    case "8453withraw":
+      if (isUser) {
+        flag = "8453withraw";
+        await bot.sendMessage(
+          chatId,
+          "Enter token address that you want to transfer:"
+        );
+        if (flag == "8453withraw") {
+          bot.once("message", async (token0Msg) => {
+            const token = token0Msg.text;
+            if (flag == "8453withraw") {
+              await bot.sendMessage(
+                chatId,
+                "Enter the wallet address where you want to get transferred tokens:"
+              );
+            }
+            if (flag == "8453withraw") {
+              await bot.once("message", async (toWalletAdd) => {
+                const toWallet = toWalletAdd.text;
+                if (flag == "8453withraw") {
+                  await bot.sendMessage(chatId, `Enter amount`);
+                  if (flag == "8453withraw") {
+                    await bot.once("message", async (amountIn) => {
+                      if (flag == "8453withraw") {
+                        const amount = Number(amountIn.text);
+                        await transferEvmToken(
+                          chatId,
+                          token,
+                          toWallet,
+                          8453,
+                          amount
+                        )
+                          .then(async (res) => {
+                            await bot.sendMessage(chatId, res?.message);
+                            await bot.sendMessage(
+                              chatId,
+                              `https://basescan.org/tx/${res?.tx}`
+                            );
+                          })
+                          .catch(async (err) => {
+                            console.log("🚀 ~ bot.once ~ err:", err);
+                            await bot.sendMessage(
+                              chatId,
+                              "somthing has been wrong please try agin latter!!"
+                            );
+                          });
+                      }
+                    });
+                  }
+                }
+              });
+            }
+          });
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
+      break;
+    case "56withraw":
+      if (isUser) {
+        flag = "56withraw";
+        await bot.sendMessage(
+          chatId,
+          "Enter token address that you want to transfer:"
+        );
+        if (flag == "56withraw") {
+          bot.once("message", async (token0Msg) => {
+            const token = token0Msg.text;
+            if (flag == "56withraw") {
+              await bot.sendMessage(
+                chatId,
+                "Enter the wallet address where you want to get transferred tokens:"
+              );
+            }
+            if (flag == "56withraw") {
+              await bot.once("message", async (toWalletAdd) => {
+                const toWallet = toWalletAdd.text;
+                if (flag == "56withraw") {
+                  await bot.sendMessage(chatId, `Enter amount`);
+                  if (flag == "56withraw") {
+                    await bot.once("message", async (amountIn) => {
+                      if (flag == "56withraw") {
+                        const amount = Number(amountIn.text);
+                        await transferEvmToken(
+                          chatId,
+                          token,
+                          toWallet,
+                          56,
+                          amount
+                        )
+                          .then(async (res) => {
+                            await bot.sendMessage(chatId, res?.message);
+                            await bot.sendMessage(
+                              chatId,
+                              `https://bscscan.com/tx/${res?.tx}`
+                            );
+                          })
+                          .catch(async (err) => {
+                            console.log("🚀 ~ bot.once ~ err:", err);
+                            await bot.sendMessage(
+                              chatId,
+                              "somthing has been wrong please try agin latter!!"
+                            );
+                          });
+                      }
+                    });
+                  }
+                }
+              });
+            }
+          });
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
+      break;
+    case "43114withraw":
+      if (isUser) {
+        flag = "43114withraw";
+        await bot.sendMessage(
+          chatId,
+          "Enter token address that you want to transfer:"
+        );
+        if (flag == "43114withraw") {
+          bot.once("message", async (token0Msg) => {
+            const token = token0Msg.text;
+            if (flag == "43114withraw") {
+              await bot.sendMessage(
+                chatId,
+                "Enter the wallet address where you want to get transferred tokens:"
+              );
+            }
+            if (flag == "43114withraw") {
+              await bot.once("message", async (toWalletAdd) => {
+                const toWallet = toWalletAdd.text;
+                if (flag == "43114withraw") {
+                  await bot.sendMessage(chatId, `Enter amount`);
+                  if (flag == "43114withraw") {
+                    await bot.once("message", async (amountIn) => {
+                      if (flag == "43114withraw") {
+                        const amount = Number(amountIn.text);
+                        await transferEvmToken(
+                          chatId,
+                          token,
+                          toWallet,
+                          43114,
+                          amount
+                        )
+                          .then(async (res) => {
+                            await bot.sendMessage(chatId, res?.message);
+                            await bot.sendMessage(
+                              chatId,
+                              `https://avascan.info/blockchain/c/tx/${res?.tx}`
+                            );
+                          })
+                          .catch(async (err) => {
+                            console.log("🚀 ~ bot.once ~ err:", err);
+                            await bot.sendMessage(
+                              chatId,
+                              "somthing has been wrong please try agin latter!!"
+                            );
+                          });
+                      }
+                    });
+                  }
+                }
+              });
+            }
+          });
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
+      break;
+    case "25withraw":
+      if (isUser) {
+        flag = "25withraw";
+        await bot.sendMessage(
+          chatId,
+          "Enter token address that you want to transfer:"
+        );
+        if (flag == "25withraw") {
+          bot.once("message", async (token0Msg) => {
+            const token = token0Msg.text;
+            if (flag == "25withraw") {
+              await bot.sendMessage(
+                chatId,
+                "Enter the wallet address where you want to get transferred tokens:"
+              );
+            }
+            if (flag == "25withraw") {
+              await bot.once("message", async (toWalletAdd) => {
+                const toWallet = toWalletAdd.text;
+                if (flag == "25withraw") {
+                  await bot.sendMessage(chatId, `Enter amount`);
+                  if (flag == "25withraw") {
+                    await bot.once("message", async (amountIn) => {
+                      if (flag == "25withraw") {
+                        const amount = Number(amountIn.text);
+                        await transferEvmToken(
+                          chatId,
+                          token,
+                          toWallet,
+                          25,
+                          amount
+                        )
+                          .then(async (res) => {
+                            await bot.sendMessage(chatId, res?.message);
+                            await bot.sendMessage(
+                              chatId,
+                              `https://cronoscan.com/tx/${res?.tx}`
+                            );
+                          })
+                          .catch(async (err) => {
+                            console.log("🚀 ~ bot.once ~ err:", err);
+                            await bot.sendMessage(
+                              chatId,
+                              "somthing has been wrong please try agin latter!!"
+                            );
+                          });
+                      }
+                    });
+                  }
+                }
+              });
+            }
+          });
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
+      break;
+    case "250withraw":
+      if (isUser) {
+        flag = "250withraw";
+        await bot.sendMessage(
+          chatId,
+          "Enter token address that you want to transfer:"
+        );
+        if (flag == "250withraw") {
+          bot.once("message", async (token0Msg) => {
+            const token = token0Msg.text;
+            if (flag == "250withraw") {
+              await bot.sendMessage(
+                chatId,
+                "Enter the wallet address where you want to get transferred tokens:"
+              );
+            }
+            if (flag == "250withraw") {
+              await bot.once("message", async (toWalletAdd) => {
+                const toWallet = toWalletAdd.text;
+                if (flag == "250withraw") {
+                  await bot.sendMessage(chatId, `Enter amount`);
+                  if (flag == "250withraw") {
+                    await bot.once("message", async (amountIn) => {
+                      if (flag == "250withraw") {
+                        const amount = Number(amountIn.text);
+                        await transferEvmToken(
+                          chatId,
+                          token,
+                          toWallet,
+                          250,
+                          amount
+                        )
+                          .then(async (res) => {
+                            await bot.sendMessage(chatId, res?.message);
+                            await bot.sendMessage(
+                              chatId,
+                              `https://ftmscan.com/tx/${res?.tx}`
+                            );
+                          })
+                          .catch(async (err) => {
+                            console.log("🚀 ~ bot.once ~ err:", err);
+                            await bot.sendMessage(
+                              chatId,
+                              "somthing has been wrong please try agin latter!!"
+                            );
+                          });
+                      }
+                    });
+                  }
+                }
+              });
+            }
+          });
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
       break;
     default:
       console.log(`Unknown button clicked meet: ${data}`);
