@@ -18,28 +18,24 @@ let isLoggingIn = false;
 // main keyboard
 const buyKeyboard = {
   inline_keyboard: [
+    [{ text: "↕️ SwapToken", callback_data: "SwaptokenButton" }],
     [
-      { text: "SwapToken", callback_data: "SwaptokenButton" },
-      { text: "🗓Menu", callback_data: "menuButton" },
+      { text: "⬇️ Buy", callback_data: "buyButton" },
+      { text: "⬆️ Sell", callback_data: "sellButton" },
+      { text: "↗️ Transfer", callback_data: "withrawButton" },
     ],
     [
-      { text: "Buy", callback_data: "buyButton" },
-      { text: "Sell", callback_data: "sellButton" },
-      { text: "Transfer", callback_data: "withrawButton" },
+      { text: "✅ Position", callback_data: "positionButton" },
+      { text: "❇️ Limit Orders", callback_data: "limitButton" },
+      // { text: "DCA Orders", callback_data: "dcaOrdersButton" },
     ],
     [
-      { text: "Position", callback_data: "positionButton" },
-      { text: "Limit Orders", callback_data: "limitButton" },
-      { text: "DCA Orders", callback_data: "dcaOrdersButton" },
+      { text: "💼 Balance EVM", callback_data: "balanceButton" },
+      { text: "💼 Balance Solona", callback_data: "SolonabalanceButton" },
+      { text: "💼 Wallet Address", callback_data: "walletAddresses" },
     ],
     [
-      { text: "💼Balance EVM", callback_data: "balanceButton" },
-      { text: "💼Balance Solona", callback_data: "SolonabalanceButton" },
-      { text: "💼Wallet Address", callback_data: "walletAddresses" },
-    ],
-    [
-      { text: "🔄Refresh", callback_data: "refreshButton" },
-      { text: "👈Back", callback_data: "backButton" },
+      { text: "🔄 Refresh", callback_data: "refreshButton" },
       { text: "Logout", callback_data: "logoutButton" },
     ],
   ],
@@ -1031,6 +1027,11 @@ bot.on("callback_query", async (callbackQuery) => {
         });
       }
       break;
+
+    case "refreshButton":
+      await start(chatId);
+      break;
+
     // -------------------------------------------------- buy ------------------------------------------------------
 
     case "solBuy":
