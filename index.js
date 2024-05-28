@@ -19,6 +19,10 @@ let isLoggingIn = false;
 const buyKeyboard = {
   inline_keyboard: [
     [
+      { text: "SwapToken", callback_data: "SwaptokenButton" },
+      { text: "🗓Menu", callback_data: "menuButton" },
+    ],
+    [
       { text: "Buy", callback_data: "buyButton" },
       { text: "Sell", callback_data: "sellButton" },
       { text: "withraw", callback_data: "withrawButton" },
@@ -27,10 +31,6 @@ const buyKeyboard = {
       { text: "Position", callback_data: "positionButton" },
       { text: "Limit Orders", callback_data: "limitButton" },
       { text: "DCA Orders", callback_data: "dcaOrdersButton" },
-    ],
-    [
-      { text: "SwapToken", callback_data: "SwaptokenButton" },
-      { text: "🗓Menu", callback_data: "menuButton" },
     ],
     [
       { text: "💼Balance EVM", callback_data: "balanceButton" },
