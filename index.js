@@ -181,13 +181,19 @@ const animateLoader = async (chatId) => {
     chatId,
     frames[index % frames.length]
   );
+
   const interval = setInterval(async () => {
     index++;
-    await bot.editMessageText(frames[index % frames.length], {
-      chat_id: chatId,
-      message_id: loaderMessage.message_id,
-    });
-  }, 500); // Change frame every 500ms
+    try {
+      await bot.editMessageText(frames[index % frames.length], {
+        chat_id: chatId,
+        message_id: loaderMessage.message_id,
+      });
+    } catch (error) {
+      clearInterval(interval); // Ensure the interval is cleared on error
+      console.error("Error updating loader message:", error);
+    }
+  }, 500);
 
   return { loaderMessage, interval };
 };
@@ -501,28 +507,56 @@ async function getEmailAndWalletFromBackend(chatId) {
 
 // Buy Token
 const buyStartTokenSelection = async (chatId) => {
-  await bot.sendMessage(chatId, `select chain taht you want to buy from`, {
-    reply_markup: JSON.stringify(buyblockchainKeyboard),
-  });
+  await bot.sendMessage(
+    chatId,
+    `🌟 Choose a blockchain 🌟
+
+  Great! Let's get started. Please select your preferred blockchain 
+  from the options below:`,
+    {
+      reply_markup: JSON.stringify(buyblockchainKeyboard),
+    }
+  );
 };
 // wallet addresses button
 const walletAddressSelection = async (chatId) => {
-  await bot.sendMessage(chatId, `Select Chain`, {
-    reply_markup: JSON.stringify(walletAddressKeyboard),
-  });
+  await bot.sendMessage(
+    chatId,
+    `🌟 Choose a blockchain 🌟
+
+  Great! Let's get started. Please select your preferred blockchain 
+  from the options below:`,
+    {
+      reply_markup: JSON.stringify(walletAddressKeyboard),
+    }
+  );
 };
 
 // Sell Token
 const sellStartTokenSelection = async (chatId) => {
-  await bot.sendMessage(chatId, `select chain taht you want to sell from`, {
-    reply_markup: JSON.stringify(sellblockchainKeyboard),
-  });
+  await bot.sendMessage(
+    chatId,
+    `🌟 Choose a blockchain 🌟
+
+  Great! Let's get started. Please select your preferred blockchain 
+  from the options below:`,
+    {
+      reply_markup: JSON.stringify(sellblockchainKeyboard),
+    }
+  );
 };
 // withraw token Token
 const withrawStartTokenSelection = async (chatId) => {
-  await bot.sendMessage(chatId, `select chain taht you want to transfer from`, {
-    reply_markup: JSON.stringify(withrawblockchainKeyboard),
-  });
+  await bot.sendMessage(
+    chatId,
+    `🌟 Choose a blockchain 🌟
+
+  Great! Let's get started. Please select your preferred blockchain 
+  from the options below:`,
+    {
+      reply_markup: JSON.stringify(withrawblockchainKeyboard),
+    }
+  );
 };
 
 //Logout
@@ -3332,7 +3366,7 @@ bot.on("callback_query", async (callbackQuery) => {
                           );
                           await bot.sendMessage(
                             chatId,
-                            `due to some reason you transaction failed!!`
+                            `due to some reason you transaction failed please try again later!!`
                           );
                         });
                     }
