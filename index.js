@@ -690,6 +690,7 @@ bot.on("message", async (msg) => {
   if (msg.text === "/start") {
     isLoggingIn = false;
     isSigningUp = false;
+    flag = null;
     const isUser = await getstartBot(chatId);
     if (!isUser) {
       await sendWelcomeMessage(chatId);
@@ -702,6 +703,7 @@ bot.on("message", async (msg) => {
   else if (msg.text === "SignUp") {
     isLoggingIn = false;
     isSigningUp = true;
+    flag = null;
     // Start the signup process only if not already in a login process
     await startNameRegistration(chatId);
   }
@@ -709,12 +711,14 @@ bot.on("message", async (msg) => {
   else if (msg.text === "Login") {
     isLoggingIn = true;
     isSigningUp = false;
+    flag = null;
     // Start the login process only if not already in a signup process
     await startEmailLogin(chatId);
   }
   // Handle 'Start' command
   else if (msg.text === "Start") {
     // Start the bot session
+    flag = null;
     await start(chatId);
   }
   // Handle other messages
@@ -786,6 +790,7 @@ bot.on("callback_query", async (callbackQuery) => {
   switch (data) {
     case "menuButton":
       if (isUser) {
+        flag = null;
         await bot.sendMessage(chatId, "Click Menu Button");
       } else {
         await bot.sendMessage(chatId, "Please login!!", {
@@ -815,6 +820,7 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     case "SwaptokenButton":
       if (isUser) {
+        flag = null;
         startSwapProcess(chatId);
       } else {
         await bot.sendMessage(chatId, "please login!!", {
@@ -845,6 +851,7 @@ bot.on("callback_query", async (callbackQuery) => {
 
     case "SolonabalanceButton":
       if (isUser) {
+        flag = null;
         fetchSolanaBalance(chatId);
       } else {
         await bot.sendMessage(chatId, "please login!!", {
@@ -875,6 +882,7 @@ bot.on("callback_query", async (callbackQuery) => {
 
     case "balanceButton":
       if (isUser) {
+        flag = null;
         await bot.sendMessage(chatId, `🌟 Choose a network 🌟`, {
           reply_markup: JSON.stringify(evmWalletBalance),
         });
@@ -966,6 +974,7 @@ bot.on("callback_query", async (callbackQuery) => {
     case "buyButton":
       if (isUser) {
         isSwap = false;
+        flag = null;
         buyStartTokenSelection(chatId);
       } else {
         await bot.sendMessage(chatId, "please login!!", {
@@ -996,6 +1005,7 @@ bot.on("callback_query", async (callbackQuery) => {
 
     case "sellButton":
       if (isUser) {
+        flag = null;
         sellStartTokenSelection(chatId);
       } else {
         await bot.sendMessage(chatId, "please login!!", {
@@ -1025,6 +1035,7 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     case "withrawButton":
       if (isUser) {
+        flag == null;
         withrawStartTokenSelection(chatId);
       } else {
         await bot.sendMessage(chatId, "please login!!", {
@@ -1054,6 +1065,7 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     case "walletAddresses":
       if (isUser) {
+        flag = null;
         walletAddressSelection(chatId);
       } else {
         await bot.sendMessage(chatId, "please login!!", {
@@ -1083,6 +1095,7 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
 
     case "refreshButton":
+      flag = null;
       await start(chatId);
       break;
 
