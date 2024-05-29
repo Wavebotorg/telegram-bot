@@ -172,6 +172,26 @@ const withrawblockchainKeyboard = {
   ],
 };
 
+// animation function
+
+const animateLoader = async (chatId) => {
+  const frames = ["⏳", "⌛", "⏳", "⌛"];
+  let index = 0;
+  const loaderMessage = await bot.sendMessage(
+    chatId,
+    frames[index % frames.length]
+  );
+  const interval = setInterval(async () => {
+    index++;
+    await bot.editMessageText(frames[index % frames.length], {
+      chat_id: chatId,
+      message_id: loaderMessage.message_id,
+    });
+  }, 500); // Change frame every 500ms
+
+  return { loaderMessage, interval };
+};
+
 // Email Validation
 const isValidEmail = (email) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -1054,9 +1074,8 @@ bot.on("callback_query", async (callbackQuery) => {
               bot.once("message", async (amountMsg) => {
                 const amount = amountMsg.text;
                 if (flag == "solBuy") {
-                  await bot.sendMessage(
-                    chatId,
-                    `please wait your transaction is processing...`
+                  const { loaderMessage, interval } = await animateLoader(
+                    chatId
                   );
                   try {
                     const tokenRes = await axios.post(
@@ -1077,6 +1096,8 @@ bot.on("callback_query", async (callbackQuery) => {
                       desBot: 9,
                       method: "Buy",
                     });
+                    clearInterval(interval);
+                    await bot.deleteMessage(chatId, loaderMessage.message_id);
                     if (response?.data?.status) {
                       await bot.sendMessage(chatId, `Token buy successful!`);
                       await bot.sendMessage(
@@ -1090,7 +1111,14 @@ bot.on("callback_query", async (callbackQuery) => {
                           "❌ Swap failed. Please try again."
                       );
                     }
-                  } catch (error) {}
+                  } catch (error) {
+                    clearInterval(interval);
+                    await bot.deleteMessage(chatId, loaderMessage.message_id);
+                    await bot.sendMessage(
+                      chatId,
+                      `due to some reason you transaction failed!!`
+                    );
+                  }
                 }
                 //
               });
@@ -1144,6 +1172,7 @@ bot.on("callback_query", async (callbackQuery) => {
             if (flag == "42161buy") {
               bot.once("message", async (amountInMsg) => {
                 const amountIn = Number(amountInMsg.text);
+                const { loaderMessage, interval } = await animateLoader(chatId);
                 const tokenRes = await axios.post(
                   `${API_URL}/getEvmTokenPrice`,
                   {
@@ -1157,10 +1186,6 @@ bot.on("callback_query", async (callbackQuery) => {
                 const finalAmt = buyAmt / tokensPrice?.token1;
                 if (tokenRes) {
                   if (flag == "42161buy") {
-                    await bot.sendMessage(
-                      chatId,
-                      `please wait your transaction is processing...`
-                    );
                     await axios({
                       url: `${API_URL}/EVMswap`,
                       method: "post",
@@ -1176,6 +1201,11 @@ bot.on("callback_query", async (callbackQuery) => {
                       },
                     })
                       .then(async (response) => {
+                        clearInterval(interval);
+                        await bot.deleteMessage(
+                          chatId,
+                          loaderMessage.message_id
+                        );
                         if (response?.data?.status) {
                           await bot.sendMessage(
                             chatId,
@@ -1193,6 +1223,11 @@ bot.on("callback_query", async (callbackQuery) => {
                         }
                       })
                       .catch(async (error) => {
+                        clearInterval(interval);
+                        await bot.deleteMessage(
+                          chatId,
+                          loaderMessage.message_id
+                        );
                         await bot.sendMessage(
                           chatId,
                           `due to some reason you transaction failed!!`
@@ -1277,6 +1312,7 @@ bot.on("callback_query", async (callbackQuery) => {
             if (flag == "10buy") {
               bot.once("message", async (amountInMsg) => {
                 const amountIn = Number(amountInMsg.text);
+                const { loaderMessage, interval } = await animateLoader(chatId);
                 const tokenRes = await axios.post(
                   `${API_URL}/getEvmTokenPrice`,
                   {
@@ -1290,10 +1326,6 @@ bot.on("callback_query", async (callbackQuery) => {
                 const finalAmt = buyAmt / tokensPrice?.token1;
                 if (tokenRes) {
                   if (flag == "10buy") {
-                    await bot.sendMessage(
-                      chatId,
-                      `please wait your transaction is processing...`
-                    );
                     await axios({
                       url: `${API_URL}/EVMswap`,
                       method: "post",
@@ -1309,6 +1341,11 @@ bot.on("callback_query", async (callbackQuery) => {
                       },
                     })
                       .then(async (response) => {
+                        clearInterval(interval);
+                        await bot.deleteMessage(
+                          chatId,
+                          loaderMessage.message_id
+                        );
                         if (response?.data?.status) {
                           await bot.sendMessage(
                             chatId,
@@ -1326,6 +1363,11 @@ bot.on("callback_query", async (callbackQuery) => {
                         }
                       })
                       .catch(async (error) => {
+                        clearInterval(interval);
+                        await bot.deleteMessage(
+                          chatId,
+                          loaderMessage.message_id
+                        );
                         await bot.sendMessage(
                           chatId,
                           `due to some reason you transaction failed!!`
@@ -1377,6 +1419,7 @@ bot.on("callback_query", async (callbackQuery) => {
             if (flag == "137buy") {
               bot.once("message", async (amountInMsg) => {
                 const amountIn = Number(amountInMsg.text);
+                const { loaderMessage, interval } = await animateLoader(chatId);
                 const tokenRes = await axios.post(
                   `${API_URL}/getEvmTokenPrice`,
                   {
@@ -1390,10 +1433,6 @@ bot.on("callback_query", async (callbackQuery) => {
                 const finalAmt = buyAmt / tokensPrice?.token1;
                 if (tokenRes) {
                   if (flag == "137buy") {
-                    await bot.sendMessage(
-                      chatId,
-                      `please wait your transaction is processing...`
-                    );
                     await axios({
                       url: `${API_URL}/EVMswap`,
                       method: "post",
@@ -1409,6 +1448,11 @@ bot.on("callback_query", async (callbackQuery) => {
                       },
                     })
                       .then(async (response) => {
+                        clearInterval(interval);
+                        await bot.deleteMessage(
+                          chatId,
+                          loaderMessage.message_id
+                        );
                         if (response?.data?.status) {
                           await bot.sendMessage(
                             chatId,
@@ -1426,6 +1470,11 @@ bot.on("callback_query", async (callbackQuery) => {
                         }
                       })
                       .catch(async (error) => {
+                        clearInterval(interval);
+                        await bot.deleteMessage(
+                          chatId,
+                          loaderMessage.message_id
+                        );
                         await bot.sendMessage(
                           chatId,
                           `due to some reason you transaction failed!!`
@@ -1508,6 +1557,7 @@ bot.on("callback_query", async (callbackQuery) => {
             if (flag == "56buy") {
               bot.once("message", async (amountInMsg) => {
                 const amountIn = Number(amountInMsg.text);
+                const { loaderMessage, interval } = await animateLoader(chatId);
                 const tokenRes = await axios.post(
                   `${API_URL}/getEvmTokenPrice`,
                   {
@@ -1521,10 +1571,6 @@ bot.on("callback_query", async (callbackQuery) => {
                 const finalAmt = buyAmt / tokensPrice?.token1;
                 if (tokenRes) {
                   if (flag == "56buy") {
-                    await bot.sendMessage(
-                      chatId,
-                      `please wait your transaction is processing...`
-                    );
                     await axios({
                       url: `${API_URL}/EVMswap`,
                       method: "post",
@@ -1540,6 +1586,11 @@ bot.on("callback_query", async (callbackQuery) => {
                       },
                     })
                       .then(async (response) => {
+                        clearInterval(interval);
+                        await bot.deleteMessage(
+                          chatId,
+                          loaderMessage.message_id
+                        );
                         if (response?.data?.status) {
                           await bot.sendMessage(
                             chatId,
@@ -1557,6 +1608,11 @@ bot.on("callback_query", async (callbackQuery) => {
                         }
                       })
                       .catch(async (error) => {
+                        clearInterval(interval);
+                        await bot.deleteMessage(
+                          chatId,
+                          loaderMessage.message_id
+                        );
                         await bot.sendMessage(
                           chatId,
                           `due to some reason you transaction failed!!`
@@ -1607,6 +1663,7 @@ bot.on("callback_query", async (callbackQuery) => {
             if (flag == "43114buy") {
               bot.once("message", async (amountInMsg) => {
                 const amountIn = Number(amountInMsg.text);
+                const { loaderMessage, interval } = await animateLoader(chatId);
                 const tokenRes = await axios.post(
                   `${API_URL}/getEvmTokenPrice`,
                   {
@@ -1620,10 +1677,6 @@ bot.on("callback_query", async (callbackQuery) => {
                 const finalAmt = buyAmt / tokensPrice?.token1;
                 if (finalAmt) {
                   if (flag == "43114buy") {
-                    await bot.sendMessage(
-                      chatId,
-                      `please wait your transaction is processing...`
-                    );
                     await axios({
                       url: `${API_URL}/EVMswap`,
                       method: "post",
@@ -1639,6 +1692,11 @@ bot.on("callback_query", async (callbackQuery) => {
                       },
                     })
                       .then(async (response) => {
+                        clearInterval(interval);
+                        await bot.deleteMessage(
+                          chatId,
+                          loaderMessage.message_id
+                        );
                         if (response?.data?.status) {
                           await bot.sendMessage(
                             chatId,
@@ -1656,6 +1714,11 @@ bot.on("callback_query", async (callbackQuery) => {
                         }
                       })
                       .catch(async (error) => {
+                        clearInterval(interval);
+                        await bot.deleteMessage(
+                          chatId,
+                          loaderMessage.message_id
+                        );
                         await bot.sendMessage(
                           chatId,
                           `due to some reason you transaction failed!!`
@@ -1711,6 +1774,7 @@ bot.on("callback_query", async (callbackQuery) => {
             if (flag == "25buy") {
               bot.once("message", async (amountInMsg) => {
                 const amountIn = Number(amountInMsg.text);
+                const { loaderMessage, interval } = await animateLoader(chatId);
                 const tokenRes = await axios.post(
                   `${API_URL}/getEvmTokenPrice`,
                   {
@@ -1724,10 +1788,6 @@ bot.on("callback_query", async (callbackQuery) => {
                 const finalAmt = buyAmt / tokensPrice?.token1;
                 if (tokenRes) {
                   if (flag == "25buy") {
-                    await bot.sendMessage(
-                      chatId,
-                      `please wait your transaction is processing...`
-                    );
                     await axios({
                       url: `${API_URL}/EVMswap`,
                       method: "post",
@@ -1743,6 +1803,11 @@ bot.on("callback_query", async (callbackQuery) => {
                       },
                     })
                       .then(async (response) => {
+                        clearInterval(interval);
+                        await bot.deleteMessage(
+                          chatId,
+                          loaderMessage.message_id
+                        );
                         if (response?.data?.status) {
                           await bot.sendMessage(
                             chatId,
@@ -1760,6 +1825,11 @@ bot.on("callback_query", async (callbackQuery) => {
                         }
                       })
                       .catch(async (error) => {
+                        clearInterval(interval);
+                        await bot.deleteMessage(
+                          chatId,
+                          loaderMessage.message_id
+                        );
                         await bot.sendMessage(
                           chatId,
                           `due to some reason you transaction failed!!`
@@ -1813,6 +1883,7 @@ bot.on("callback_query", async (callbackQuery) => {
             if (flag == "250buy") {
               bot.once("message", async (amountInMsg) => {
                 const amountIn = Number(amountInMsg.text);
+                const { loaderMessage, interval } = await animateLoader(chatId);
                 const tokenRes = await axios.post(
                   `${API_URL}/getEvmTokenPrice`,
                   {
@@ -1826,10 +1897,6 @@ bot.on("callback_query", async (callbackQuery) => {
                 const finalAmt = buyAmt / tokensPrice?.token1;
                 if (tokenRes) {
                   if (flag == "250buy") {
-                    await bot.sendMessage(
-                      chatId,
-                      `please wait your transaction is processing...`
-                    );
                     await axios({
                       url: `${API_URL}/EVMswap`,
                       method: "post",
@@ -1845,6 +1912,11 @@ bot.on("callback_query", async (callbackQuery) => {
                       },
                     })
                       .then(async (response) => {
+                        clearInterval(interval);
+                        await bot.deleteMessage(
+                          chatId,
+                          loaderMessage.message_id
+                        );
                         if (response?.data?.status) {
                           await bot.sendMessage(
                             chatId,
@@ -1862,6 +1934,11 @@ bot.on("callback_query", async (callbackQuery) => {
                         }
                       })
                       .catch(async (error) => {
+                        clearInterval(interval);
+                        await bot.deleteMessage(
+                          chatId,
+                          loaderMessage.message_id
+                        );
                         await bot.sendMessage(
                           chatId,
                           `due to some reason you transaction failed!!`
@@ -1923,9 +2000,8 @@ bot.on("callback_query", async (callbackQuery) => {
               bot.once("message", async (amountMsg) => {
                 const amount = amountMsg.text;
                 if (flag == "solSell") {
-                  await bot.sendMessage(
-                    chatId,
-                    `please wait your transaction is processing...`
+                  const { loaderMessage, interval } = await animateLoader(
+                    chatId
                   );
                   try {
                     const response = await axios.post(`${API_URL}/solanaSwap`, {
@@ -1935,6 +2011,8 @@ bot.on("callback_query", async (callbackQuery) => {
                       chatId,
                       method: "Sell",
                     });
+                    clearInterval(interval);
+                    await bot.deleteMessage(chatId, loaderMessage.message_id);
                     if (response.data.status === true) {
                       await bot.sendMessage(chatId, `Token sell successful!`);
                       await bot.sendMessage(
@@ -1948,7 +2026,14 @@ bot.on("callback_query", async (callbackQuery) => {
                           "❌ Swap failed. Please try again."
                       );
                     }
-                  } catch (error) {}
+                  } catch (error) {
+                    clearInterval(interval);
+                    await bot.deleteMessage(chatId, loaderMessage.message_id);
+                    await bot.sendMessage(
+                      chatId,
+                      `due to some reason you transaction failed!!`
+                    );
+                  }
                 } //
               });
             }
@@ -2027,9 +2112,8 @@ bot.on("callback_query", async (callbackQuery) => {
               bot.once("message", async (amountInMsg) => {
                 const amountIn = Number(amountInMsg.text);
                 if (flag == "42161sell") {
-                  await bot.sendMessage(
-                    chatId,
-                    `please wait your transaction is processing...`
+                  const { loaderMessage, interval } = await animateLoader(
+                    chatId
                   );
                   await axios({
                     url: `${API_URL}/EVMswap`,
@@ -2046,6 +2130,8 @@ bot.on("callback_query", async (callbackQuery) => {
                     },
                   })
                     .then(async (response) => {
+                      clearInterval(interval);
+                      await bot.deleteMessage(chatId, loaderMessage.message_id);
                       if (response?.data?.status) {
                         await bot.sendMessage(chatId, response?.data?.message);
                         await bot.sendMessage(
@@ -2057,6 +2143,8 @@ bot.on("callback_query", async (callbackQuery) => {
                       }
                     })
                     .catch(async (error) => {
+                      clearInterval(interval);
+                      await bot.deleteMessage(chatId, loaderMessage.message_id);
                       await bot.sendMessage(
                         chatId,
                         `due to some reason you transaction failed!!`
@@ -2107,9 +2195,8 @@ bot.on("callback_query", async (callbackQuery) => {
               bot.once("message", async (amountInMsg) => {
                 const amountIn = Number(amountInMsg.text);
                 if (flag == "10sell") {
-                  await bot.sendMessage(
-                    chatId,
-                    `please wait your transaction is processing...`
+                  const { loaderMessage, interval } = await animateLoader(
+                    chatId
                   );
                   await axios({
                     url: `${API_URL}/EVMswap`,
@@ -2126,6 +2213,8 @@ bot.on("callback_query", async (callbackQuery) => {
                     },
                   })
                     .then(async (response) => {
+                      clearInterval(interval);
+                      await bot.deleteMessage(chatId, loaderMessage.message_id);
                       if (response?.data?.status) {
                         await bot.sendMessage(chatId, response?.data?.message);
                         await bot.sendMessage(
@@ -2137,6 +2226,8 @@ bot.on("callback_query", async (callbackQuery) => {
                       }
                     })
                     .catch(async (error) => {
+                      clearInterval(interval);
+                      await bot.deleteMessage(chatId, loaderMessage.message_id);
                       await bot.sendMessage(
                         chatId,
                         `due to some reason you transaction failed!!`
@@ -2187,9 +2278,8 @@ bot.on("callback_query", async (callbackQuery) => {
               bot.once("message", async (amountInMsg) => {
                 const amountIn = Number(amountInMsg.text);
                 if (flag == "137sell") {
-                  await bot.sendMessage(
-                    chatId,
-                    `please wait your transaction is processing...`
+                  const { loaderMessage, interval } = await animateLoader(
+                    chatId
                   );
                   await axios({
                     url: `${API_URL}/EVMswap`,
@@ -2206,6 +2296,8 @@ bot.on("callback_query", async (callbackQuery) => {
                     },
                   })
                     .then(async (response) => {
+                      clearInterval(interval);
+                      await bot.deleteMessage(chatId, loaderMessage.message_id);
                       if (response?.data?.status) {
                         await bot.sendMessage(chatId, response?.data?.message);
                         await bot.sendMessage(
@@ -2217,6 +2309,8 @@ bot.on("callback_query", async (callbackQuery) => {
                       }
                     })
                     .catch(async (error) => {
+                      clearInterval(interval);
+                      await bot.deleteMessage(chatId, loaderMessage.message_id);
                       await bot.sendMessage(
                         chatId,
                         `due to some reason you transaction failed!!`
@@ -2299,9 +2393,8 @@ bot.on("callback_query", async (callbackQuery) => {
               bot.once("message", async (amountInMsg) => {
                 const amountIn = Number(amountInMsg.text);
                 if (flag == "56sell") {
-                  await bot.sendMessage(
-                    chatId,
-                    `please wait your transaction is processing...`
+                  const { loaderMessage, interval } = await animateLoader(
+                    chatId
                   );
                   await axios({
                     url: `${API_URL}/EVMswap`,
@@ -2318,6 +2411,8 @@ bot.on("callback_query", async (callbackQuery) => {
                     },
                   })
                     .then(async (response) => {
+                      clearInterval(interval);
+                      await bot.deleteMessage(chatId, loaderMessage.message_id);
                       if (response?.data?.status) {
                         await bot.sendMessage(chatId, response?.data?.message);
                         await bot.sendMessage(
@@ -2329,6 +2424,8 @@ bot.on("callback_query", async (callbackQuery) => {
                       }
                     })
                     .catch(async (error) => {
+                      clearInterval(interval);
+                      await bot.deleteMessage(chatId, loaderMessage.message_id);
                       await bot.sendMessage(
                         chatId,
                         `due to some reason you transaction failed!!`
@@ -2379,9 +2476,8 @@ bot.on("callback_query", async (callbackQuery) => {
               bot.once("message", async (amountInMsg) => {
                 const amountIn = Number(amountInMsg.text);
                 if (flag == "43114sell") {
-                  await bot.sendMessage(
-                    chatId,
-                    `please wait your transaction is processing...`
+                  const { loaderMessage, interval } = await animateLoader(
+                    chatId
                   );
                   await axios({
                     url: `${API_URL}/EVMswap`,
@@ -2398,6 +2494,8 @@ bot.on("callback_query", async (callbackQuery) => {
                     },
                   })
                     .then(async (response) => {
+                      clearInterval(interval);
+                      await bot.deleteMessage(chatId, loaderMessage.message_id);
                       if (response?.data?.status) {
                         await bot.sendMessage(chatId, response?.data?.message);
                         await bot.sendMessage(
@@ -2409,6 +2507,8 @@ bot.on("callback_query", async (callbackQuery) => {
                       }
                     })
                     .catch(async (error) => {
+                      clearInterval(interval);
+                      await bot.deleteMessage(chatId, loaderMessage.message_id);
                       await bot.sendMessage(
                         chatId,
                         `due to some reason you transaction failed!!`
@@ -2463,9 +2563,8 @@ bot.on("callback_query", async (callbackQuery) => {
               bot.once("message", async (amountInMsg) => {
                 const amountIn = Number(amountInMsg.text);
                 if (flag == "25sell") {
-                  await bot.sendMessage(
-                    chatId,
-                    `please wait your transaction is processing...`
+                  const { loaderMessage, interval } = await animateLoader(
+                    chatId
                   );
                   await axios({
                     url: `${API_URL}/EVMswap`,
@@ -2482,6 +2581,8 @@ bot.on("callback_query", async (callbackQuery) => {
                     },
                   })
                     .then(async (response) => {
+                      clearInterval(interval);
+                      await bot.deleteMessage(chatId, loaderMessage.message_id);
                       if (response?.data?.status) {
                         await bot.sendMessage(chatId, response?.data?.message);
                         await bot.sendMessage(
@@ -2493,6 +2594,8 @@ bot.on("callback_query", async (callbackQuery) => {
                       }
                     })
                     .catch(async (error) => {
+                      clearInterval(interval);
+                      await bot.deleteMessage(chatId, loaderMessage.message_id);
                       await bot.sendMessage(
                         chatId,
                         `due to some reason you transaction failed!!`
@@ -2546,9 +2649,8 @@ bot.on("callback_query", async (callbackQuery) => {
               bot.once("message", async (amountInMsg) => {
                 const amountIn = Number(amountInMsg.text);
                 if (flag == "250sell") {
-                  await bot.sendMessage(
-                    chatId,
-                    `please wait your transaction is processing...`
+                  const { loaderMessage, interval } = await animateLoader(
+                    chatId
                   );
                   await axios({
                     url: `${API_URL}/EVMswap`,
@@ -2565,6 +2667,8 @@ bot.on("callback_query", async (callbackQuery) => {
                     },
                   })
                     .then(async (response) => {
+                      clearInterval(interval);
+                      await bot.deleteMessage(chatId, loaderMessage.message_id);
                       if (response?.data?.status) {
                         await bot.sendMessage(chatId, response?.data?.message);
                         await bot.sendMessage(
@@ -2576,6 +2680,8 @@ bot.on("callback_query", async (callbackQuery) => {
                       }
                     })
                     .catch(async (error) => {
+                      clearInterval(interval);
+                      await bot.deleteMessage(chatId, loaderMessage.message_id);
                       await bot.sendMessage(
                         chatId,
                         `due to some reason you transaction failed!!`
@@ -2638,9 +2744,8 @@ bot.on("callback_query", async (callbackQuery) => {
                   bot.once("message", async (amountMsg) => {
                     const amount = Number(amountMsg.text);
                     if (flag == "solana") {
-                      await bot.sendMessage(
-                        chatId,
-                        `please wait your transaction is processing...`
+                      const { loaderMessage, interval } = await animateLoader(
+                        chatId
                       );
                       try {
                         const response = await axios.post(
@@ -2654,6 +2759,11 @@ bot.on("callback_query", async (callbackQuery) => {
                           }
                         );
                         if (response.data.status === true) {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
                           await bot.sendMessage(
                             chatId,
                             `Solona Swap successful!`
@@ -2663,6 +2773,11 @@ bot.on("callback_query", async (callbackQuery) => {
                             `https://solscan.io/account/${response?.data?.transactionCreated?.txid}`
                           );
                         } else {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
                           await bot.sendMessage(
                             chatId,
                             response.data.message ||
@@ -2670,6 +2785,11 @@ bot.on("callback_query", async (callbackQuery) => {
                           );
                         }
                       } catch (error) {
+                        clearInterval(interval);
+                        await bot.deleteMessage(
+                          chatId,
+                          loaderMessage.message_id
+                        );
                         await bot.sendMessage(
                           chatId,
                           `❌ An error occurred: ${error.message}`
@@ -2733,9 +2853,8 @@ bot.on("callback_query", async (callbackQuery) => {
                   bot.once("message", async (amountInMsg) => {
                     const amountIn = Number(amountInMsg.text);
                     if (flag == "1") {
-                      await bot.sendMessage(
-                        chatId,
-                        `please wait your transaction is processing...`
+                      const { loaderMessage, interval } = await animateLoader(
+                        chatId
                       );
                       await axios({
                         url: `${API_URL}/EVMswap`,
@@ -2752,6 +2871,11 @@ bot.on("callback_query", async (callbackQuery) => {
                         },
                       })
                         .then(async (response) => {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
                           if (response?.data?.status) {
                             await bot.sendMessage(
                               chatId,
@@ -2769,6 +2893,11 @@ bot.on("callback_query", async (callbackQuery) => {
                           }
                         })
                         .catch(async (error) => {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
                           await bot.sendMessage(
                             chatId,
                             `due to some reason you transaction failed!!`
@@ -2830,9 +2959,8 @@ bot.on("callback_query", async (callbackQuery) => {
                   bot.once("message", async (amountInMsg) => {
                     const amountIn = Number(amountInMsg.text);
                     if (flag == "42161") {
-                      await bot.sendMessage(
-                        chatId,
-                        `please wait your transaction is processing...`
+                      const { loaderMessage, interval } = await animateLoader(
+                        chatId
                       );
                       await axios({
                         url: `${API_URL}/EVMswap`,
@@ -2850,6 +2978,11 @@ bot.on("callback_query", async (callbackQuery) => {
                       })
                         .then(async (response) => {
                           if (response?.data?.status) {
+                            clearInterval(interval);
+                            await bot.deleteMessage(
+                              chatId,
+                              loaderMessage.message_id
+                            );
                             await bot.sendMessage(
                               chatId,
                               response?.data?.message
@@ -2859,6 +2992,11 @@ bot.on("callback_query", async (callbackQuery) => {
                               `https://arbiscan.io/tx/${response?.data?.tx}`
                             );
                           } else {
+                            clearInterval(interval);
+                            await bot.deleteMessage(
+                              chatId,
+                              loaderMessage.message_id
+                            );
                             await bot.sendMessage(
                               chatId,
                               response?.data?.message
@@ -2866,6 +3004,11 @@ bot.on("callback_query", async (callbackQuery) => {
                           }
                         })
                         .catch(async (error) => {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
                           await bot.sendMessage(
                             chatId,
                             `due to some reason you transaction failed!!`
@@ -2928,9 +3071,8 @@ bot.on("callback_query", async (callbackQuery) => {
                   bot.once("message", async (amountInMsg) => {
                     const amountIn = Number(amountInMsg.text);
                     if (flag == "10") {
-                      await bot.sendMessage(
-                        chatId,
-                        `please wait your transaction is processing...`
+                      const { loaderMessage, interval } = await animateLoader(
+                        chatId
                       );
                       await axios({
                         url: `${API_URL}/EVMswap`,
@@ -2947,6 +3089,11 @@ bot.on("callback_query", async (callbackQuery) => {
                         },
                       })
                         .then(async (response) => {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
                           if (response?.data?.status) {
                             await bot.sendMessage(
                               chatId,
@@ -2964,6 +3111,11 @@ bot.on("callback_query", async (callbackQuery) => {
                           }
                         })
                         .catch(async (error) => {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
                           await bot.sendMessage(
                             chatId,
                             `due to some reason you transaction failed!!`
@@ -3026,9 +3178,8 @@ bot.on("callback_query", async (callbackQuery) => {
                   bot.once("message", async (amountInMsg) => {
                     const amountIn = Number(amountInMsg.text);
                     if (flag == "137") {
-                      await bot.sendMessage(
-                        chatId,
-                        `please wait your transaction is processing...`
+                      const { loaderMessage, interval } = await animateLoader(
+                        chatId
                       );
                       await axios({
                         url: `${API_URL}/EVMswap`,
@@ -3045,6 +3196,11 @@ bot.on("callback_query", async (callbackQuery) => {
                         },
                       })
                         .then(async (response) => {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
                           if (response?.data?.status) {
                             await bot.sendMessage(
                               chatId,
@@ -3062,6 +3218,11 @@ bot.on("callback_query", async (callbackQuery) => {
                           }
                         })
                         .catch(async (error) => {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
                           await bot.sendMessage(
                             chatId,
                             `due to some reason you transaction failed!!`
@@ -3124,9 +3285,8 @@ bot.on("callback_query", async (callbackQuery) => {
                   bot.once("message", async (amountInMsg) => {
                     const amountIn = Number(amountInMsg.text);
                     if (flag == "8453") {
-                      await bot.sendMessage(
-                        chatId,
-                        `please wait your transaction is processing...`
+                      const { loaderMessage, interval } = await animateLoader(
+                        chatId
                       );
                       await axios({
                         url: `${API_URL}/EVMswap`,
@@ -3143,6 +3303,11 @@ bot.on("callback_query", async (callbackQuery) => {
                         },
                       })
                         .then(async (response) => {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
                           if (response?.data?.status) {
                             await bot.sendMessage(
                               chatId,
@@ -3160,6 +3325,11 @@ bot.on("callback_query", async (callbackQuery) => {
                           }
                         })
                         .catch(async (error) => {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
                           await bot.sendMessage(
                             chatId,
                             `due to some reason you transaction failed!!`
@@ -3222,9 +3392,8 @@ bot.on("callback_query", async (callbackQuery) => {
                   bot.once("message", async (amountInMsg) => {
                     const amountIn = Number(amountInMsg.text);
                     if (flag == "56") {
-                      await bot.sendMessage(
-                        chatId,
-                        `please wait your transaction is processing...`
+                      const { loaderMessage, interval } = await animateLoader(
+                        chatId
                       );
                       await axios({
                         url: `${API_URL}/EVMswap`,
@@ -3241,6 +3410,11 @@ bot.on("callback_query", async (callbackQuery) => {
                         },
                       })
                         .then(async (response) => {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
                           if (response?.data?.status) {
                             await bot.sendMessage(
                               chatId,
@@ -3258,6 +3432,11 @@ bot.on("callback_query", async (callbackQuery) => {
                           }
                         })
                         .catch(async (error) => {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
                           await bot.sendMessage(
                             chatId,
                             `due to some reason you transaction failed!!`
@@ -3320,9 +3499,8 @@ bot.on("callback_query", async (callbackQuery) => {
                   bot.once("message", async (amountInMsg) => {
                     const amountIn = Number(amountInMsg.text);
                     if (flag == "43114") {
-                      await bot.sendMessage(
-                        chatId,
-                        `please wait your transaction is processing...`
+                      const { loaderMessage, interval } = await animateLoader(
+                        chatId
                       );
                       await axios({
                         url: `${API_URL}/EVMswap`,
@@ -3339,6 +3517,11 @@ bot.on("callback_query", async (callbackQuery) => {
                         },
                       })
                         .then(async (response) => {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
                           if (response?.data?.status) {
                             await bot.sendMessage(
                               chatId,
@@ -3356,6 +3539,11 @@ bot.on("callback_query", async (callbackQuery) => {
                           }
                         })
                         .catch(async (error) => {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
                           await bot.sendMessage(
                             chatId,
                             `due to some reason you transaction failed!!`
@@ -3417,9 +3605,8 @@ bot.on("callback_query", async (callbackQuery) => {
                   bot.once("message", async (amountInMsg) => {
                     const amountIn = Number(amountInMsg.text);
                     if (flag == "25") {
-                      await bot.sendMessage(
-                        chatId,
-                        `please wait your transaction is processing...`
+                      const { loaderMessage, interval } = await animateLoader(
+                        chatId
                       );
                       await axios({
                         url: `${API_URL}/EVMswap`,
@@ -3436,6 +3623,11 @@ bot.on("callback_query", async (callbackQuery) => {
                         },
                       })
                         .then(async (response) => {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
                           if (response?.data?.status) {
                             await bot.sendMessage(
                               chatId,
@@ -3453,6 +3645,11 @@ bot.on("callback_query", async (callbackQuery) => {
                           }
                         })
                         .catch(async (error) => {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
                           await bot.sendMessage(
                             chatId,
                             `due to some reason you transaction failed!!`
@@ -3514,9 +3711,8 @@ bot.on("callback_query", async (callbackQuery) => {
                   bot.once("message", async (amountInMsg) => {
                     const amountIn = Number(amountInMsg.text);
                     if (flag == "250") {
-                      await bot.sendMessage(
-                        chatId,
-                        `please wait your transaction is processing...`
+                      const { loaderMessage, interval } = await animateLoader(
+                        chatId
                       );
                       await axios({
                         url: `${API_URL}/EVMswap`,
@@ -3533,6 +3729,11 @@ bot.on("callback_query", async (callbackQuery) => {
                         },
                       })
                         .then(async (response) => {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
                           if (response?.data?.status) {
                             await bot.sendMessage(
                               chatId,
@@ -3550,6 +3751,11 @@ bot.on("callback_query", async (callbackQuery) => {
                           }
                         })
                         .catch(async (error) => {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
                           await bot.sendMessage(
                             chatId,
                             `due to some reason you transaction failed!!`
@@ -4197,6 +4403,9 @@ bot.on("callback_query", async (callbackQuery) => {
                     await bot.once("message", async (amountIn) => {
                       if (flag == "1withraw") {
                         const amount = Number(amountIn.text);
+                        const { loaderMessage, interval } = await animateLoader(
+                          chatId
+                        );
                         await transferEvmToken(
                           chatId,
                           token,
@@ -4205,6 +4414,11 @@ bot.on("callback_query", async (callbackQuery) => {
                           amount
                         )
                           .then(async (res) => {
+                            clearInterval(interval);
+                            await bot.deleteMessage(
+                              chatId,
+                              loaderMessage.message_id
+                            );
                             await bot.sendMessage(chatId, res?.message);
                             await bot.sendMessage(
                               chatId,
@@ -4212,6 +4426,11 @@ bot.on("callback_query", async (callbackQuery) => {
                             );
                           })
                           .catch(async (err) => {
+                            clearInterval(interval);
+                            await bot.deleteMessage(
+                              chatId,
+                              loaderMessage.message_id
+                            );
                             console.log("🚀 ~ bot.once ~ err:", err);
                             await bot.sendMessage(
                               chatId,
@@ -4277,6 +4496,9 @@ bot.on("callback_query", async (callbackQuery) => {
                     await bot.once("message", async (amountIn) => {
                       if (flag == "42161withraw") {
                         const amount = Number(amountIn.text);
+                        const { loaderMessage, interval } = await animateLoader(
+                          chatId
+                        );
                         await transferEvmToken(
                           chatId,
                           token,
@@ -4286,6 +4508,11 @@ bot.on("callback_query", async (callbackQuery) => {
                         )
                           // transferEvmToken(chatId, token, toWallet, chain, amount)
                           .then(async (res) => {
+                            clearInterval(interval);
+                            await bot.deleteMessage(
+                              chatId,
+                              loaderMessage.message_id
+                            );
                             await bot.sendMessage(chatId, res?.message);
                             await bot.sendMessage(
                               chatId,
@@ -4293,6 +4520,11 @@ bot.on("callback_query", async (callbackQuery) => {
                             );
                           })
                           .catch(async (err) => {
+                            clearInterval(interval);
+                            await bot.deleteMessage(
+                              chatId,
+                              loaderMessage.message_id
+                            );
                             console.log("🚀 ~ bot.once ~ err:", err);
                             await bot.sendMessage(
                               chatId,
@@ -4358,6 +4590,9 @@ bot.on("callback_query", async (callbackQuery) => {
                     await bot.once("message", async (amountIn) => {
                       if (flag == "10withraw") {
                         const amount = Number(amountIn.text);
+                        const { loaderMessage, interval } = await animateLoader(
+                          chatId
+                        );
                         await transferEvmToken(
                           chatId,
                           token,
@@ -4366,6 +4601,11 @@ bot.on("callback_query", async (callbackQuery) => {
                           amount
                         )
                           .then(async (res) => {
+                            clearInterval(interval);
+                            await bot.deleteMessage(
+                              chatId,
+                              loaderMessage.message_id
+                            );
                             await bot.sendMessage(chatId, res?.message);
                             await bot.sendMessage(
                               chatId,
@@ -4373,6 +4613,11 @@ bot.on("callback_query", async (callbackQuery) => {
                             );
                           })
                           .catch(async (err) => {
+                            clearInterval(interval);
+                            await bot.deleteMessage(
+                              chatId,
+                              loaderMessage.message_id
+                            );
                             console.log("🚀 ~ bot.once ~ err:", err);
                             await bot.sendMessage(
                               chatId,
@@ -4437,6 +4682,9 @@ bot.on("callback_query", async (callbackQuery) => {
                     await bot.once("message", async (amountIn) => {
                       if (flag == "137withraw") {
                         const amount = Number(amountIn.text);
+                        const { loaderMessage, interval } = await animateLoader(
+                          chatId
+                        );
                         await transferEvmToken(
                           chatId,
                           token,
@@ -4445,6 +4693,11 @@ bot.on("callback_query", async (callbackQuery) => {
                           amount
                         )
                           .then(async (res) => {
+                            clearInterval(interval);
+                            await bot.deleteMessage(
+                              chatId,
+                              loaderMessage.message_id
+                            );
                             await bot.sendMessage(chatId, res?.message);
                             await bot.sendMessage(
                               chatId,
@@ -4452,6 +4705,11 @@ bot.on("callback_query", async (callbackQuery) => {
                             );
                           })
                           .catch(async (err) => {
+                            clearInterval(interval);
+                            await bot.deleteMessage(
+                              chatId,
+                              loaderMessage.message_id
+                            );
                             console.log("🚀 ~ bot.once ~ err:", err);
                             await bot.sendMessage(
                               chatId,
@@ -4516,6 +4774,9 @@ bot.on("callback_query", async (callbackQuery) => {
                     await bot.once("message", async (amountIn) => {
                       if (flag == "8453withraw") {
                         const amount = Number(amountIn.text);
+                        const { loaderMessage, interval } = await animateLoader(
+                          chatId
+                        );
                         await transferEvmToken(
                           chatId,
                           token,
@@ -4524,6 +4785,11 @@ bot.on("callback_query", async (callbackQuery) => {
                           amount
                         )
                           .then(async (res) => {
+                            clearInterval(interval);
+                            await bot.deleteMessage(
+                              chatId,
+                              loaderMessage.message_id
+                            );
                             await bot.sendMessage(chatId, res?.message);
                             await bot.sendMessage(
                               chatId,
@@ -4531,6 +4797,11 @@ bot.on("callback_query", async (callbackQuery) => {
                             );
                           })
                           .catch(async (err) => {
+                            clearInterval(interval);
+                            await bot.deleteMessage(
+                              chatId,
+                              loaderMessage.message_id
+                            );
                             console.log("🚀 ~ bot.once ~ err:", err);
                             await bot.sendMessage(
                               chatId,
@@ -4595,6 +4866,9 @@ bot.on("callback_query", async (callbackQuery) => {
                     await bot.once("message", async (amountIn) => {
                       if (flag == "56withraw") {
                         const amount = Number(amountIn.text);
+                        const { loaderMessage, interval } = await animateLoader(
+                          chatId
+                        );
                         await transferEvmToken(
                           chatId,
                           token,
@@ -4603,6 +4877,11 @@ bot.on("callback_query", async (callbackQuery) => {
                           amount
                         )
                           .then(async (res) => {
+                            clearInterval(interval);
+                            await bot.deleteMessage(
+                              chatId,
+                              loaderMessage.message_id
+                            );
                             await bot.sendMessage(chatId, res?.message);
                             await bot.sendMessage(
                               chatId,
@@ -4610,6 +4889,11 @@ bot.on("callback_query", async (callbackQuery) => {
                             );
                           })
                           .catch(async (err) => {
+                            clearInterval(interval);
+                            await bot.deleteMessage(
+                              chatId,
+                              loaderMessage.message_id
+                            );
                             console.log("🚀 ~ bot.once ~ err:", err);
                             await bot.sendMessage(
                               chatId,
@@ -4674,6 +4958,9 @@ bot.on("callback_query", async (callbackQuery) => {
                     await bot.once("message", async (amountIn) => {
                       if (flag == "43114withraw") {
                         const amount = Number(amountIn.text);
+                        const { loaderMessage, interval } = await animateLoader(
+                          chatId
+                        );
                         await transferEvmToken(
                           chatId,
                           token,
@@ -4682,6 +4969,11 @@ bot.on("callback_query", async (callbackQuery) => {
                           amount
                         )
                           .then(async (res) => {
+                            clearInterval(interval);
+                            await bot.deleteMessage(
+                              chatId,
+                              loaderMessage.message_id
+                            );
                             await bot.sendMessage(chatId, res?.message);
                             await bot.sendMessage(
                               chatId,
@@ -4689,6 +4981,11 @@ bot.on("callback_query", async (callbackQuery) => {
                             );
                           })
                           .catch(async (err) => {
+                            clearInterval(interval);
+                            await bot.deleteMessage(
+                              chatId,
+                              loaderMessage.message_id
+                            );
                             console.log("🚀 ~ bot.once ~ err:", err);
                             await bot.sendMessage(
                               chatId,
@@ -4753,6 +5050,9 @@ bot.on("callback_query", async (callbackQuery) => {
                     await bot.once("message", async (amountIn) => {
                       if (flag == "25withraw") {
                         const amount = Number(amountIn.text);
+                        const { loaderMessage, interval } = await animateLoader(
+                          chatId
+                        );
                         await transferEvmToken(
                           chatId,
                           token,
@@ -4761,6 +5061,11 @@ bot.on("callback_query", async (callbackQuery) => {
                           amount
                         )
                           .then(async (res) => {
+                            clearInterval(interval);
+                            await bot.deleteMessage(
+                              chatId,
+                              loaderMessage.message_id
+                            );
                             await bot.sendMessage(chatId, res?.message);
                             await bot.sendMessage(
                               chatId,
@@ -4768,6 +5073,11 @@ bot.on("callback_query", async (callbackQuery) => {
                             );
                           })
                           .catch(async (err) => {
+                            clearInterval(interval);
+                            await bot.deleteMessage(
+                              chatId,
+                              loaderMessage.message_id
+                            );
                             console.log("🚀 ~ bot.once ~ err:", err);
                             await bot.sendMessage(
                               chatId,
@@ -4832,6 +5142,9 @@ bot.on("callback_query", async (callbackQuery) => {
                     await bot.once("message", async (amountIn) => {
                       if (flag == "250withraw") {
                         const amount = Number(amountIn.text);
+                        const { loaderMessage, interval } = await animateLoader(
+                          chatId
+                        );
                         await transferEvmToken(
                           chatId,
                           token,
@@ -4840,6 +5153,11 @@ bot.on("callback_query", async (callbackQuery) => {
                           amount
                         )
                           .then(async (res) => {
+                            clearInterval(interval);
+                            await bot.deleteMessage(
+                              chatId,
+                              loaderMessage.message_id
+                            );
                             await bot.sendMessage(chatId, res?.message);
                             await bot.sendMessage(
                               chatId,
@@ -4847,6 +5165,11 @@ bot.on("callback_query", async (callbackQuery) => {
                             );
                           })
                           .catch(async (err) => {
+                            clearInterval(interval);
+                            await bot.deleteMessage(
+                              chatId,
+                              loaderMessage.message_id
+                            );
                             console.log("🚀 ~ bot.once ~ err:", err);
                             await bot.sendMessage(
                               chatId,
