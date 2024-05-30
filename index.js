@@ -1919,7 +1919,7 @@ bot.on("callback_query", async (callbackQuery) => {
         flag = "250buy";
         await bot.sendMessage(
           chatId,
-          "Type cronos token that you want to buy:"
+          "Type fantom token that you want to buy:"
         );
         if (flag == "250buy") {
           bot.once("message", async (token0Msg) => {
