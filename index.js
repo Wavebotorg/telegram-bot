@@ -1218,68 +1218,72 @@ bot.on("callback_query", async (callbackQuery) => {
             }
             if (flag == "42161buy") {
               bot.once("message", async (amountInMsg) => {
-                const amountIn = Number(amountInMsg.text);
-                const { loaderMessage, interval } = await animateLoader(chatId);
-                const tokenRes = await axios.post(
-                  `${API_URL}/getEvmTokenPrice`,
-                  {
-                    token: "0x912CE59144191C1204E64559FE8253a0e49E6548",
-                    token2: token1,
-                    chain: "0xa4b1",
-                  }
-                );
-                const tokensPrice = tokenRes?.data?.finalRes;
-                const buyAmt = amountIn * tokensPrice?.token2;
-                const finalAmt = buyAmt / tokensPrice?.token1;
-                if (tokenRes) {
-                  if (flag == "42161buy") {
-                    await axios({
-                      url: `${API_URL}/EVMswap`,
-                      method: "post",
-                      data: {
-                        tokenIn: "0x912CE59144191C1204E64559FE8253a0e49E6548",
-                        tokenOut: token1,
-                        chainId: "arbitrum",
-                        amount: finalAmt,
-                        chain: 42161,
-                        chatId: chatId,
-                        desCode: "0xa4b1",
-                        method: "Buy",
-                      },
-                    })
-                      .then(async (response) => {
-                        clearInterval(interval);
-                        await bot.deleteMessage(
-                          chatId,
-                          loaderMessage.message_id
-                        );
-                        if (response?.data?.status) {
-                          await bot.sendMessage(
-                            chatId,
-                            response?.data?.message
-                          );
-                          await bot.sendMessage(
-                            chatId,
-                            `https://arbiscan.io/tx/${response?.data?.tx}`
-                          );
-                        } else {
-                          await bot.sendMessage(
-                            chatId,
-                            response?.data?.message
-                          );
-                        }
+                if (flag == "42161nuy") {
+                  const amountIn = Number(amountInMsg.text);
+                  const { loaderMessage, interval } = await animateLoader(
+                    chatId
+                  );
+                  const tokenRes = await axios.post(
+                    `${API_URL}/getEvmTokenPrice`,
+                    {
+                      token: "0x912CE59144191C1204E64559FE8253a0e49E6548",
+                      token2: token1,
+                      chain: "0xa4b1",
+                    }
+                  );
+                  const tokensPrice = tokenRes?.data?.finalRes;
+                  const buyAmt = amountIn * tokensPrice?.token2;
+                  const finalAmt = buyAmt / tokensPrice?.token1;
+                  if (tokenRes) {
+                    if (flag == "42161buy") {
+                      await axios({
+                        url: `${API_URL}/EVMswap`,
+                        method: "post",
+                        data: {
+                          tokenIn: "0x912CE59144191C1204E64559FE8253a0e49E6548",
+                          tokenOut: token1,
+                          chainId: "arbitrum",
+                          amount: finalAmt,
+                          chain: 42161,
+                          chatId: chatId,
+                          desCode: "0xa4b1",
+                          method: "Buy",
+                        },
                       })
-                      .catch(async (error) => {
-                        clearInterval(interval);
-                        await bot.deleteMessage(
-                          chatId,
-                          loaderMessage.message_id
-                        );
-                        await bot.sendMessage(
-                          chatId,
-                          `due to some reason you transaction failed!!`
-                        );
-                      });
+                        .then(async (response) => {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
+                          if (response?.data?.status) {
+                            await bot.sendMessage(
+                              chatId,
+                              response?.data?.message
+                            );
+                            await bot.sendMessage(
+                              chatId,
+                              `https://arbiscan.io/tx/${response?.data?.tx}`
+                            );
+                          } else {
+                            await bot.sendMessage(
+                              chatId,
+                              response?.data?.message
+                            );
+                          }
+                        })
+                        .catch(async (error) => {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
+                          await bot.sendMessage(
+                            chatId,
+                            `due to some reason you transaction failed!!`
+                          );
+                        });
+                    }
                   }
                 }
               });
@@ -1316,8 +1320,90 @@ bot.on("callback_query", async (callbackQuery) => {
     case "1buy":
       if (isUser) {
         flag = "1buy";
+        await bot.sendMessage(chatId, "Type Eth token that you want to buy:");
         if (flag == "1buy") {
-          await bot.sendMessage(chatId, "Ethereum is comming soon....");
+          bot.once("message", async (token0Msg) => {
+            const token0 = token0Msg.text;
+            if (flag == "1buy") {
+              await bot.sendMessage(
+                chatId,
+                "Please enter the Eth token amount:"
+              );
+              if (flag == "1buy") {
+                bot.once("message", async (amountInMsg) => {
+                  const amountIn = Number(amountInMsg.text);
+                  if (flag == "1buy") {
+                    const { loaderMessage, interval } = await animateLoader(
+                      chatId
+                    );
+                    const tokenRes = await axios.post(
+                      `${API_URL}/getEvmTokenPrice`,
+                      {
+                        token: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+                        token2: token0,
+                        chain: "0x1",
+                      }
+                    );
+                    const tokensPrice = tokenRes?.data?.finalRes;
+                    const buyAmt = amountIn * tokensPrice?.token2;
+                    const finalAmt = buyAmt / tokensPrice?.token1;
+                    if (tokenRes) {
+                      if (flag == "1buy") {
+                        await axios({
+                          url: `${API_URL}/EVMswap`,
+                          method: "post",
+                          data: {
+                            tokenIn:
+                              "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+                            tokenOut: token0,
+                            chainId: "ethereum",
+                            amount: finalAmt,
+                            chain: 1,
+                            chatId: chatId,
+                            desCode: "0x1",
+                            method: "Buy",
+                          },
+                        })
+                          .then(async (response) => {
+                            clearInterval(interval);
+                            await bot.deleteMessage(
+                              chatId,
+                              loaderMessage.message_id
+                            );
+                            if (response?.data?.status) {
+                              await bot.sendMessage(
+                                chatId,
+                                response?.data?.message
+                              );
+                              await bot.sendMessage(
+                                chatId,
+                                `https://etherscan.io/tx/${response?.data?.tx}`
+                              );
+                            } else {
+                              await bot.sendMessage(
+                                chatId,
+                                response?.data?.message
+                              );
+                            }
+                          })
+                          .catch(async (error) => {
+                            clearInterval(interval);
+                            await bot.deleteMessage(
+                              chatId,
+                              loaderMessage.message_id
+                            );
+                            await bot.sendMessage(
+                              chatId,
+                              `due to some reason you transaction failed!!`
+                            );
+                          });
+                      }
+                    }
+                  }
+                });
+              }
+            }
+          });
         }
       } else {
         await bot.sendMessage(chatId, "please login!!", {
@@ -1359,67 +1445,71 @@ bot.on("callback_query", async (callbackQuery) => {
             if (flag == "10buy") {
               bot.once("message", async (amountInMsg) => {
                 const amountIn = Number(amountInMsg.text);
-                const { loaderMessage, interval } = await animateLoader(chatId);
-                const tokenRes = await axios.post(
-                  `${API_URL}/getEvmTokenPrice`,
-                  {
-                    token: "0x4200000000000000000000000000000000000042",
-                    token2: token0,
-                    chain: "0xa",
-                  }
-                );
-                const tokensPrice = tokenRes?.data?.finalRes;
-                const buyAmt = amountIn * tokensPrice?.token2;
-                const finalAmt = buyAmt / tokensPrice?.token1;
-                if (tokenRes) {
-                  if (flag == "10buy") {
-                    await axios({
-                      url: `${API_URL}/EVMswap`,
-                      method: "post",
-                      data: {
-                        tokenIn: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
-                        tokenOut: token0,
-                        chainId: "optimism",
-                        amount: finalAmt,
-                        chain: 10,
-                        chatId: chatId,
-                        desCode: "0xa",
-                        method: "Buy",
-                      },
-                    })
-                      .then(async (response) => {
-                        clearInterval(interval);
-                        await bot.deleteMessage(
-                          chatId,
-                          loaderMessage.message_id
-                        );
-                        if (response?.data?.status) {
-                          await bot.sendMessage(
-                            chatId,
-                            response?.data?.message
-                          );
-                          await bot.sendMessage(
-                            chatId,
-                            `https://optimistic.etherscan.io/tx/${response?.data?.tx}`
-                          );
-                        } else {
-                          await bot.sendMessage(
-                            chatId,
-                            response?.data?.message
-                          );
-                        }
+                if (flag == "10buy") {
+                  const { loaderMessage, interval } = await animateLoader(
+                    chatId
+                  );
+                  const tokenRes = await axios.post(
+                    `${API_URL}/getEvmTokenPrice`,
+                    {
+                      token: "0x4200000000000000000000000000000000000042",
+                      token2: token0,
+                      chain: "0xa",
+                    }
+                  );
+                  const tokensPrice = tokenRes?.data?.finalRes;
+                  const buyAmt = amountIn * tokensPrice?.token2;
+                  const finalAmt = buyAmt / tokensPrice?.token1;
+                  if (tokenRes) {
+                    if (flag == "10buy") {
+                      await axios({
+                        url: `${API_URL}/EVMswap`,
+                        method: "post",
+                        data: {
+                          tokenIn: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
+                          tokenOut: token0,
+                          chainId: "optimism",
+                          amount: finalAmt,
+                          chain: 10,
+                          chatId: chatId,
+                          desCode: "0xa",
+                          method: "Buy",
+                        },
                       })
-                      .catch(async (error) => {
-                        clearInterval(interval);
-                        await bot.deleteMessage(
-                          chatId,
-                          loaderMessage.message_id
-                        );
-                        await bot.sendMessage(
-                          chatId,
-                          `due to some reason you transaction failed!!`
-                        );
-                      });
+                        .then(async (response) => {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
+                          if (response?.data?.status) {
+                            await bot.sendMessage(
+                              chatId,
+                              response?.data?.message
+                            );
+                            await bot.sendMessage(
+                              chatId,
+                              `https://optimistic.etherscan.io/tx/${response?.data?.tx}`
+                            );
+                          } else {
+                            await bot.sendMessage(
+                              chatId,
+                              response?.data?.message
+                            );
+                          }
+                        })
+                        .catch(async (error) => {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
+                          await bot.sendMessage(
+                            chatId,
+                            `due to some reason you transaction failed!!`
+                          );
+                        });
+                    }
                   }
                 }
               });
@@ -1466,67 +1556,71 @@ bot.on("callback_query", async (callbackQuery) => {
             if (flag == "137buy") {
               bot.once("message", async (amountInMsg) => {
                 const amountIn = Number(amountInMsg.text);
-                const { loaderMessage, interval } = await animateLoader(chatId);
-                const tokenRes = await axios.post(
-                  `${API_URL}/getEvmTokenPrice`,
-                  {
-                    token: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
-                    token2: token0,
-                    chain: "0x89",
-                  }
-                );
-                const tokensPrice = tokenRes?.data?.finalRes;
-                const buyAmt = amountIn * tokensPrice?.token2;
-                const finalAmt = buyAmt / tokensPrice?.token1;
-                if (tokenRes) {
-                  if (flag == "137buy") {
-                    await axios({
-                      url: `${API_URL}/EVMswap`,
-                      method: "post",
-                      data: {
-                        tokenIn: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
-                        tokenOut: token0,
-                        chainId: "polygon",
-                        amount: finalAmt,
-                        chain: 137,
-                        chatId: chatId,
-                        desCode: "0x89",
-                        method: "Buy",
-                      },
-                    })
-                      .then(async (response) => {
-                        clearInterval(interval);
-                        await bot.deleteMessage(
-                          chatId,
-                          loaderMessage.message_id
-                        );
-                        if (response?.data?.status) {
-                          await bot.sendMessage(
-                            chatId,
-                            response?.data?.message
-                          );
-                          await bot.sendMessage(
-                            chatId,
-                            `https://polygonscan.com/tx/${response?.data?.tx}`
-                          );
-                        } else {
-                          await bot.sendMessage(
-                            chatId,
-                            response?.data?.message
-                          );
-                        }
+                if (flag == "137buy") {
+                  const { loaderMessage, interval } = await animateLoader(
+                    chatId
+                  );
+                  const tokenRes = await axios.post(
+                    `${API_URL}/getEvmTokenPrice`,
+                    {
+                      token: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
+                      token2: token0,
+                      chain: "0x89",
+                    }
+                  );
+                  const tokensPrice = tokenRes?.data?.finalRes;
+                  const buyAmt = amountIn * tokensPrice?.token2;
+                  const finalAmt = buyAmt / tokensPrice?.token1;
+                  if (tokenRes) {
+                    if (flag == "137buy") {
+                      await axios({
+                        url: `${API_URL}/EVMswap`,
+                        method: "post",
+                        data: {
+                          tokenIn: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
+                          tokenOut: token0,
+                          chainId: "polygon",
+                          amount: finalAmt,
+                          chain: 137,
+                          chatId: chatId,
+                          desCode: "0x89",
+                          method: "Buy",
+                        },
                       })
-                      .catch(async (error) => {
-                        clearInterval(interval);
-                        await bot.deleteMessage(
-                          chatId,
-                          loaderMessage.message_id
-                        );
-                        await bot.sendMessage(
-                          chatId,
-                          `due to some reason you transaction failed!!`
-                        );
-                      });
+                        .then(async (response) => {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
+                          if (response?.data?.status) {
+                            await bot.sendMessage(
+                              chatId,
+                              response?.data?.message
+                            );
+                            await bot.sendMessage(
+                              chatId,
+                              `https://polygonscan.com/tx/${response?.data?.tx}`
+                            );
+                          } else {
+                            await bot.sendMessage(
+                              chatId,
+                              response?.data?.message
+                            );
+                          }
+                        })
+                        .catch(async (error) => {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
+                          await bot.sendMessage(
+                            chatId,
+                            `due to some reason you transaction failed!!`
+                          );
+                        });
+                    }
                   }
                 }
               });
@@ -1562,8 +1656,90 @@ bot.on("callback_query", async (callbackQuery) => {
     case "8453buy":
       if (isUser) {
         flag = "8453buy";
+        await bot.sendMessage(chatId, "Type base token that you want to buy:");
         if (flag == "8453buy") {
-          await bot.sendMessage(chatId, "Base Ethereum is comming soon....");
+          bot.once("message", async (token0Msg) => {
+            const token0 = token0Msg.text;
+            if (flag == "8453buy") {
+              await bot.sendMessage(
+                chatId,
+                "Please enter the base token amount:"
+              );
+              if (flag == "8453buy") {
+                bot.once("message", async (amountInMsg) => {
+                  const amountIn = Number(amountInMsg.text);
+                  if (flag == "8453buy") {
+                    const { loaderMessage, interval } = await animateLoader(
+                      chatId
+                    );
+                    const tokenRes = await axios.post(
+                      `${API_URL}/getEvmTokenPrice`,
+                      {
+                        token: "0x4200000000000000000000000000000000000006",
+                        token2: token0,
+                        chain: "0x2105",
+                      }
+                    );
+                    const tokensPrice = tokenRes?.data?.finalRes;
+                    const buyAmt = amountIn * tokensPrice?.token2;
+                    const finalAmt = buyAmt / tokensPrice?.token1;
+                    if (tokenRes) {
+                      if (flag == "8453buy") {
+                        await axios({
+                          url: `${API_URL}/EVMswap`,
+                          method: "post",
+                          data: {
+                            tokenIn:
+                              "0x4200000000000000000000000000000000000006",
+                            tokenOut: token0,
+                            chainId: "base",
+                            amount: finalAmt,
+                            chain: 8453,
+                            chatId: chatId,
+                            desCode: "0x2105",
+                            method: "Buy",
+                          },
+                        })
+                          .then(async (response) => {
+                            clearInterval(interval);
+                            await bot.deleteMessage(
+                              chatId,
+                              loaderMessage.message_id
+                            );
+                            if (response?.data?.status) {
+                              await bot.sendMessage(
+                                chatId,
+                                response?.data?.message
+                              );
+                              await bot.sendMessage(
+                                chatId,
+                                `https://basescan.org/tx/${response?.data?.tx}`
+                              );
+                            } else {
+                              await bot.sendMessage(
+                                chatId,
+                                response?.data?.message
+                              );
+                            }
+                          })
+                          .catch(async (error) => {
+                            clearInterval(interval);
+                            await bot.deleteMessage(
+                              chatId,
+                              loaderMessage.message_id
+                            );
+                            await bot.sendMessage(
+                              chatId,
+                              `due to some reason you transaction failed!!`
+                            );
+                          });
+                      }
+                    }
+                  }
+                });
+              }
+            }
+          });
         }
       } else {
         await bot.sendMessage(chatId, "please login!!", {
@@ -1604,67 +1780,71 @@ bot.on("callback_query", async (callbackQuery) => {
             if (flag == "56buy") {
               bot.once("message", async (amountInMsg) => {
                 const amountIn = Number(amountInMsg.text);
-                const { loaderMessage, interval } = await animateLoader(chatId);
-                const tokenRes = await axios.post(
-                  `${API_URL}/getEvmTokenPrice`,
-                  {
-                    token: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
-                    token2: token0,
-                    chain: "0x38",
-                  }
-                );
-                const tokensPrice = tokenRes?.data?.finalRes;
-                const buyAmt = amountIn * tokensPrice?.token2;
-                const finalAmt = buyAmt / tokensPrice?.token1;
-                if (tokenRes) {
-                  if (flag == "56buy") {
-                    await axios({
-                      url: `${API_URL}/EVMswap`,
-                      method: "post",
-                      data: {
-                        tokenIn: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
-                        tokenOut: token0,
-                        chainId: "bsc",
-                        amount: finalAmt,
-                        chain: 56,
-                        chatId: chatId,
-                        desCode: "0x38",
-                        method: "Buy",
-                      },
-                    })
-                      .then(async (response) => {
-                        clearInterval(interval);
-                        await bot.deleteMessage(
-                          chatId,
-                          loaderMessage.message_id
-                        );
-                        if (response?.data?.status) {
-                          await bot.sendMessage(
-                            chatId,
-                            response?.data?.message
-                          );
-                          await bot.sendMessage(
-                            chatId,
-                            `https://bscscan.com/tx/${response?.data?.tx}`
-                          );
-                        } else {
-                          await bot.sendMessage(
-                            chatId,
-                            response?.data?.message
-                          );
-                        }
+                if (flag == "56buy") {
+                  const { loaderMessage, interval } = await animateLoader(
+                    chatId
+                  );
+                  const tokenRes = await axios.post(
+                    `${API_URL}/getEvmTokenPrice`,
+                    {
+                      token: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
+                      token2: token0,
+                      chain: "0x38",
+                    }
+                  );
+                  const tokensPrice = tokenRes?.data?.finalRes;
+                  const buyAmt = amountIn * tokensPrice?.token2;
+                  const finalAmt = buyAmt / tokensPrice?.token1;
+                  if (tokenRes) {
+                    if (flag == "56buy") {
+                      await axios({
+                        url: `${API_URL}/EVMswap`,
+                        method: "post",
+                        data: {
+                          tokenIn: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
+                          tokenOut: token0,
+                          chainId: "bsc",
+                          amount: finalAmt,
+                          chain: 56,
+                          chatId: chatId,
+                          desCode: "0x38",
+                          method: "Buy",
+                        },
                       })
-                      .catch(async (error) => {
-                        clearInterval(interval);
-                        await bot.deleteMessage(
-                          chatId,
-                          loaderMessage.message_id
-                        );
-                        await bot.sendMessage(
-                          chatId,
-                          `due to some reason you transaction failed!!`
-                        );
-                      });
+                        .then(async (response) => {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
+                          if (response?.data?.status) {
+                            await bot.sendMessage(
+                              chatId,
+                              response?.data?.message
+                            );
+                            await bot.sendMessage(
+                              chatId,
+                              `https://bscscan.com/tx/${response?.data?.tx}`
+                            );
+                          } else {
+                            await bot.sendMessage(
+                              chatId,
+                              response?.data?.message
+                            );
+                          }
+                        })
+                        .catch(async (error) => {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
+                          await bot.sendMessage(
+                            chatId,
+                            `due to some reason you transaction failed!!`
+                          );
+                        });
+                    }
                   }
                 }
               });
@@ -1710,70 +1890,76 @@ bot.on("callback_query", async (callbackQuery) => {
             if (flag == "43114buy") {
               bot.once("message", async (amountInMsg) => {
                 const amountIn = Number(amountInMsg.text);
-                const { loaderMessage, interval } = await animateLoader(chatId);
-                const tokenRes = await axios.post(
-                  `${API_URL}/getEvmTokenPrice`,
-                  {
-                    token: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
-                    token2: token0,
-                    chain: "0xa86a",
-                  }
-                );
-                const tokensPrice = tokenRes?.data?.finalRes;
-                const buyAmt = amountIn * tokensPrice?.token2;
-                const finalAmt = buyAmt / tokensPrice?.token1;
-                if (finalAmt) {
-                  if (flag == "43114buy") {
-                    await axios({
-                      url: `${API_URL}/EVMswap`,
-                      method: "post",
-                      data: {
-                        tokenIn: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
-                        tokenOut: token0,
-                        chainId: "avalanche",
-                        amount: finalAmt,
-                        chain: 43114,
-                        chatId: chatId,
-                        desCode: "0xa86a",
-                        method: "Buy",
-                      },
-                    })
-                      .then(async (response) => {
-                        clearInterval(interval);
-                        await bot.deleteMessage(
-                          chatId,
-                          loaderMessage.message_id
-                        );
-                        if (response?.data?.status) {
-                          await bot.sendMessage(
-                            chatId,
-                            response?.data?.message
-                          );
-                          await bot.sendMessage(
-                            chatId,
-                            `https://avascan.info/blockchain/c/tx/${response?.data?.tx}`
-                          );
-                        } else {
-                          await bot.sendMessage(
-                            chatId,
-                            response?.data?.message
-                          );
-                        }
+                if (flag == "43114buy") {
+                  const { loaderMessage, interval } = await animateLoader(
+                    chatId
+                  );
+                  const tokenRes = await axios.post(
+                    `${API_URL}/getEvmTokenPrice`,
+                    {
+                      token: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
+                      token2: token0,
+                      chain: "0xa86a",
+                    }
+                  );
+                  const tokensPrice = tokenRes?.data?.finalRes;
+                  const buyAmt = amountIn * tokensPrice?.token2;
+                  const finalAmt = buyAmt / tokensPrice?.token1;
+                  if (finalAmt) {
+                    if (flag == "43114buy") {
+                      await axios({
+                        url: `${API_URL}/EVMswap`,
+                        method: "post",
+                        data: {
+                          tokenIn: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
+                          tokenOut: token0,
+                          chainId: "avalanche",
+                          amount: finalAmt,
+                          chain: 43114,
+                          chatId: chatId,
+                          desCode: "0xa86a",
+                          method: "Buy",
+                        },
                       })
-                      .catch(async (error) => {
-                        clearInterval(interval);
-                        await bot.deleteMessage(
-                          chatId,
-                          loaderMessage.message_id
-                        );
-                        await bot.sendMessage(
-                          chatId,
-                          `due to some reason you transaction failed!!`
-                        );
-                      });
+                        .then(async (response) => {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
+                          if (response?.data?.status) {
+                            await bot.sendMessage(
+                              chatId,
+                              response?.data?.message
+                            );
+                            await bot.sendMessage(
+                              chatId,
+                              `https://avascan.info/blockchain/c/tx/${response?.data?.tx}`
+                            );
+                          } else {
+                            await bot.sendMessage(
+                              chatId,
+                              response?.data?.message
+                            );
+                          }
+                        })
+                        .catch(async (error) => {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
+                          await bot.sendMessage(
+                            chatId,
+                            `due to some reason you transaction failed!!`
+                          );
+                        });
+                    }
+                  } else {
+                    clearInterval(interval);
+                    await bot.deleteMessage(chatId, loaderMessage.message_id);
+                    await bot.sendMessage(chatId, `token is not supported!!`);
                   }
-                } else {
-                  await bot.sendMessage(chatId, `token is not supported!!`);
                 }
               });
             }
@@ -1821,67 +2007,71 @@ bot.on("callback_query", async (callbackQuery) => {
             if (flag == "25buy") {
               bot.once("message", async (amountInMsg) => {
                 const amountIn = Number(amountInMsg.text);
-                const { loaderMessage, interval } = await animateLoader(chatId);
-                const tokenRes = await axios.post(
-                  `${API_URL}/getEvmTokenPrice`,
-                  {
-                    token: "0x5C7F8A570d578ED84E63fdFA7b1eE72dEae1AE23",
-                    token2: token0,
-                    chain: "0x19",
-                  }
-                );
-                const tokensPrice = tokenRes?.data?.finalRes;
-                const buyAmt = amountIn * tokensPrice?.token2;
-                const finalAmt = buyAmt / tokensPrice?.token1;
-                if (tokenRes) {
-                  if (flag == "25buy") {
-                    await axios({
-                      url: `${API_URL}/EVMswap`,
-                      method: "post",
-                      data: {
-                        tokenIn: "0x5C7F8A570d578ED84E63fdFA7b1eE72dEae1AE23",
-                        tokenOut: token0,
-                        chainId: "cronos",
-                        amount: finalAmt,
-                        chain: 25,
-                        chatId: chatId,
-                        desCode: "0x19",
-                        method: "Buy",
-                      },
-                    })
-                      .then(async (response) => {
-                        clearInterval(interval);
-                        await bot.deleteMessage(
-                          chatId,
-                          loaderMessage.message_id
-                        );
-                        if (response?.data?.status) {
-                          await bot.sendMessage(
-                            chatId,
-                            response?.data?.message
-                          );
-                          await bot.sendMessage(
-                            chatId,
-                            `https://cronoscan.com/tx/${response?.data?.tx}`
-                          );
-                        } else {
-                          await bot.sendMessage(
-                            chatId,
-                            response?.data?.message
-                          );
-                        }
+                if (flag == "25buy") {
+                  const { loaderMessage, interval } = await animateLoader(
+                    chatId
+                  );
+                  const tokenRes = await axios.post(
+                    `${API_URL}/getEvmTokenPrice`,
+                    {
+                      token: "0x5C7F8A570d578ED84E63fdFA7b1eE72dEae1AE23",
+                      token2: token0,
+                      chain: "0x19",
+                    }
+                  );
+                  const tokensPrice = tokenRes?.data?.finalRes;
+                  const buyAmt = amountIn * tokensPrice?.token2;
+                  const finalAmt = buyAmt / tokensPrice?.token1;
+                  if (tokenRes) {
+                    if (flag == "25buy") {
+                      await axios({
+                        url: `${API_URL}/EVMswap`,
+                        method: "post",
+                        data: {
+                          tokenIn: "0x5C7F8A570d578ED84E63fdFA7b1eE72dEae1AE23",
+                          tokenOut: token0,
+                          chainId: "cronos",
+                          amount: finalAmt,
+                          chain: 25,
+                          chatId: chatId,
+                          desCode: "0x19",
+                          method: "Buy",
+                        },
                       })
-                      .catch(async (error) => {
-                        clearInterval(interval);
-                        await bot.deleteMessage(
-                          chatId,
-                          loaderMessage.message_id
-                        );
-                        await bot.sendMessage(
-                          chatId,
-                          `due to some reason you transaction failed!!`
-                        );
-                      });
+                        .then(async (response) => {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
+                          if (response?.data?.status) {
+                            await bot.sendMessage(
+                              chatId,
+                              response?.data?.message
+                            );
+                            await bot.sendMessage(
+                              chatId,
+                              `https://cronoscan.com/tx/${response?.data?.tx}`
+                            );
+                          } else {
+                            await bot.sendMessage(
+                              chatId,
+                              response?.data?.message
+                            );
+                          }
+                        })
+                        .catch(async (error) => {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
+                          await bot.sendMessage(
+                            chatId,
+                            `due to some reason you transaction failed!!`
+                          );
+                        });
+                    }
                   }
                 }
               });
@@ -1930,67 +2120,71 @@ bot.on("callback_query", async (callbackQuery) => {
             if (flag == "250buy") {
               bot.once("message", async (amountInMsg) => {
                 const amountIn = Number(amountInMsg.text);
-                const { loaderMessage, interval } = await animateLoader(chatId);
-                const tokenRes = await axios.post(
-                  `${API_URL}/getEvmTokenPrice`,
-                  {
-                    token: "0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83",
-                    token2: token0,
-                    chain: "0xfa",
-                  }
-                );
-                const tokensPrice = tokenRes?.data?.finalRes;
-                const buyAmt = amountIn * tokensPrice?.token2;
-                const finalAmt = buyAmt / tokensPrice?.token1;
-                if (tokenRes) {
-                  if (flag == "250buy") {
-                    await axios({
-                      url: `${API_URL}/EVMswap`,
-                      method: "post",
-                      data: {
-                        tokenIn: "0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83",
-                        tokenOut: token0,
-                        chainId: "fantom",
-                        amount: finalAmt,
-                        chain: 250,
-                        chatId: chatId,
-                        desCode: "0xfa",
-                        method: "Buy",
-                      },
-                    })
-                      .then(async (response) => {
-                        clearInterval(interval);
-                        await bot.deleteMessage(
-                          chatId,
-                          loaderMessage.message_id
-                        );
-                        if (response?.data?.status) {
-                          await bot.sendMessage(
-                            chatId,
-                            response?.data?.message
-                          );
-                          await bot.sendMessage(
-                            chatId,
-                            `https://ftmscan.com/tx/${response?.data?.tx}`
-                          );
-                        } else {
-                          await bot.sendMessage(
-                            chatId,
-                            response?.data?.message
-                          );
-                        }
+                if (flag == "250buy") {
+                  const { loaderMessage, interval } = await animateLoader(
+                    chatId
+                  );
+                  const tokenRes = await axios.post(
+                    `${API_URL}/getEvmTokenPrice`,
+                    {
+                      token: "0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83",
+                      token2: token0,
+                      chain: "0xfa",
+                    }
+                  );
+                  const tokensPrice = tokenRes?.data?.finalRes;
+                  const buyAmt = amountIn * tokensPrice?.token2;
+                  const finalAmt = buyAmt / tokensPrice?.token1;
+                  if (tokenRes) {
+                    if (flag == "250buy") {
+                      await axios({
+                        url: `${API_URL}/EVMswap`,
+                        method: "post",
+                        data: {
+                          tokenIn: "0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83",
+                          tokenOut: token0,
+                          chainId: "fantom",
+                          amount: finalAmt,
+                          chain: 250,
+                          chatId: chatId,
+                          desCode: "0xfa",
+                          method: "Buy",
+                        },
                       })
-                      .catch(async (error) => {
-                        clearInterval(interval);
-                        await bot.deleteMessage(
-                          chatId,
-                          loaderMessage.message_id
-                        );
-                        await bot.sendMessage(
-                          chatId,
-                          `due to some reason you transaction failed!!`
-                        );
-                      });
+                        .then(async (response) => {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
+                          if (response?.data?.status) {
+                            await bot.sendMessage(
+                              chatId,
+                              response?.data?.message
+                            );
+                            await bot.sendMessage(
+                              chatId,
+                              `https://ftmscan.com/tx/${response?.data?.tx}`
+                            );
+                          } else {
+                            await bot.sendMessage(
+                              chatId,
+                              response?.data?.message
+                            );
+                          }
+                        })
+                        .catch(async (error) => {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
+                          await bot.sendMessage(
+                            chatId,
+                            `due to some reason you transaction failed!!`
+                          );
+                        });
+                    }
                   }
                 }
               });
@@ -2116,8 +2310,71 @@ bot.on("callback_query", async (callbackQuery) => {
     case "1sell":
       if (isUser) {
         flag = "1sell";
+        await bot.sendMessage(chatId, "Enter Eth token that you want to sell:");
         if (flag == "1sell") {
-          await bot.sendMessage(chatId, "Ethereum is comming soon!!");
+          bot.once("message", async (token1Msg) => {
+            const token1 = token1Msg.text;
+            if (flag == "1sell") {
+              await bot.sendMessage(chatId, "Please enter the sell amount :");
+              if (flag == "1sell") {
+                bot.once("message", async (amountInMsg) => {
+                  const amountIn = Number(amountInMsg.text);
+                  if (flag == "1sell") {
+                    const { loaderMessage, interval } = await animateLoader(
+                      chatId
+                    );
+                    await axios({
+                      url: `${API_URL}/EVMswap`,
+                      method: "post",
+                      data: {
+                        tokenIn: token1,
+                        tokenOut: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+                        chainId: "ethereum",
+                        amount: amountIn,
+                        chain: 1,
+                        chatId: chatId,
+                        desCode: "0x1",
+                        method: "Sell",
+                      },
+                    })
+                      .then(async (response) => {
+                        clearInterval(interval);
+                        await bot.deleteMessage(
+                          chatId,
+                          loaderMessage.message_id
+                        );
+                        if (response?.data?.status) {
+                          await bot.sendMessage(
+                            chatId,
+                            response?.data?.message
+                          );
+                          await bot.sendMessage(
+                            chatId,
+                            `https://etherscan.io/tx/${response?.data?.tx}`
+                          );
+                        } else {
+                          await bot.sendMessage(
+                            chatId,
+                            response?.data?.message
+                          );
+                        }
+                      })
+                      .catch(async (error) => {
+                        clearInterval(interval);
+                        await bot.deleteMessage(
+                          chatId,
+                          loaderMessage.message_id
+                        );
+                        await bot.sendMessage(
+                          chatId,
+                          `due to some reason you transaction failed!!`
+                        );
+                      });
+                  }
+                });
+              }
+            }
+          });
         }
       } else {
         await bot.sendMessage(chatId, "please login!!", {
@@ -2397,8 +2654,71 @@ bot.on("callback_query", async (callbackQuery) => {
     case "8453sell":
       if (isUser) {
         flag = "8453sell";
+        await bot.sendMessage(chatId, "Type Base token that you want to sell:");
         if (flag == "8453sell") {
-          await bot.sendMessage(chatId, "Base is comming soon!!");
+          bot.once("message", async (token0Msg) => {
+            const token0 = token0Msg.text;
+            if (flag == "8453sell") {
+              await bot.sendMessage(chatId, "Please enter the amount:");
+              if (flag == "8453sell") {
+                bot.once("message", async (amountInMsg) => {
+                  const amountIn = Number(amountInMsg.text);
+                  if (flag == "8453sell") {
+                    const { loaderMessage, interval } = await animateLoader(
+                      chatId
+                    );
+                    await axios({
+                      url: `${API_URL}/EVMswap`,
+                      method: "post",
+                      data: {
+                        tokenIn: token0,
+                        tokenOut: "0x4200000000000000000000000000000000000006",
+                        chainId: "base",
+                        amount: amountIn,
+                        chain: 8453,
+                        chatId: chatId,
+                        desCode: "0x2105",
+                        method: "Sell",
+                      },
+                    })
+                      .then(async (response) => {
+                        clearInterval(interval);
+                        await bot.deleteMessage(
+                          chatId,
+                          loaderMessage.message_id
+                        );
+                        if (response?.data?.status) {
+                          await bot.sendMessage(
+                            chatId,
+                            response?.data?.message
+                          );
+                          await bot.sendMessage(
+                            chatId,
+                            `https://basescan.org/tx/${response?.data?.tx}`
+                          );
+                        } else {
+                          await bot.sendMessage(
+                            chatId,
+                            response?.data?.message
+                          );
+                        }
+                      })
+                      .catch(async (error) => {
+                        clearInterval(interval);
+                        await bot.deleteMessage(
+                          chatId,
+                          loaderMessage.message_id
+                        );
+                        await bot.sendMessage(
+                          chatId,
+                          `due to some reason you transaction failed!!`
+                        );
+                      });
+                  }
+                });
+              }
+            }
+          });
         }
       } else {
         await bot.sendMessage(chatId, "please login!!", {
