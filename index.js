@@ -4683,6 +4683,118 @@ bot.on("callback_query", async (callbackQuery) => {
       }
       break;
     // ------------------------------------------------------ transfer token --------------------------------------------------------
+    case "solwithraw":
+      if (isUser) {
+        flag = "solwithraw";
+        await bot.sendMessage(
+          chatId,
+          "Enter sol token address that you want to transfer:"
+        );
+        if (flag == "solwithraw") {
+          bot.once("message", async (token0Msg) => {
+            const token = token0Msg.text;
+            if (flag == "solwithraw") {
+              await bot.sendMessage(
+                chatId,
+                "Enter the wallet address where you want to get transferred tokens:"
+              );
+            }
+            if (flag == "solwithraw") {
+              await bot.once("message", async (toWalletAdd) => {
+                const toWallet = toWalletAdd.text;
+                if (flag == "solwithraw") {
+                  await bot.sendMessage(chatId, `Enter amount`);
+                  if (flag == "solwithraw") {
+                    await bot.once("message", async (amountIn) => {
+                      const amount = Number(amountIn.text);
+                      if (flag == "solwithraw") {
+                        const { loaderMessage, interval } = await animateLoader(
+                          chatId
+                        );
+                        if (flag == "solwithraw") {
+                          await axios({
+                            url: `${API_URL}/transferSolanaToken`,
+                            method: "post",
+                            data: {
+                              chatId,
+                              toWallet: toWallet,
+                              token: token,
+                              amount: amount,
+                            },
+                          })
+                            .then(async (res) => {
+                              clearInterval(interval);
+                              await bot.deleteMessage(
+                                chatId,
+                                loaderMessage.message_id
+                              );
+                              if (res?.data?.status) {
+                                console.log(
+                                  "🚀 ~ .then ~ res?.data?.tx:",
+                                  res?.data?.tx
+                                );
+                                await bot.sendMessage(
+                                  chatId,
+                                  res?.data?.message
+                                );
+                                await bot.sendMessage(
+                                  chatId,
+                                  `https://solscan.io/tx/${res?.data?.tx}`
+                                );
+                              } else {
+                                await bot.sendMessage(
+                                  chatId,
+                                  res?.data?.message
+                                );
+                              }
+                            })
+                            .catch(async (error) => {
+                              clearInterval(interval);
+                              await bot.deleteMessage(
+                                chatId,
+                                loaderMessage.message_id
+                              );
+                              console.log("🚀 ~ awaitbot.once ~ error:", error);
+                              await bot.sendMessage(
+                                chatId,
+                                "due to high transaction volume in solana you transaction has been faild!!"
+                              );
+                            });
+                        }
+                      }
+                    });
+                  }
+                }
+              });
+            }
+          });
+        }
+      } else {
+        await bot.sendMessage(chatId, "please login!!", {
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "SignUp",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              //[{ text: 'Start', request_contact: false, request_location: false }],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        });
+      }
+      break;
     case "1withraw":
       if (isUser) {
         flag = "1withraw";
@@ -4701,7 +4813,7 @@ bot.on("callback_query", async (callbackQuery) => {
             }
             if (flag == "1withraw") {
               await bot.once("message", async (toWalletAdd) => {
-                const toWallet = Number(toWalletAdd.text);
+                const toWallet = toWalletAdd.text;
                 if (flag == "1withraw") {
                   await bot.sendMessage(chatId, `Enter amount`);
                   if (flag == "1withraw") {
