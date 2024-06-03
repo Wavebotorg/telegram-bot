@@ -3,16 +3,12 @@ require("dotenv").config();
 const { default: axios } = require("axios");
 const express = require("express");
 const app = express();
-
 const PORT = process.env.PORT || 3333;
 const TOKEN = process.env.TOKEN; // Telegram Token
 const API_URL = process.env.BACKEND_URL; // Backend URL
-
 const bot = new TelegramBot(TOKEN, { polling: true });
-
 // ================================ main flag ===========================================
 let flag = null;
-
 let isSigningUp = false;
 let isLoggingIn = false;
 // main keyboard
@@ -40,7 +36,6 @@ const buyKeyboard = {
     ],
   ],
 };
-
 // wallet balance keyboard
 const evmWalletBalance = {
   inline_keyboard: [
@@ -61,7 +56,6 @@ const evmWalletBalance = {
     ],
   ],
 };
-
 // wallet addresses keyboard
 const walletAddressKeyboard = {
   inline_keyboard: [
@@ -83,7 +77,6 @@ const walletAddressKeyboard = {
     ],
   ],
 };
-
 // swap keyboard
 const blockchainKeyboard = {
   inline_keyboard: [
@@ -105,7 +98,6 @@ const blockchainKeyboard = {
     ],
   ],
 };
-
 // buy token keyboard
 const buyblockchainKeyboard = {
   inline_keyboard: [
@@ -127,7 +119,6 @@ const buyblockchainKeyboard = {
     ],
   ],
 };
-
 // sell token keyboard
 const sellblockchainKeyboard = {
   inline_keyboard: [
@@ -149,7 +140,6 @@ const sellblockchainKeyboard = {
     ],
   ],
 };
-
 // withraw token keyboard
 const withrawblockchainKeyboard = {
   inline_keyboard: [
@@ -171,46 +161,43 @@ const withrawblockchainKeyboard = {
     ],
   ],
 };
-
 // animation function
-
 const animateLoader = async (chatId) => {
-  const frames = ["⏳", "⌛", "⏳", "⌛"];
-  let index = 0;
-  const loaderMessage = await bot.sendMessage(
-    chatId,
-    frames[index % frames.length]
-  );
-
-  const interval = setInterval(async () => {
-    index++;
-    try {
-      await bot.editMessageText(frames[index % frames.length], {
-        chat_id: chatId,
-        message_id: loaderMessage.message_id,
-      });
-    } catch (error) {
-      clearInterval(interval); // Ensure the interval is cleared on error
-      console.error("Error updating loader message:", error);
-    }
-  }, 500);
-
-  return { loaderMessage, interval };
+  try {
+    const frames = ["⏳", "⌛", "⏳", "⌛"];
+    let index = 0;
+    const loaderMessage = await bot.sendMessage(
+      chatId,
+      frames[index % frames.length]
+    );
+    const interval = setInterval(async () => {
+      index++;
+      try {
+        await bot.editMessageText(frames[index % frames.length], {
+          chat_id: chatId,
+          message_id: loaderMessage.message_id,
+        });
+      } catch (error) {
+        clearInterval(interval); // Ensure the interval is cleared on error
+        console.error("Error updating loader message:", error);
+      }
+    }, 500);
+    return { loaderMessage, interval };
+  } catch (error) {
+    console.log("🚀 ~ animateLoader ~ error:", error);
+  }
 };
-
 // Email Validation
 const isValidEmail = (email) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 };
-
 //Password Validation
 const isValidPassword = (password) => {
   const passwordRegex =
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
   return passwordRegex.test(password);
 };
-
 // Signup Funaction
 const startNameRegistration = async (chatId) => {
   await bot.sendMessage(chatId, "👋 Welcome! Please provide your name:");
@@ -229,7 +216,6 @@ const startNameRegistration = async (chatId) => {
     });
   }
 };
-
 // Signup Funaction
 const startEmailRegistration = (chatId, name) => {
   bot.once("message", async (emailMsg) => {
@@ -254,7 +240,6 @@ const startEmailRegistration = (chatId, name) => {
     }
   });
 };
-
 // Signup Funaction
 const startPasswordRegistration = (chatId, name, email) => {
   bot.once("message", async (passwordMsg) => {
@@ -272,7 +257,6 @@ const startPasswordRegistration = (chatId, name, email) => {
         }
       }
     }
-
     if (isSigningUp) {
       await bot.sendMessage(chatId, "Got it! Please confirm your password:");
     }
@@ -281,7 +265,6 @@ const startPasswordRegistration = (chatId, name, email) => {
     }
   });
 };
-
 // get evm qr code
 async function getQrCode(chatId, wallet) {
   await axios({
@@ -301,7 +284,6 @@ async function getQrCode(chatId, wallet) {
     }
   });
 }
-
 // Signup Funaction
 const startConfirmPasswordRegistration = (chatId, name, email, password) => {
   bot.once("message", async (confirmPasswordMsg) => {
@@ -376,7 +358,6 @@ const startConfirmPasswordRegistration = (chatId, name, email, password) => {
     }
   });
 };
-
 // Otp Varification
 const startOTPVerification = (chatId, email) => {
   console.log("------------------------------------");
@@ -410,11 +391,9 @@ const startOTPVerification = (chatId, email) => {
     }
   });
 };
-
 // Star Login
 const startEmailLogin = async (chatId) => {
   await bot.sendMessage(chatId, "🔐 Please enter your email to log in:");
-
   if (isLoggingIn) {
     bot.once("message", async (emailMsg) => {
       const email = emailMsg.text;
@@ -424,7 +403,6 @@ const startEmailLogin = async (chatId) => {
     });
   }
 };
-
 // star Login
 const startPasswordLogin = async (chatId, email) => {
   await bot.sendMessage(chatId, "🔑 Please enter your password:");
@@ -474,19 +452,16 @@ const startPasswordLogin = async (chatId, email) => {
     });
   }
 };
-
 // Start Swap
 const startSwapProcess = async (chatId) => {
   await bot.sendMessage(
     chatId,
     `🌟 Choose a blockchain 🌟
-
   Great! Let's get started. Please select your preferred blockchain 
   from the options below:`,
     { reply_markup: JSON.stringify(blockchainKeyboard) }
   );
 };
-
 // get email address and wallet address from backend
 async function getEmailAndWalletFromBackend(chatId) {
   try {
@@ -504,13 +479,11 @@ async function getEmailAndWalletFromBackend(chatId) {
     await bot.sendMessage(chatId, "An error occurred while fetching data."); // Sending an error message
   }
 }
-
 // Buy Token
 const buyStartTokenSelection = async (chatId) => {
   await bot.sendMessage(
     chatId,
     `🌟 Choose a blockchain 🌟
-
   Great! Let's get started. Please select your preferred blockchain 
   from the options below:`,
     {
@@ -523,7 +496,6 @@ const walletAddressSelection = async (chatId) => {
   await bot.sendMessage(
     chatId,
     `🌟 Choose a blockchain 🌟
-
   Great! Let's get started. Please select your preferred blockchain 
   from the options below:`,
     {
@@ -531,13 +503,11 @@ const walletAddressSelection = async (chatId) => {
     }
   );
 };
-
 // Sell Token
 const sellStartTokenSelection = async (chatId) => {
   await bot.sendMessage(
     chatId,
     `🌟 Choose a blockchain 🌟
-
   Great! Let's get started. Please select your preferred blockchain 
   from the options below:`,
     {
@@ -550,7 +520,6 @@ const withrawStartTokenSelection = async (chatId) => {
   await bot.sendMessage(
     chatId,
     `🌟 Choose a blockchain 🌟
-
   Great! Let's get started. Please select your preferred blockchain 
   from the options below:`,
     {
@@ -558,7 +527,6 @@ const withrawStartTokenSelection = async (chatId) => {
     }
   );
 };
-
 //Logout
 async function logoutfunaction(chatId) {
   try {
@@ -573,7 +541,6 @@ async function logoutfunaction(chatId) {
     await bot.sendMessage(chatId, "An error occurred while fetching data."); // Sending an error message
   }
 }
-
 //Send welcome Msg
 async function sendWelcomeMessage(chatId) {
   const isUser = await getstartBot(chatId);
@@ -586,7 +553,6 @@ async function sendWelcomeMessage(chatId) {
   await bot.sendMessage(
     chatId,
     `👋 Welcome to the Wavebot! 👋
-  
   Thank you for joining us! To get started, simply press start Button. 
   Our bot is here to assist you with anything you need!🤖💬`,
     {
@@ -598,13 +564,11 @@ async function sendWelcomeMessage(chatId) {
     }
   );
 }
-
 //Send welcome Msg
 async function sendWelcomeMessage2(chatId) {
   const keyboard = [
     [{ text: "Start", request_contact: false, request_location: false }],
   ];
-
   await bot.sendMessage(chatId, `👋 Welcome to the Wavebot!👋`, {
     reply_markup: {
       keyboard: keyboard,
@@ -613,7 +577,6 @@ async function sendWelcomeMessage2(chatId) {
     },
   });
 }
-
 // Function to start the bot session
 async function loginLogOutButton(chatId) {
   await bot.sendMessage(chatId, `👋please login!!👋`, {
@@ -627,7 +590,6 @@ async function loginLogOutButton(chatId) {
     },
   });
 }
-
 // get User Data
 async function getstartBot(chatId) {
   try {
@@ -643,37 +605,48 @@ async function getstartBot(chatId) {
 }
 // transfer token function
 async function transferEvmToken(chatId, token, toWallet, chain, amount) {
-  const receipt = await axios({
-    url: `${API_URL}/transferEvmToken`,
-    method: "post",
-    data: {
-      chatId,
-      token,
-      toWallet,
-      chain,
-      amount,
-    },
-  });
-  if (!receipt?.data?.status) {
-    console.log("🚀 ~ transferEvmToken ~ receipt:", receipt);
-    return null;
+  try {
+    const { loaderMessage, interval } = await animateLoader(chatId);
+    const receipt = await axios({
+      url: `${API_URL}/transferEvmToken`,
+      method: "post",
+      data: {
+        chatId,
+        token,
+        toWallet,
+        chain,
+        amount,
+      },
+    });
+    clearInterval(interval);
+    if (loaderMessage) {
+      await bot.deleteMessage(chatId, loaderMessage.message_id);
+    }
+    if (!receipt?.data?.status) {
+      console.log("🚀 ~ transferEvmToken ~ receipt:", receipt);
+      return null;
+    }
+    return receipt?.data;
+  } catch (error) {
+    clearInterval(interval);
+    if (loaderMessage) {
+      await bot.deleteMessage(chatId, loaderMessage.message_id);
+    }
+    console.log("🚀 ~ transferEvmToken ~ error:", error);
   }
-  return receipt?.data;
 }
 // Function to start the bot session
 async function start(chatId) {
   flag = null;
   const userInfo = await getEmailAndWalletFromBackend(chatId);
-
   if (userInfo?.email) {
     const messageText = `Welcome to WaveBot! 🌊\n
-      🌊 WaveBot(https://wavebot.app/)\n
-      📖 Dashboard(https://dashboard.wavebot.app/)\n
-      🌐 Website(https://marketing-dashboard-d22655001f93.herokuapp.com/)
-      ‧‧────────────────‧‧
-      *Your Email Address: ${userInfo?.email}\n
-      *Your Wallet Address (EVM): ${userInfo?.EVMwallet}\n
-      *Your Wallet Address (Solana): ${userInfo?.solanaWallets}`;
+  🌊 WaveBot(https://wavebot.app/)\n
+  🌐 Website(https://marketing-dashboard-d22655001f93.herokuapp.com/)
+  ‧‧────────────────‧‧
+  *Your Email Address: ${userInfo?.email}\n
+  *Your Wallet Address (EVM): ${userInfo?.EVMwallet}\n
+  *Your Wallet Address (Solana): ${userInfo?.solanaWallets}`;
     await bot.sendMessage(chatId, messageText, {
       reply_markup: JSON.stringify(buyKeyboard),
     });
@@ -681,11 +654,9 @@ async function start(chatId) {
     await loginLogOutButton(chatId);
   }
 }
-
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
-
   // Handle '/start' command
   if (msg.text === "/start") {
     isLoggingIn = false;
@@ -726,7 +697,6 @@ bot.on("message", async (msg) => {
   //   await bot.sendMessage(chatId, `You typed: ${msg.text}`);
   // }
 });
-
 // Function to fetch Solana balance
 async function fetchSolanaBalance(chatId) {
   try {
@@ -735,7 +705,6 @@ async function fetchSolanaBalance(chatId) {
     });
     const balances = response?.data?.data;
     let message = "Your Solana Wallet balances:\n\n";
-
     if (balances && balances.length > 0) {
       balances?.slice(0, 4)?.forEach((balance) => {
         message += `Token Name: ${balance.name}\n`;
@@ -755,7 +724,6 @@ async function fetchSolanaBalance(chatId) {
     );
   }
 }
-
 // Function to fetch token balances
 async function fetchTokenBalances(chatId, chainId) {
   try {
@@ -779,9 +747,7 @@ async function fetchTokenBalances(chatId, chainId) {
     );
   }
 }
-
 // all keyborad button handler
-
 bot.on("callback_query", async (callbackQuery) => {
   const chatId = callbackQuery.message.chat.id;
   const messageId = callbackQuery.message.message_id;
@@ -848,7 +814,6 @@ bot.on("callback_query", async (callbackQuery) => {
         });
       }
       break;
-
     case "SolonabalanceButton":
       if (isUser) {
         flag = null;
@@ -879,7 +844,6 @@ bot.on("callback_query", async (callbackQuery) => {
         });
       }
       break;
-
     case "balanceButton":
       if (isUser) {
         flag = null;
@@ -912,7 +876,6 @@ bot.on("callback_query", async (callbackQuery) => {
         });
       }
       break;
-
     case "logoutButton":
       if (isUser) {
         isSigningUp = false;
@@ -970,7 +933,6 @@ bot.on("callback_query", async (callbackQuery) => {
         });
       }
       break;
-
     case "buyButton":
       if (isUser) {
         isSwap = false;
@@ -1002,7 +964,6 @@ bot.on("callback_query", async (callbackQuery) => {
         });
       }
       break;
-
     case "sellButton":
       if (isUser) {
         flag = null;
@@ -1093,14 +1054,11 @@ bot.on("callback_query", async (callbackQuery) => {
         });
       }
       break;
-
     case "refreshButton":
       flag = null;
       await start(chatId);
       break;
-
     // -------------------------------------------------- buy ------------------------------------------------------
-
     case "solBuy":
       if (isUser) {
         flag = "solBuy";
@@ -1198,7 +1156,6 @@ bot.on("callback_query", async (callbackQuery) => {
         });
       }
       break;
-
     case "42161buy":
       if (isUser) {
         flag = "42161buy";
@@ -1316,7 +1273,6 @@ bot.on("callback_query", async (callbackQuery) => {
         });
       }
       break;
-
     case "1buy":
       if (isUser) {
         flag = "1buy";
@@ -1431,7 +1387,6 @@ bot.on("callback_query", async (callbackQuery) => {
         });
       }
       break;
-
     case "10buy":
       if (isUser) {
         flag = "10buy";
@@ -1542,7 +1497,6 @@ bot.on("callback_query", async (callbackQuery) => {
         });
       }
       break;
-
     case "137buy":
       if (isUser) {
         flag = "137buy";
@@ -2217,9 +2171,7 @@ bot.on("callback_query", async (callbackQuery) => {
         });
       }
       break;
-
     // ------------------------------------------------ sell -----------------------------------------------------------
-
     case "solSell":
       if (isUser) {
         flag = "solSell";
@@ -2306,7 +2258,6 @@ bot.on("callback_query", async (callbackQuery) => {
         });
       }
       break;
-
     case "1sell":
       if (isUser) {
         flag = "1sell";
@@ -2912,7 +2863,6 @@ bot.on("callback_query", async (callbackQuery) => {
         });
       }
       break;
-
     case "25sell":
       if (isUser) {
         flag = "25sell";
@@ -3085,9 +3035,7 @@ bot.on("callback_query", async (callbackQuery) => {
         });
       }
       break;
-
     // ---------------------------------------------------------------- swap --------------------------------------------------------
-
     case "solana":
       if (isUser) {
         flag = "solana";
@@ -3194,9 +3142,7 @@ bot.on("callback_query", async (callbackQuery) => {
           },
         });
       }
-
       break;
-
     case "1":
       if (isUser) {
         flag = "1";
@@ -3414,7 +3360,6 @@ bot.on("callback_query", async (callbackQuery) => {
         });
       }
       break;
-
     case "10":
       if (isUser) {
         flag = "10";
@@ -3521,7 +3466,6 @@ bot.on("callback_query", async (callbackQuery) => {
         });
       }
       break;
-
     case "137":
       if (isUser) {
         flag = "137";
@@ -3628,7 +3572,6 @@ bot.on("callback_query", async (callbackQuery) => {
         });
       }
       break;
-
     case "8453":
       if (isUser) {
         flag = "8453";
@@ -3735,7 +3678,6 @@ bot.on("callback_query", async (callbackQuery) => {
         });
       }
       break;
-
     case "56":
       if (isUser) {
         flag = "56";
@@ -3842,7 +3784,6 @@ bot.on("callback_query", async (callbackQuery) => {
         });
       }
       break;
-
     case "43114":
       if (isUser) {
         flag = "43114";
@@ -4161,7 +4102,6 @@ bot.on("callback_query", async (callbackQuery) => {
         });
       }
       break;
-
     // ------------------------------------- balance ---------------------------------------------------
     case "1b":
       if (isUser) {
@@ -4387,7 +4327,6 @@ bot.on("callback_query", async (callbackQuery) => {
         });
       }
       break;
-
     case "25b":
       if (isUser) {
         flag = "25b";
@@ -4743,7 +4682,6 @@ bot.on("callback_query", async (callbackQuery) => {
         });
       }
       break;
-
     // ------------------------------------------------------ transfer token --------------------------------------------------------
     case "1withraw":
       if (isUser) {
@@ -4770,9 +4708,7 @@ bot.on("callback_query", async (callbackQuery) => {
                     await bot.once("message", async (amountIn) => {
                       if (flag == "1withraw") {
                         const amount = Number(amountIn.text);
-                        const { loaderMessage, interval } = await animateLoader(
-                          chatId
-                        );
+
                         await transferEvmToken(
                           chatId,
                           token,
@@ -4781,11 +4717,6 @@ bot.on("callback_query", async (callbackQuery) => {
                           amount
                         )
                           .then(async (res) => {
-                            clearInterval(interval);
-                            await bot.deleteMessage(
-                              chatId,
-                              loaderMessage.message_id
-                            );
                             await bot.sendMessage(chatId, res?.message);
                             await bot.sendMessage(
                               chatId,
@@ -4793,15 +4724,10 @@ bot.on("callback_query", async (callbackQuery) => {
                             );
                           })
                           .catch(async (err) => {
-                            clearInterval(interval);
-                            await bot.deleteMessage(
-                              chatId,
-                              loaderMessage.message_id
-                            );
                             console.log("🚀 ~ bot.once ~ err:", err);
                             await bot.sendMessage(
                               chatId,
-                              "somthing has been wrong please try agin latter!!"
+                              "somthing has been wrong make sure you have a enough balance!!"
                             );
                           });
                       }
@@ -4863,9 +4789,7 @@ bot.on("callback_query", async (callbackQuery) => {
                     await bot.once("message", async (amountIn) => {
                       if (flag == "42161withraw") {
                         const amount = Number(amountIn.text);
-                        const { loaderMessage, interval } = await animateLoader(
-                          chatId
-                        );
+
                         await transferEvmToken(
                           chatId,
                           token,
@@ -4873,13 +4797,7 @@ bot.on("callback_query", async (callbackQuery) => {
                           42161,
                           amount
                         )
-                          // transferEvmToken(chatId, token, toWallet, chain, amount)
                           .then(async (res) => {
-                            clearInterval(interval);
-                            await bot.deleteMessage(
-                              chatId,
-                              loaderMessage.message_id
-                            );
                             await bot.sendMessage(chatId, res?.message);
                             await bot.sendMessage(
                               chatId,
@@ -4887,15 +4805,10 @@ bot.on("callback_query", async (callbackQuery) => {
                             );
                           })
                           .catch(async (err) => {
-                            clearInterval(interval);
-                            await bot.deleteMessage(
-                              chatId,
-                              loaderMessage.message_id
-                            );
                             console.log("🚀 ~ bot.once ~ err:", err);
                             await bot.sendMessage(
                               chatId,
-                              "somthing has been wrong please try agin latter!!"
+                              "somthing has been wrong make sure you have a enough balance!!"
                             );
                           });
                       }
@@ -4957,9 +4870,7 @@ bot.on("callback_query", async (callbackQuery) => {
                     await bot.once("message", async (amountIn) => {
                       if (flag == "10withraw") {
                         const amount = Number(amountIn.text);
-                        const { loaderMessage, interval } = await animateLoader(
-                          chatId
-                        );
+
                         await transferEvmToken(
                           chatId,
                           token,
@@ -4968,11 +4879,6 @@ bot.on("callback_query", async (callbackQuery) => {
                           amount
                         )
                           .then(async (res) => {
-                            clearInterval(interval);
-                            await bot.deleteMessage(
-                              chatId,
-                              loaderMessage.message_id
-                            );
                             await bot.sendMessage(chatId, res?.message);
                             await bot.sendMessage(
                               chatId,
@@ -4980,15 +4886,10 @@ bot.on("callback_query", async (callbackQuery) => {
                             );
                           })
                           .catch(async (err) => {
-                            clearInterval(interval);
-                            await bot.deleteMessage(
-                              chatId,
-                              loaderMessage.message_id
-                            );
                             console.log("🚀 ~ bot.once ~ err:", err);
                             await bot.sendMessage(
                               chatId,
-                              "somthing has been wrong please try agin latter!!"
+                              "somthing has been wrong make sure you have a enough balance!!"
                             );
                           });
                       }
@@ -5049,9 +4950,7 @@ bot.on("callback_query", async (callbackQuery) => {
                     await bot.once("message", async (amountIn) => {
                       if (flag == "137withraw") {
                         const amount = Number(amountIn.text);
-                        const { loaderMessage, interval } = await animateLoader(
-                          chatId
-                        );
+
                         await transferEvmToken(
                           chatId,
                           token,
@@ -5060,11 +4959,6 @@ bot.on("callback_query", async (callbackQuery) => {
                           amount
                         )
                           .then(async (res) => {
-                            clearInterval(interval);
-                            await bot.deleteMessage(
-                              chatId,
-                              loaderMessage.message_id
-                            );
                             await bot.sendMessage(chatId, res?.message);
                             await bot.sendMessage(
                               chatId,
@@ -5072,15 +4966,10 @@ bot.on("callback_query", async (callbackQuery) => {
                             );
                           })
                           .catch(async (err) => {
-                            clearInterval(interval);
-                            await bot.deleteMessage(
-                              chatId,
-                              loaderMessage.message_id
-                            );
                             console.log("🚀 ~ bot.once ~ err:", err);
                             await bot.sendMessage(
                               chatId,
-                              "somthing has been wrong please try agin latter!!"
+                              "somthing has been wrong make sure you have a enough balance!!"
                             );
                           });
                       }
@@ -5141,9 +5030,7 @@ bot.on("callback_query", async (callbackQuery) => {
                     await bot.once("message", async (amountIn) => {
                       if (flag == "8453withraw") {
                         const amount = Number(amountIn.text);
-                        const { loaderMessage, interval } = await animateLoader(
-                          chatId
-                        );
+
                         await transferEvmToken(
                           chatId,
                           token,
@@ -5152,11 +5039,6 @@ bot.on("callback_query", async (callbackQuery) => {
                           amount
                         )
                           .then(async (res) => {
-                            clearInterval(interval);
-                            await bot.deleteMessage(
-                              chatId,
-                              loaderMessage.message_id
-                            );
                             await bot.sendMessage(chatId, res?.message);
                             await bot.sendMessage(
                               chatId,
@@ -5164,15 +5046,10 @@ bot.on("callback_query", async (callbackQuery) => {
                             );
                           })
                           .catch(async (err) => {
-                            clearInterval(interval);
-                            await bot.deleteMessage(
-                              chatId,
-                              loaderMessage.message_id
-                            );
                             console.log("🚀 ~ bot.once ~ err:", err);
                             await bot.sendMessage(
                               chatId,
-                              "somthing has been wrong please try agin latter!!"
+                              "somthing has been wrong make sure you have a enough balance!!"
                             );
                           });
                       }
@@ -5233,9 +5110,7 @@ bot.on("callback_query", async (callbackQuery) => {
                     await bot.once("message", async (amountIn) => {
                       if (flag == "56withraw") {
                         const amount = Number(amountIn.text);
-                        const { loaderMessage, interval } = await animateLoader(
-                          chatId
-                        );
+
                         await transferEvmToken(
                           chatId,
                           token,
@@ -5244,11 +5119,6 @@ bot.on("callback_query", async (callbackQuery) => {
                           amount
                         )
                           .then(async (res) => {
-                            clearInterval(interval);
-                            await bot.deleteMessage(
-                              chatId,
-                              loaderMessage.message_id
-                            );
                             await bot.sendMessage(chatId, res?.message);
                             await bot.sendMessage(
                               chatId,
@@ -5256,15 +5126,10 @@ bot.on("callback_query", async (callbackQuery) => {
                             );
                           })
                           .catch(async (err) => {
-                            clearInterval(interval);
-                            await bot.deleteMessage(
-                              chatId,
-                              loaderMessage.message_id
-                            );
                             console.log("🚀 ~ bot.once ~ err:", err);
                             await bot.sendMessage(
                               chatId,
-                              "somthing has been wrong please try agin latter!!"
+                              "somthing has been wrong make sure you have a enough balance!!"
                             );
                           });
                       }
@@ -5325,9 +5190,7 @@ bot.on("callback_query", async (callbackQuery) => {
                     await bot.once("message", async (amountIn) => {
                       if (flag == "43114withraw") {
                         const amount = Number(amountIn.text);
-                        const { loaderMessage, interval } = await animateLoader(
-                          chatId
-                        );
+
                         await transferEvmToken(
                           chatId,
                           token,
@@ -5336,11 +5199,6 @@ bot.on("callback_query", async (callbackQuery) => {
                           amount
                         )
                           .then(async (res) => {
-                            clearInterval(interval);
-                            await bot.deleteMessage(
-                              chatId,
-                              loaderMessage.message_id
-                            );
                             await bot.sendMessage(chatId, res?.message);
                             await bot.sendMessage(
                               chatId,
@@ -5348,15 +5206,10 @@ bot.on("callback_query", async (callbackQuery) => {
                             );
                           })
                           .catch(async (err) => {
-                            clearInterval(interval);
-                            await bot.deleteMessage(
-                              chatId,
-                              loaderMessage.message_id
-                            );
                             console.log("🚀 ~ bot.once ~ err:", err);
                             await bot.sendMessage(
                               chatId,
-                              "somthing has been wrong please try agin latter!!"
+                              "somthing has been wrong make sure you have a enough balance!!"
                             );
                           });
                       }
@@ -5417,9 +5270,7 @@ bot.on("callback_query", async (callbackQuery) => {
                     await bot.once("message", async (amountIn) => {
                       if (flag == "25withraw") {
                         const amount = Number(amountIn.text);
-                        const { loaderMessage, interval } = await animateLoader(
-                          chatId
-                        );
+
                         await transferEvmToken(
                           chatId,
                           token,
@@ -5428,11 +5279,6 @@ bot.on("callback_query", async (callbackQuery) => {
                           amount
                         )
                           .then(async (res) => {
-                            clearInterval(interval);
-                            await bot.deleteMessage(
-                              chatId,
-                              loaderMessage.message_id
-                            );
                             await bot.sendMessage(chatId, res?.message);
                             await bot.sendMessage(
                               chatId,
@@ -5440,15 +5286,10 @@ bot.on("callback_query", async (callbackQuery) => {
                             );
                           })
                           .catch(async (err) => {
-                            clearInterval(interval);
-                            await bot.deleteMessage(
-                              chatId,
-                              loaderMessage.message_id
-                            );
                             console.log("🚀 ~ bot.once ~ err:", err);
                             await bot.sendMessage(
                               chatId,
-                              "somthing has been wrong please try agin latter!!"
+                              "somthing has been wrong make sure you have a enough balance!!"
                             );
                           });
                       }
@@ -5509,9 +5350,7 @@ bot.on("callback_query", async (callbackQuery) => {
                     await bot.once("message", async (amountIn) => {
                       if (flag == "250withraw") {
                         const amount = Number(amountIn.text);
-                        const { loaderMessage, interval } = await animateLoader(
-                          chatId
-                        );
+
                         await transferEvmToken(
                           chatId,
                           token,
@@ -5520,11 +5359,6 @@ bot.on("callback_query", async (callbackQuery) => {
                           amount
                         )
                           .then(async (res) => {
-                            clearInterval(interval);
-                            await bot.deleteMessage(
-                              chatId,
-                              loaderMessage.message_id
-                            );
                             await bot.sendMessage(chatId, res?.message);
                             await bot.sendMessage(
                               chatId,
@@ -5532,15 +5366,10 @@ bot.on("callback_query", async (callbackQuery) => {
                             );
                           })
                           .catch(async (err) => {
-                            clearInterval(interval);
-                            await bot.deleteMessage(
-                              chatId,
-                              loaderMessage.message_id
-                            );
                             console.log("🚀 ~ bot.once ~ err:", err);
                             await bot.sendMessage(
                               chatId,
-                              "somthing has been wrong please try agin latter!!"
+                              "somthing has been wrong make sure you have a enough balance!!"
                             );
                           });
                       }
