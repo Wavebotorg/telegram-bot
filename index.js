@@ -287,109 +287,128 @@ async function getQrCode(chatId, wallet) {
 // Signup Funaction
 const startConfirmPasswordRegistration = (chatId, name, email, password) => {
   bot.once("message", async (confirmPasswordMsg) => {
-    const confirmPassword = confirmPasswordMsg.text;
     if (isSigningUp) {
+      const confirmPassword = confirmPasswordMsg.text;
       if (password !== confirmPassword) {
-        await bot.sendMessage(
-          chatId,
-          "❌ Passwords do not match. Please try again."
-        );
+        if (isSigningUp) {
+          await bot.sendMessage(
+            chatId,
+            "❌ Passwords do not match. Please try again."
+          );
+        }
         // if (isSigningUp) {
         //   startPasswordRegistration(chatId, name, email); // Start from password registration
         // }
       }
-    }
-    // Continue with registration process
-    try {
-      isSigningUp = true; // Set signup flag to true
-      const response = await axios.post(`${API_URL}/signup`, {
-        name,
-        email,
-        password,
-        confirmPassword,
-        chatId,
-      });
-      const { message, data } = response.data;
-      if (data && data.email) {
-        await await bot.sendMessage(
+      // Continue with registration process
+      try {
+        isSigningUp = true; // Set signup flag to true
+        const response = await axios.post(`${API_URL}/signup`, {
+          name,
+          email,
+          password,
+          confirmPassword,
           chatId,
-          `🎉 User registered successfully. Email: ${data.email}`
-        );
-        await bot.sendMessage(
-          chatId,
-          "📧 Please check your email for a verification code:"
-        );
-        startOTPVerification(chatId, email); // Start OTP verification process
-      } else {
-        await bot.sendMessage(
-          chatId,
-          `❌ Failed to register user. Please try again.`
-        );
-        isSigningUp = false;
-        await bot.sendMessage(chatId, `👋please register again carefully!!👋`, {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
         });
+        const { message, data } = response.data;
+        if (data && data.email) {
+          await await bot.sendMessage(
+            chatId,
+            `🎉 User registered successfully. Email: ${data.email}`
+          );
+          await bot.sendMessage(
+            chatId,
+            "📧 Please check your email for a verification code:"
+          );
+          startOTPVerification(chatId, email); // Start OTP verification process
+        } else {
+          await bot.sendMessage(
+            chatId,
+            `❌ Failed to register user. Please try again.`
+          );
+          isSigningUp = false;
+          await bot.sendMessage(
+            chatId,
+            `👋please register again carefully!!👋`,
+            {
+              reply_markup: {
+                keyboard: [
+                  [
+                    {
+                      text: "SignUp",
+                      request_contact: false,
+                      request_location: false,
+                    },
+                  ],
+                  [
+                    {
+                      text: "Login",
+                      request_contact: false,
+                      request_location: false,
+                    },
+                  ],
+                ],
+                resize_keyboard: true,
+                one_time_keyboard: true,
+              },
+            }
+          );
+        }
+      } catch (error) {
+        console.error("Error:", error.message);
+        await bot.sendMessage(
+          chatId,
+          `❌ An error occurred while registering the user: ${error.message}`
+        );
       }
-    } catch (error) {
-      console.error("Error:", error.message);
-      await bot.sendMessage(
-        chatId,
-        `❌ An error occurred while registering the user: ${error.message}`
-      );
     }
   });
 };
 // Otp Varification
 const startOTPVerification = (chatId, email) => {
   console.log("------------------------------------");
-  bot.once("message", async (otpMsg) => {
-    const otp = otpMsg.text;
-    try {
-      const response = await axios.post(`${API_URL}/verify`, {
-        email,
-        otp,
-        chatId,
-      });
-      if (response.data.status == true) {
-        await await bot.sendMessage(chatId, `✅ User verified successfully`);
-        await start(chatId);
-        await sendWelcomeMessage2(chatId);
-        isSigningUp = false;
-      } else {
-        await bot.sendMessage(
-          chatId,
-          `❌ Invalid OTP. Please enter a valid OTP.`
-        );
-        await bot.sendMessage(chatId, `Please enter a valid OTP.`);
-        startOTPVerification(chatId, email); // Recall OTP verification process
+  if (isSigningUp) {
+    bot.once("message", async (otpMsg) => {
+      if (isSigningUp) {
+        const otp = otpMsg.text;
+        try {
+          const response = await axios.post(`${API_URL}/verify`, {
+            email,
+            otp,
+            chatId,
+          });
+          if (response.data.status == true) {
+            if (isSigningUp) {
+              await await bot.sendMessage(
+                chatId,
+                `✅ User verified successfully`
+              );
+              await start(chatId);
+              await sendWelcomeMessage2(chatId);
+              isSigningUp = false;
+            }
+          } else {
+            if (isSigningUp) {
+              await bot.sendMessage(
+                chatId,
+                `❌ Invalid OTP. Please enter a valid OTP.`
+              );
+              await bot.sendMessage(chatId, `Please enter a valid OTP.`);
+              startOTPVerification(chatId, email); // Recall OTP verification process
+            }
+          }
+        } catch (error) {
+          if (isSigningUp) {
+            console.error("Error:", error.message);
+            await bot.sendMessage(
+              chatId,
+              `❌ An error occurred while verifying the user: ${error.message}`
+            );
+          }
+        }
       }
-    } catch (error) {
-      console.error("Error:", error.message);
-      await bot.sendMessage(
-        chatId,
-        `❌ An error occurred while verifying the user: ${error.message}`
-      );
-    }
-  });
+    });
+  }
 };
 // Star Login
 const startEmailLogin = async (chatId) => {
