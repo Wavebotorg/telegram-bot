@@ -1159,91 +1159,88 @@ bot.on("callback_query", async (callbackQuery) => {
     case "42161buy":
       if (isUser) {
         flag = "42161buy";
-        console.log("-------------- EVM--------------------");
-        await bot.sendMessage(
-          chatId,
-          "Enter a ARB token that you want to buy from :"
-        );
+        await bot.sendMessage(chatId, "Type ARB token that you want to buy:");
         if (flag == "42161buy") {
-          bot.once("message", async (token1Msg) => {
-            const token1 = token1Msg.text;
+          bot.once("message", async (token0Msg) => {
+            const token0 = token0Msg.text;
             if (flag == "42161buy") {
               await bot.sendMessage(
                 chatId,
-                "Please enter the ARB amount that you want to buy:"
+                "Please enter the ARB token amount:"
               );
-            }
-            if (flag == "42161buy") {
-              bot.once("message", async (amountInMsg) => {
-                if (flag == "42161nuy") {
+              if (flag == "42161buy") {
+                bot.once("message", async (amountInMsg) => {
                   const amountIn = Number(amountInMsg.text);
-                  const { loaderMessage, interval } = await animateLoader(
-                    chatId
-                  );
-                  const tokenRes = await axios.post(
-                    `${API_URL}/getEvmTokenPrice`,
-                    {
-                      token: "0x912CE59144191C1204E64559FE8253a0e49E6548",
-                      token2: token1,
-                      chain: "0xa4b1",
-                    }
-                  );
-                  const tokensPrice = tokenRes?.data?.finalRes;
-                  const buyAmt = amountIn * tokensPrice?.token2;
-                  const finalAmt = buyAmt / tokensPrice?.token1;
-                  if (tokenRes) {
-                    if (flag == "42161buy") {
-                      await axios({
-                        url: `${API_URL}/EVMswap`,
-                        method: "post",
-                        data: {
-                          tokenIn: "0x912CE59144191C1204E64559FE8253a0e49E6548",
-                          tokenOut: token1,
-                          chainId: "arbitrum",
-                          amount: finalAmt,
-                          chain: 42161,
-                          chatId: chatId,
-                          desCode: "0xa4b1",
-                          method: "Buy",
-                        },
-                      })
-                        .then(async (response) => {
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          if (response?.data?.status) {
-                            await bot.sendMessage(
-                              chatId,
-                              response?.data?.message
-                            );
-                            await bot.sendMessage(
-                              chatId,
-                              `https://arbiscan.io/tx/${response?.data?.tx}`
-                            );
-                          } else {
-                            await bot.sendMessage(
-                              chatId,
-                              response?.data?.message
-                            );
-                          }
+                  if (flag == "42161buy") {
+                    const { loaderMessage, interval } = await animateLoader(
+                      chatId
+                    );
+                    const tokenRes = await axios.post(
+                      `${API_URL}/getEvmTokenPrice`,
+                      {
+                        token: "0x912CE59144191C1204E64559FE8253a0e49E6548",
+                        token2: token0,
+                        chain: "0xa4b1",
+                      }
+                    );
+                    const tokensPrice = tokenRes?.data?.finalRes;
+                    const buyAmt = amountIn * tokensPrice?.token2;
+                    const finalAmt = buyAmt / tokensPrice?.token1;
+                    if (tokenRes) {
+                      if (flag == "42161buy") {
+                        await axios({
+                          url: `${API_URL}/EVMswap`,
+                          method: "post",
+                          data: {
+                            tokenIn:
+                              "0x912CE59144191C1204E64559FE8253a0e49E6548",
+                            tokenOut: token0,
+                            chainId: "arbitrum",
+                            amount: finalAmt,
+                            chain: 42161,
+                            chatId: chatId,
+                            desCode: "0xa4b1",
+                            method: "Buy",
+                          },
                         })
-                        .catch(async (error) => {
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          await bot.sendMessage(
-                            chatId,
-                            `due to some reason you transaction failed!!`
-                          );
-                        });
+                          .then(async (response) => {
+                            clearInterval(interval);
+                            await bot.deleteMessage(
+                              chatId,
+                              loaderMessage.message_id
+                            );
+                            if (response?.data?.status) {
+                              await bot.sendMessage(
+                                chatId,
+                                response?.data?.message
+                              );
+                              await bot.sendMessage(
+                                chatId,
+                                `https://arbiscan.io/tx/${response?.data?.tx}`
+                              );
+                            } else {
+                              await bot.sendMessage(
+                                chatId,
+                                response?.data?.message
+                              );
+                            }
+                          })
+                          .catch(async (error) => {
+                            clearInterval(interval);
+                            await bot.deleteMessage(
+                              chatId,
+                              loaderMessage.message_id
+                            );
+                            await bot.sendMessage(
+                              chatId,
+                              `due to some reason you transaction failed!!`
+                            );
+                          });
+                      }
                     }
                   }
-                }
-              });
+                });
+              }
             }
           });
         }
