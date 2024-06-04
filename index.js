@@ -274,13 +274,19 @@ async function getQrCode(chatId, wallet) {
       chatId,
       wallet,
     },
-  }).then((res) => {
+  }).then(async (res) => {
     if (res?.data?.status) {
-      bot.sendPhoto(chatId, res?.data?.path, {
-        caption: `${wallet == 2 ? "Solana wallet" : "Eth Wallet"}:- ${
-          res?.data?.walletAddress
-        }`,
+      await bot.sendPhoto(chatId, res?.data?.path, {
+        // caption: `${wallet == 2 ? "Solana wallet" : "Eth Wallet"}:- ${
+        //   res?.data?.walletAddress
+        // }`,
       });
+      await bot.sendMessage(
+        chatId,
+        `${wallet == 2 ? "Solana wallet" : "Eth Wallet"}:- ${
+          res?.data?.walletAddress
+        }`
+      );
     } else {
       bot.sendMessage(chatId, "somthing has been wrong!!");
     }
@@ -442,13 +448,13 @@ const startPasswordLogin = async (chatId, email) => {
             const userInfo = await getEmailAndWalletFromBackend(chatId);
             if (userInfo?.email) {
               const messageText = `Welcome to WaveBot! 🌊\n
-    🌊 WaveBot(https://wavebot.app/)\n
-    📖 Dashboard(https://dashboard.wavebot.app/)\n
-    🌐 Website(https://marketing-dashboard-d22655001f93.herokuapp.com/)
-    ‧‧────────────────‧‧
-    *Your Email Address: ${userInfo?.email}\n
-    *Your Wallet Address (EVM): ${userInfo?.EVMwallet}\n
-    *Your Wallet Address (Solana): ${userInfo?.solanaWallets}`;
+          🌊 WaveBot(https://wavebot.app/)\n
+          📖 Dashboard(https://dashboard.wavebot.app/)\n
+          🌐 Website(https://marketing-dashboard-d22655001f93.herokuapp.com/)
+          ‧‧────────────────‧‧
+          *Your Email Address: ${userInfo?.email}\n
+          *Your Wallet Address (EVM): ${userInfo?.EVMwallet}\n
+          *Your Wallet Address (Solana): ${userInfo?.solanaWallets}`;
               await bot.sendMessage(chatId, messageText, {
                 reply_markup: JSON.stringify(buyKeyboard),
               });
