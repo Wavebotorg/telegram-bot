@@ -277,7 +277,9 @@ async function getQrCode(chatId, wallet) {
   }).then((res) => {
     if (res?.data?.status) {
       bot.sendPhoto(chatId, res?.data?.path, {
-        caption: `wallet:- ${res?.data?.walletAddress}`,
+        caption: `${wallet == 2 ? "Solana wallet" : "Eth Wallet"}:- ${
+          res?.data?.walletAddress
+        }`,
       });
     } else {
       bot.sendMessage(chatId, "somthing has been wrong!!");
