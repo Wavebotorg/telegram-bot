@@ -233,37 +233,49 @@ const startEmailRegistration = (chatId, name) => {
       }
     }
     if (isSigningUp) {
-      await bot.sendMessage(chatId, "Awesome! Now, please create a password:");
-    }
-    if (isSigningUp) {
-      await startPasswordRegistration(chatId, name, email); // Pass name and email to password registration
+      return await startPasswordRegistration(chatId, name, email); // Pass name and email to password registration
     }
   });
 };
 // Signup Funaction
-const startPasswordRegistration = (chatId, name, email) => {
-  bot.once("message", async (passwordMsg) => {
-    const password = passwordMsg.text;
+const startPasswordRegistration = async (chatId, name, email) => {
+  if (isSigningUp) {
     if (isSigningUp) {
-      if (!isValidPassword(password)) {
-        if (isSigningUp) {
-          await bot.sendMessage(
-            chatId,
-            "❌ Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character."
-          );
-        }
-        if (isSigningUp) {
-          startPasswordRegistration(chatId, name, email); // Reset password registration process
-        }
+      await bot.sendMessage(chatId, "Now, please create a password:");
+      if (isSigningUp) {
+        bot.once("message", async (passwordMsg) => {
+          const password = passwordMsg.text;
+          if (isSigningUp) {
+            if (!isValidPassword(password)) {
+              if (isSigningUp) {
+                await bot.sendMessage(
+                  chatId,
+                  "❌ Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character."
+                );
+              }
+              if (isSigningUp) {
+                return startPasswordRegistration(chatId, name, email); // Reset password registration process
+              }
+            }
+          }
+          if (isSigningUp) {
+            await bot.sendMessage(
+              chatId,
+              "Got it! Please confirm your password:"
+            );
+            if (isSigningUp) {
+              return startConfirmPasswordRegistration(
+                chatId,
+                name,
+                email,
+                password
+              ); // Pass name, email, and password to confirm password registration
+            }
+          }
+        });
       }
     }
-    if (isSigningUp) {
-      await bot.sendMessage(chatId, "Got it! Please confirm your password:");
-    }
-    if (isSigningUp) {
-      startConfirmPasswordRegistration(chatId, name, email, password); // Pass name, email, and password to confirm password registration
-    }
-  });
+  }
 };
 // get evm qr code
 async function getQrCode(chatId, wallet) {
@@ -303,10 +315,10 @@ const startConfirmPasswordRegistration = (chatId, name, email, password) => {
             chatId,
             "❌ Passwords do not match. Please try again."
           );
+          if (isSigningUp) {
+            return startPasswordRegistration(chatId, name, email);
+          }
         }
-        // if (isSigningUp) {
-        //   startPasswordRegistration(chatId, name, email); // Start from password registration
-        // }
       }
       // Continue with registration process
       try {
