@@ -338,7 +338,7 @@ const startConfirmPasswordRegistration = (chatId, name, email, password) => {
           );
           await bot.sendMessage(
             chatId,
-            "📧 Please check your email for a verification code:"
+            "📧 Please check your email and enter verification code:"
           );
           startOTPVerification(chatId, email); // Start OTP verification process
         } else {
