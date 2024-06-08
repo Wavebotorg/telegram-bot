@@ -262,7 +262,8 @@ async function getQrCode(chatId, wallet) {
       });
       await bot.sendMessage(
         chatId,
-        `${wallet == 2 ? "Solana wallet" : "EVM Wallet"}:- ${res?.data?.walletAddress
+        `${wallet == 2 ? "Solana wallet" : "EVM Wallet"}:- ${
+          res?.data?.walletAddress
         }`
       );
     } else {
@@ -365,9 +366,9 @@ async function sendWelcomeMessage(chatId) {
   const keyboard = isUser
     ? [[{ text: "Start", request_contact: false, request_location: false }]]
     : [
-      [{ text: "SignUp", request_contact: false, request_location: false }],
-      [{ text: "Login", request_contact: false, request_location: false }],
-    ];
+        [{ text: "SignUp", request_contact: false, request_location: false }],
+        [{ text: "Login", request_contact: false, request_location: false }],
+      ];
   await bot.sendMessage(
     chatId,
     `👋 Welcome to the Wavebot! 👋
@@ -706,7 +707,7 @@ bot.on("message", async (msg) => {
                       await bot.sendMessage(
                         chatId,
                         response.data.message ||
-                        "❌ buy failed. Please try again."
+                          "❌ buy failed. Please try again."
                       );
                     }
                   });
@@ -889,7 +890,7 @@ bot.on("message", async (msg) => {
               },
             })
               .then(async (res) => {
-                resetUserState(chatId)
+                resetUserState(chatId);
                 clearInterval(interval);
                 await bot.deleteMessage(chatId, loaderMessage.message_id);
                 if (res?.data?.status) {
@@ -904,7 +905,7 @@ bot.on("message", async (msg) => {
                 }
               })
               .catch(async (error) => {
-                resetUserState(chatId)
+                resetUserState(chatId);
                 clearInterval(interval);
                 await bot.deleteMessage(chatId, loaderMessage.message_id);
                 console.log("🚀 ~ awaitbot.once ~ error:", error);
@@ -922,15 +923,12 @@ bot.on("message", async (msg) => {
               state?.amount
             )
               .then(async (res) => {
-                clearInterval(interval);
-                await bot.deleteMessage(chatId, loaderMessage.message_id);
                 await bot.sendMessage(chatId, res?.message);
                 await bot.sendMessage(chatId, res?.txUrl);
               })
               .catch(async (err) => {
                 console.log("🚀 ~ bot.once ~ err:", err);
-                clearInterval(interval);
-                await bot.deleteMessage(chatId, loaderMessage.message_id);
+
                 await bot.sendMessage(
                   chatId,
                   "somthing has been wrong make sure you have a enough balance!!"
