@@ -11,6 +11,51 @@ const bot = new TelegramBot(TOKEN, { polling: true });
 let flag = null;
 let isSigningUp = false;
 let isLoggingIn = false;
+const userStates = {};
+const resetUserState = (chatId) => {
+  userStates[chatId] = {
+    flag: null,
+    fromToken: null,
+    toToken: null,
+    amount: null,
+    currentStep: null,
+    method: null,
+    network: null,
+    desCode: null,
+    email: null,
+    password: null,
+    confirmPassword: null,
+    otp: null,
+    name: null,
+  };
+};
+
+// Function to handle swapping for Solana
+const handleSwap = async (chatId) => {
+  userStates[chatId].currentStep = "fromTokenSwap";
+  await bot.sendMessage(chatId, "Type From Token:");
+};
+const handleBuy = async (chatId) => {
+  userStates[chatId].currentStep = "fromTokenBuy";
+  await bot.sendMessage(chatId, "Type Token You Want To Buy:");
+};
+const handleSell = async (chatId) => {
+  userStates[chatId].currentStep = "toTokenSell";
+  await bot.sendMessage(chatId, "Type Token You Want To Sell:");
+};
+const handleTransfer = async (chatId) => {
+  userStates[chatId].currentStep = "tokenTransfer";
+  await bot.sendMessage(chatId, "Type Token You Want To Transfer:");
+};
+const handleLogin = async (chatId) => {
+  userStates[chatId].currentStep = "loginEmail";
+  await bot.sendMessage(chatId, "🔐Please enter your email to log in:");
+};
+const handleSignUp = async (chatId) => {
+  userStates[chatId].currentStep = "signupHandle";
+  await bot.sendMessage(chatId, "🔐Please enter your name:");
+};
+
 // main keyboard
 const buyKeyboard = {
   inline_keyboard: [
@@ -61,19 +106,19 @@ const walletAddressKeyboard = {
   inline_keyboard: [
     [{ text: "Solona", callback_data: "solanaAddress" }],
     [
-      { text: "Ethereum", callback_data: "1Address" },
-      { text: "Arbitrum", callback_data: "42161Address" },
-      { text: "Optimism", callback_data: "10Address" },
+      { text: "Ethereum", callback_data: "addressEVM" },
+      { text: "Arbitrum", callback_data: "addressEVM" },
+      { text: "Optimism", callback_data: "addressEVM" },
     ],
     [
-      { text: "Polygon", callback_data: "137Address" },
-      { text: "Base", callback_data: "8453Address" },
-      { text: "BNB Chain", callback_data: "56Address" },
+      { text: "Polygon", callback_data: "addressEVM" },
+      { text: "Base", callback_data: "addressEVM" },
+      { text: "BNB Chain", callback_data: "addressEVM" },
     ],
     [
-      { text: "Avalanche", callback_data: "43114Address" },
-      { text: "Cronos", callback_data: "25Address" },
-      { text: "Fantom", callback_data: "250Address" },
+      { text: "Avalanche", callback_data: "addressEVM" },
+      { text: "Cronos", callback_data: "addressEVM" },
+      { text: "Fantom", callback_data: "addressEVM" },
     ],
   ],
 };
@@ -198,85 +243,7 @@ const isValidPassword = (password) => {
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
   return passwordRegex.test(password);
 };
-// Signup Funaction
-const startNameRegistration = async (chatId) => {
-  await bot.sendMessage(chatId, "👋 Welcome! Please provide your name:");
-  if (isSigningUp) {
-    bot.once("message", async (nameMsg) => {
-      const name = nameMsg.text;
-      if (isSigningUp) {
-        await bot.sendMessage(
-          chatId,
-          `Great, thanks ${name}! Next, please provide your email address:`
-        );
-      }
-      if (isSigningUp) {
-        startEmailRegistration(chatId, name); // Pass name to email registration
-      }
-    });
-  }
-};
-// Signup Funaction
-const startEmailRegistration = (chatId, name) => {
-  bot.once("message", async (emailMsg) => {
-    const email = emailMsg.text;
-    if (isSigningUp) {
-      if (!isValidEmail(email)) {
-        if (isSigningUp) {
-          await bot.sendMessage(
-            chatId,
-            "❌ Invalid email address. Please enter a valid email."
-          );
-          await bot.sendMessage(chatId, "Please renter a valid email.");
-          return startEmailRegistration(chatId, name);
-        }
-      }
-    }
-    if (isSigningUp) {
-      return await startPasswordRegistration(chatId, name, email); // Pass name and email to password registration
-    }
-  });
-};
-// Signup Funaction
-const startPasswordRegistration = async (chatId, name, email) => {
-  if (isSigningUp) {
-    if (isSigningUp) {
-      await bot.sendMessage(chatId, "Now, please create a password:");
-      if (isSigningUp) {
-        bot.once("message", async (passwordMsg) => {
-          const password = passwordMsg.text;
-          if (isSigningUp) {
-            if (!isValidPassword(password)) {
-              if (isSigningUp) {
-                await bot.sendMessage(
-                  chatId,
-                  "❌ Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character."
-                );
-              }
-              if (isSigningUp) {
-                return startPasswordRegistration(chatId, name, email); // Reset password registration process
-              }
-            }
-          }
-          if (isSigningUp) {
-            await bot.sendMessage(
-              chatId,
-              "Got it! Please confirm your password:"
-            );
-            if (isSigningUp) {
-              return startConfirmPasswordRegistration(
-                chatId,
-                name,
-                email,
-                password
-              ); // Pass name, email, and password to confirm password registration
-            }
-          }
-        });
-      }
-    }
-  }
-};
+
 // get evm qr code
 async function getQrCode(chatId, wallet) {
   await axios({
@@ -295,8 +262,7 @@ async function getQrCode(chatId, wallet) {
       });
       await bot.sendMessage(
         chatId,
-        `${wallet == 2 ? "Solana wallet" : "Eth Wallet"}:- ${
-          res?.data?.walletAddress
+        `${wallet == 2 ? "Solana wallet" : "EVM Wallet"}:- ${res?.data?.walletAddress
         }`
       );
     } else {
@@ -304,193 +270,6 @@ async function getQrCode(chatId, wallet) {
     }
   });
 }
-// Signup Funaction
-const startConfirmPasswordRegistration = (chatId, name, email, password) => {
-  bot.once("message", async (confirmPasswordMsg) => {
-    if (isSigningUp) {
-      const confirmPassword = confirmPasswordMsg.text;
-      if (password !== confirmPassword) {
-        if (isSigningUp) {
-          await bot.sendMessage(
-            chatId,
-            "❌ Passwords do not match. Please try again."
-          );
-          if (isSigningUp) {
-            return startPasswordRegistration(chatId, name, email);
-          }
-        }
-      }
-      // Continue with registration process
-      try {
-        isSigningUp = true; // Set signup flag to true
-        const response = await axios.post(`${API_URL}/signup`, {
-          name,
-          email,
-          password,
-          confirmPassword,
-          chatId,
-        });
-        const { message, data } = response.data;
-        if (data && data.email) {
-          await await bot.sendMessage(
-            chatId,
-            `🎉 User registered successfully. Email: ${data.email}`
-          );
-          await bot.sendMessage(
-            chatId,
-            "📧 Please check your email and enter verification code:"
-          );
-          startOTPVerification(chatId, email); // Start OTP verification process
-        } else {
-          await bot.sendMessage(
-            chatId,
-            `❌ Failed to register user. Please try again.`
-          );
-          isSigningUp = false;
-          await bot.sendMessage(
-            chatId,
-            `👋please register again carefully!!👋`,
-            {
-              reply_markup: {
-                keyboard: [
-                  [
-                    {
-                      text: "SignUp",
-                      request_contact: false,
-                      request_location: false,
-                    },
-                  ],
-                  [
-                    {
-                      text: "Login",
-                      request_contact: false,
-                      request_location: false,
-                    },
-                  ],
-                ],
-                resize_keyboard: true,
-                one_time_keyboard: true,
-              },
-            }
-          );
-        }
-      } catch (error) {
-        console.error("Error:", error.message);
-        await bot.sendMessage(
-          chatId,
-          `❌ An error occurred while registering the user: ${error.message}`
-        );
-      }
-    }
-  });
-};
-// Otp Varification
-const startOTPVerification = (chatId, email) => {
-  console.log("------------------------------------");
-  if (isSigningUp) {
-    bot.once("message", async (otpMsg) => {
-      if (isSigningUp) {
-        const otp = otpMsg.text;
-        try {
-          const response = await axios.post(`${API_URL}/verify`, {
-            email,
-            otp,
-            chatId,
-          });
-          if (response.data.status == true) {
-            if (isSigningUp) {
-              await await bot.sendMessage(
-                chatId,
-                `✅ User verified successfully`
-              );
-              await start(chatId);
-              await sendWelcomeMessage2(chatId);
-              isSigningUp = false;
-            }
-          } else {
-            if (isSigningUp) {
-              await bot.sendMessage(
-                chatId,
-                `❌ Invalid OTP. Please enter a valid OTP.`
-              );
-              await bot.sendMessage(chatId, `Please enter a valid OTP.`);
-              startOTPVerification(chatId, email); // Recall OTP verification process
-            }
-          }
-        } catch (error) {
-          if (isSigningUp) {
-            console.error("Error:", error.message);
-            await bot.sendMessage(
-              chatId,
-              `❌ An error occurred while verifying the user: ${error.message}`
-            );
-          }
-        }
-      }
-    });
-  }
-};
-// Star Login
-const startEmailLogin = async (chatId) => {
-  await bot.sendMessage(chatId, "🔐 Please enter your email to log in:");
-  if (isLoggingIn) {
-    bot.once("message", async (emailMsg) => {
-      const email = emailMsg.text;
-      if (isLoggingIn) {
-        startPasswordLogin(chatId, email); // Proceed to password login
-      }
-    });
-  }
-};
-// star Login
-const startPasswordLogin = async (chatId, email) => {
-  await bot.sendMessage(chatId, "🔑 Please enter your password:");
-  if (isLoggingIn) {
-    bot.once("message", async (passwordMsg) => {
-      const password = passwordMsg.text;
-      if (isLoggingIn) {
-        try {
-          const response = await axios.post(`${API_URL}/login`, {
-            email,
-            password,
-            chatId,
-          });
-          if (response.data.status === true) {
-            await bot.sendMessage(chatId, `✅ Login successfull!`);
-            const userInfo = await getEmailAndWalletFromBackend(chatId);
-            if (userInfo?.email) {
-              const messageText = `Welcome to WaveBot! 🌊\n
-          🌊 WaveBot(https://wavebot.app/)\n
-          📖 Dashboard(https://dashboard.wavebot.app/)\n
-          🌐 Website(https://marketing-dashboard-d22655001f93.herokuapp.com/)
-          ‧‧────────────────‧‧
-          *Your Email Address: ${userInfo?.email}\n
-          *Your Wallet Address (EVM): ${userInfo?.EVMwallet}\n
-          *Your Wallet Address (Solana): ${userInfo?.solanaWallets}`;
-              await bot.sendMessage(chatId, messageText, {
-                reply_markup: JSON.stringify(buyKeyboard),
-              });
-            }
-            await sendWelcomeMessage2(chatId);
-            isLoggingIn = false;
-          } else {
-            await bot.sendMessage(
-              chatId,
-              "❌ Invalid email or password. Please try again."
-            );
-            await startEmailLogin(chatId); // Restart login process from email if credentials are invalid
-          }
-        } catch (error) {
-          console.error("Error:", error.message);
-          await bot.sendMessage(
-            chatId,
-            `❌ An error occurred while logging in: ${error.message}`
-          );
-        }
-      }
-    });
-  }
-};
 // Start Swap
 const startSwapProcess = async (chatId) => {
   await bot.sendMessage(
@@ -586,9 +365,9 @@ async function sendWelcomeMessage(chatId) {
   const keyboard = isUser
     ? [[{ text: "Start", request_contact: false, request_location: false }]]
     : [
-        [{ text: "SignUp", request_contact: false, request_location: false }],
-        [{ text: "Login", request_contact: false, request_location: false }],
-      ];
+      [{ text: "SignUp", request_contact: false, request_location: false }],
+      [{ text: "Login", request_contact: false, request_location: false }],
+    ];
   await bot.sendMessage(
     chatId,
     `👋 Welcome to the Wavebot! 👋
@@ -693,49 +472,6 @@ async function start(chatId) {
     await loginLogOutButton(chatId);
   }
 }
-bot.on("message", async (msg) => {
-  const chatId = msg.chat.id;
-  const userId = msg.from.id;
-  // Handle '/start' command
-  if (msg.text === "/start") {
-    isLoggingIn = false;
-    isSigningUp = false;
-    flag = null;
-    const isUser = await getstartBot(chatId);
-    if (!isUser) {
-      await sendWelcomeMessage(chatId);
-    } else {
-      await start(chatId);
-      await sendWelcomeMessage2(chatId);
-    }
-  }
-  // Handle 'SignUp' command
-  else if (msg.text === "SignUp") {
-    isLoggingIn = false;
-    isSigningUp = true;
-    flag = null;
-    // Start the signup process only if not already in a login process
-    await startNameRegistration(chatId);
-  }
-  // Handle 'Login' command
-  else if (msg.text === "Login") {
-    isLoggingIn = true;
-    isSigningUp = false;
-    flag = null;
-    // Start the login process only if not already in a signup process
-    await startEmailLogin(chatId);
-  }
-  // Handle 'Start' command
-  else if (msg.text === "Start") {
-    // Start the bot session
-    flag = null;
-    await start(chatId);
-  }
-  // Handle other messages
-  // else {
-  //   await bot.sendMessage(chatId, `You typed: ${msg.text}`);
-  // }
-});
 // Function to fetch Solana balance
 async function fetchSolanaBalance(chatId) {
   try {
@@ -786,361 +522,179 @@ async function fetchTokenBalances(chatId, chainId) {
     );
   }
 }
-// all keyborad button handler
-bot.on("callback_query", async (callbackQuery) => {
-  const chatId = callbackQuery.message.chat.id;
-  const messageId = callbackQuery.message.message_id;
-  const data = callbackQuery.data;
-  const isUser = await getstartBot(chatId);
-  switch (data) {
-    case "menuButton":
-      if (isUser) {
-        flag = null;
-        await bot.sendMessage(chatId, "Click Menu Button");
-      } else {
-        await bot.sendMessage(chatId, "Please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
-      break;
-    case "SwaptokenButton":
-      if (isUser) {
-        flag = null;
-        startSwapProcess(chatId);
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
-      break;
-    case "SolonabalanceButton":
-      if (isUser) {
-        flag = null;
-        fetchSolanaBalance(chatId);
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
-      break;
-    case "balanceButton":
-      if (isUser) {
-        flag = null;
-        await bot.sendMessage(chatId, `🌟 Choose a network 🌟`, {
-          reply_markup: JSON.stringify(evmWalletBalance),
-        });
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
-      break;
-    case "logoutButton":
-      if (isUser) {
-        isSigningUp = false;
-        isLoggingIn = false;
-        flag = null;
-        await logoutfunaction(chatId).then(async (res) => {
-          await bot.sendMessage(chatId, "logout successfull!", {
-            reply_markup: {
-              keyboard: [
-                [
-                  {
-                    text: "SignUp",
-                    request_contact: false,
-                    request_location: false,
-                  },
-                ],
-                [
-                  {
-                    text: "Login",
-                    request_contact: false,
-                    request_location: false,
-                  },
-                ],
-                //[{ text: 'Start', request_contact: false, request_location: false }],
-              ],
-              resize_keyboard: true,
-              one_time_keyboard: true,
-            },
-          });
-        });
-      } else {
-        flag = null;
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
-      break;
-    case "buyButton":
-      if (isUser) {
-        isSwap = false;
-        flag = null;
-        buyStartTokenSelection(chatId);
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
-      break;
-    case "sellButton":
-      if (isUser) {
-        flag = null;
-        sellStartTokenSelection(chatId);
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
-      break;
-    case "withrawButton":
-      if (isUser) {
-        flag == null;
-        withrawStartTokenSelection(chatId);
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
-      break;
-    case "walletAddresses":
-      if (isUser) {
-        flag = null;
-        walletAddressSelection(chatId);
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
-      break;
-    case "refreshButton":
-      flag = null;
+bot.on("message", async (msg) => {
+  const chatId = msg.chat.id;
+  const userId = msg.from.id;
+  // Handle '/start' command
+  if (msg.text === "/start") {
+    resetUserState(chatId);
+    const isUser = await getstartBot(chatId);
+    if (!isUser) {
+      await sendWelcomeMessage(chatId);
+    } else {
       await start(chatId);
-      break;
-    // -------------------------------------------------- buy ------------------------------------------------------
-    case "solBuy":
-      if (isUser) {
-        flag = "solBuy";
-        await bot.sendMessage(
-          chatId,
-          "Enter solBuy a Token that you want to Buy:"
-        );
-        if (flag == "solBuy") {
-          bot.once("message", async (outputMsg) => {
-            const output = outputMsg.text;
-            if (flag == "solBuy") {
-              await bot.sendMessage(
+      await sendWelcomeMessage2(chatId);
+    }
+  }
+  // Handle 'SignUp' command
+  else if (msg.text === "SignUp") {
+    resetUserState(chatId);
+    userStates[chatId].method = "signupUser";
+    userStates[chatId].flag = "signupUser";
+    await handleSignUp(chatId);
+  }
+  // Handle 'Login' command
+  else if (msg.text === "Login") {
+    resetUserState(chatId);
+    userStates[chatId].method = "loginUser";
+    userStates[chatId].flag = "loginUser";
+    await handleLogin(chatId);
+  }
+  // Handle 'Start' command
+  else if (msg.text === "Start") {
+    resetUserState(chatId);
+    flag = null;
+    await start(chatId);
+  }
+});
+
+// take input from user for swap , sell, buy, transfer, logoutUser, signupUser
+
+bot.on("message", async (msg) => {
+  const chatId = msg.chat.id;
+  if (!userStates[chatId] || !userStates[chatId].flag) {
+    return;
+  }
+  const state = userStates[chatId];
+  const text = msg.text;
+
+  switch (state.method) {
+    case "swap":
+      if (!userStates[chatId] || !userStates[chatId].flag) {
+        return;
+      }
+
+      switch (state.currentStep) {
+        case "fromTokenSwap":
+          state.fromToken = text;
+          state.currentStep = "toTokenSwap";
+          await bot.sendMessage(chatId, "Type To Token:");
+          break;
+
+        case "toTokenSwap":
+          state.toToken = text;
+          state.currentStep = "amountSwap";
+          await bot.sendMessage(chatId, "Please enter the amount to swap:");
+          break;
+
+        case "amountSwap":
+          state.amount = Number(text);
+          const { loaderMessage, interval } = await animateLoader(chatId);
+
+          if (state.flag == 19999) {
+            response = await axios
+              .post(`${API_URL}/solanaSwap`, {
+                input: state?.fromToken,
+                output: state?.toToken,
+                amount: state?.amount,
                 chatId,
-                " Please enter the solBuy amount to Buy:"
-              );
-            }
-            if (flag == "solBuy") {
-              bot.once("message", async (amountMsg) => {
-                const amount = amountMsg.text;
-                if (flag == "solBuy") {
-                  const { loaderMessage, interval } = await animateLoader(
-                    chatId
+                method: "Swap",
+              })
+              .then(async (res) => {
+                clearInterval(interval);
+                await bot.deleteMessage(chatId, loaderMessage.message_id);
+                if (res?.data?.status) {
+                  resetUserState(chatId);
+                  return await bot.sendMessage(
+                    chatId,
+                    "solana swap successfull"
                   );
-                  try {
-                    const tokenRes = await axios.post(
-                      `${API_URL}/getSolanaTokenPrice`,
-                      {
-                        token: "So11111111111111111111111111111111111111112",
-                        token2: output,
-                      }
-                    );
-                    const tokensPrice = tokenRes?.data?.finalRes;
-                    const buyAmt = amount * tokensPrice?.to;
-                    const finalAmt = buyAmt / tokensPrice?.sol;
-                    const response = await axios.post(`${API_URL}/solanaSwap`, {
-                      input: "So11111111111111111111111111111111111111112",
-                      output,
-                      amount: finalAmt,
-                      chatId,
-                      desBot: 9,
-                      method: "Buy",
-                    });
+                } else {
+                  resetUserState(chatId);
+                  return await bot.sendMessage(
+                    chatId,
+                    "somthing has been wrong in solana swap!!!"
+                  );
+                }
+              })
+              .catch(async (err) => {
+                resetUserState(chatId);
+                clearInterval(interval);
+                await bot.deleteMessage(chatId, loaderMessage.message_id);
+                return await bot.sendMessage(chatId, err?.message);
+              });
+          } else {
+            response = await axios
+              .post(`${API_URL}/EVMswap`, {
+                tokenIn: state?.fromToken,
+                tokenOut: state?.toToken,
+                chainId: state?.network,
+                amount: state?.amount,
+                chain: state?.flag,
+                chatId,
+                method: "Swap",
+              })
+              .then(async (res) => {
+                clearInterval(interval);
+                await bot.deleteMessage(chatId, loaderMessage.message_id);
+                resetUserState(chatId);
+                if (res?.data?.status) {
+                  await bot.sendMessage(chatId, res?.data?.message);
+                  return await bot.sendMessage(chatId, res?.data?.txUrl);
+                } else {
+                  return await bot.sendMessage(
+                    chatId,
+                    `somthing has been wrong in swap!!!`
+                  );
+                }
+              })
+              .catch(async (err) => {
+                resetUserState(chatId);
+                clearInterval(interval);
+                await bot.deleteMessage(chatId, loaderMessage.message_id);
+                return await bot.sendMessage(chatId, err?.message);
+              });
+          }
+          break;
+      }
+      break;
+    case "buy":
+      if (!userStates[chatId] || !userStates[chatId].flag) {
+        return;
+      }
+      switch (state.currentStep) {
+        case "fromTokenBuy":
+          state.toToken = text;
+          state.currentStep = "amountBuy";
+          await bot.sendMessage(chatId, "Enter amount:");
+          break;
+
+        case "amountBuy":
+          state.amount = Number(text);
+
+          if (state.flag == 19999) {
+            const { loaderMessage, interval } = await animateLoader(chatId);
+            const tokenRes = await axios
+              .post(`${API_URL}/getSolanaTokenPrice`, {
+                token: "So11111111111111111111111111111111111111112",
+                token2: state?.toToken,
+              })
+              .then(async (res) => {
+                const tokensPrice = res?.data?.finalRes;
+                const buyAmt = state.amount * tokensPrice?.to;
+                const finalAmt = buyAmt / tokensPrice?.sol;
+                await axios
+                  .post(`${API_URL}/solanaSwap`, {
+                    input: "So11111111111111111111111111111111111111112",
+                    output: state?.toToken,
+                    amount: finalAmt,
+                    chatId,
+                    desBot: 9,
+                    method: "Buy",
+                  })
+                  .then(async (response) => {
                     clearInterval(interval);
+                    resetUserState(chatId);
                     await bot.deleteMessage(chatId, loaderMessage.message_id);
                     if (response?.data?.status) {
                       await bot.sendMessage(chatId, `Token buy successful!`);
@@ -1152,25 +706,568 @@ bot.on("callback_query", async (callbackQuery) => {
                       await bot.sendMessage(
                         chatId,
                         response.data.message ||
-                          "❌ Swap failed. Please try again."
+                        "❌ buy failed. Please try again."
                       );
                     }
-                  } catch (error) {
+                  });
+              })
+              .catch(async (err) => {
+                resetUserState(chatId);
+                clearInterval(interval);
+                await bot.deleteMessage(chatId, loaderMessage.message_id);
+                await bot.sendMessage(
+                  chatId,
+                  `due to some reason you transaction failed!!`
+                );
+              });
+          } else {
+            const { loaderMessage, interval } = await animateLoader(chatId);
+            const tokenRes = await axios
+              .post(`${API_URL}/getEvmTokenPrice`, {
+                token: state?.fromToken,
+                token2: state?.toToken,
+                chain: state?.desCode,
+              })
+              .then(async (res) => {
+                const tokensPrice = res?.data?.finalRes;
+                const buyAmt = state?.amount * tokensPrice?.token2;
+                const finalAmt = buyAmt / tokensPrice?.token1;
+                await axios({
+                  url: `${API_URL}/EVMswap`,
+                  method: "post",
+                  data: {
+                    tokenIn: state?.fromToken,
+                    tokenOut: state?.toToken,
+                    chainId: state?.network,
+                    amount: finalAmt,
+                    chain: 42161,
+                    chatId: chatId,
+                    method: "Buy",
+                  },
+                })
+                  .then(async (response) => {
+                    resetUserState(chatId);
+                    clearInterval(interval);
+                    await bot.deleteMessage(chatId, loaderMessage.message_id);
+                    if (response?.data?.status) {
+                      await bot.sendMessage(chatId, response?.data?.message);
+                      return await bot.sendMessage(chatId, res?.data?.txUrl);
+                    } else {
+                      await bot.sendMessage(chatId, response?.data?.message);
+                    }
+                  })
+                  .catch(async (error) => {
+                    resetUserState(chatId);
                     clearInterval(interval);
                     await bot.deleteMessage(chatId, loaderMessage.message_id);
                     await bot.sendMessage(
                       chatId,
                       `due to some reason you transaction failed!!`
                     );
-                  }
-                }
-                //
+                  });
               });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
+          }
+          break;
+      }
+      break;
+
+    case "sell":
+      if (!userStates[chatId] || !userStates[chatId].flag) {
+        return;
+      }
+
+      switch (state.currentStep) {
+        case "toTokenSell":
+          state.fromToken = text;
+          state.currentStep = "amountSell";
+          await bot.sendMessage(chatId, "Please enter amount:");
+          break;
+
+        case "amountSell":
+          state.amount = Number(text);
+          const { loaderMessage, interval } = await animateLoader(chatId);
+
+          if (state.flag == 19999) {
+            response = await axios
+              .post(`${API_URL}/solanaSwap`, {
+                input: state?.fromToken,
+                output: "So11111111111111111111111111111111111111112",
+                amount: state?.amount,
+                chatId,
+                method: "Sell",
+              })
+              .then(async (res) => {
+                clearInterval(interval);
+                await bot.deleteMessage(chatId, loaderMessage.message_id);
+                if (res?.data?.status) {
+                  resetUserState(chatId);
+                  await bot.sendMessage(chatId, "Transaction Successfull!!");
+                  return await bot.sendMessage(
+                    chatId,
+                    `https://solscan.io/account/${res?.data?.transactionCreated?.txid}`
+                  );
+                } else {
+                  resetUserState(chatId);
+                  return await bot.sendMessage(
+                    chatId,
+                    "somthing has been wrong please try again letter!!!"
+                  );
+                }
+              })
+              .catch(async (err) => {
+                resetUserState(chatId);
+                clearInterval(interval);
+                await bot.deleteMessage(chatId, loaderMessage.message_id);
+                return await bot.sendMessage(chatId, err?.message);
+              });
+          } else {
+            response = await axios
+              .post(`${API_URL}/EVMswap`, {
+                tokenIn: state?.fromToken,
+                tokenOut: state?.toToken,
+                chainId: state?.network,
+                amount: state?.amount,
+                chain: state?.flag,
+                chatId,
+                method: "Sell",
+              })
+              .then(async (res) => {
+                clearInterval(interval);
+                await bot.deleteMessage(chatId, loaderMessage.message_id);
+                resetUserState(chatId);
+                if (res?.data?.status) {
+                  await bot.sendMessage(chatId, res?.data?.message);
+                  return await bot.sendMessage(chatId, res?.data?.txUrl);
+                } else {
+                  return await bot.sendMessage(
+                    chatId,
+                    `somthing has been wrong in swap!!!`
+                  );
+                }
+              })
+              .catch(async (err) => {
+                resetUserState(chatId);
+                clearInterval(interval);
+                await bot.deleteMessage(chatId, loaderMessage.message_id);
+                return await bot.sendMessage(chatId, err?.message);
+              });
+          }
+          break;
+      }
+      break;
+    case "transfer":
+      if (!userStates[chatId] || !userStates[chatId].flag) {
+        return;
+      }
+
+      switch (state.currentStep) {
+        case "tokenTransfer":
+          state.fromToken = text;
+          state.currentStep = "toWalletTransfer";
+          await bot.sendMessage(chatId, "Type To Wallet Address:");
+          break;
+
+        case "toWalletTransfer":
+          state.toToken = text;
+          state.currentStep = "amountTransfer";
+          await bot.sendMessage(chatId, "Please enter amount:");
+          break;
+
+        case "amountTransfer":
+          state.amount = Number(text);
+
+          if (state.flag == 19999) {
+            const { loaderMessage, interval } = await animateLoader(chatId);
+            await axios({
+              url: `${API_URL}/transferSolanaToken`,
+              method: "post",
+              data: {
+                chatId,
+                toWallet: state?.toToken,
+                token: state?.fromToken,
+                amount: state.amount,
+              },
+            })
+              .then(async (res) => {
+                clearInterval(interval);
+                await bot.deleteMessage(chatId, loaderMessage.message_id);
+                if (res?.data?.status) {
+                  console.log("🚀 ~ .then ~ res?.data?.tx:", res?.data?.tx);
+                  await bot.sendMessage(chatId, res?.data?.message);
+                  await bot.sendMessage(
+                    chatId,
+                    `https://solscan.io/tx/${res?.data?.tx}`
+                  );
+                } else {
+                  await bot.sendMessage(chatId, res?.data?.message);
+                }
+              })
+              .catch(async (error) => {
+                clearInterval(interval);
+                await bot.deleteMessage(chatId, loaderMessage.message_id);
+                console.log("🚀 ~ awaitbot.once ~ error:", error);
+                await bot.sendMessage(
+                  chatId,
+                  "due to high transaction volume in solana you transaction has been faild!!"
+                );
+              });
+          } else {
+            await transferEvmToken(
+              chatId,
+              state?.fromToken,
+              state?.toToken,
+              state?.flag,
+              state?.amount
+            )
+              .then(async (res) => {
+                await bot.sendMessage(chatId, res?.data?.message);
+                await bot.sendMessage(chatId, res?.data?.txUrl);
+              })
+              .catch(async (err) => {
+                console.log("🚀 ~ bot.once ~ err:", err);
+                await bot.sendMessage(
+                  chatId,
+                  "somthing has been wrong make sure you have a enough balance!!"
+                );
+              });
+          }
+          break;
+      }
+      break;
+    case "loginUser":
+      if (!userStates[chatId] || !userStates[chatId].flag) {
+        return;
+      }
+
+      switch (state.currentStep) {
+        case "loginEmail":
+          state.currentStep = "userPasswordLogin";
+          break;
+        case "userPasswordLogin":
+          if (!isValidEmail(text)) {
+            state.currentStep = "userPasswordLogin";
+            return await bot.sendMessage(
+              chatId,
+              "🔐invalid email please re-enter your email:"
+            );
+          }
+          state.email = text;
+          state.currentStep = "loginApi";
+          await bot.sendMessage(chatId, "🔐 please enter your password:");
+          break;
+
+        case "loginApi":
+          state.password = text;
+          const { loaderMessage, interval } = await animateLoader(chatId);
+          await axios
+            .post(`${API_URL}/login`, {
+              email: state?.email,
+              password: state?.password,
+              chatId,
+            })
+            .then(async (response) => {
+              resetUserState(chatId);
+              clearInterval(interval);
+              await bot.deleteMessage(chatId, loaderMessage.message_id);
+              if (response.data.status === true) {
+                await bot.sendMessage(chatId, `✅ Login successfull!`);
+                const userInfo = await getEmailAndWalletFromBackend(chatId);
+                if (userInfo?.email) {
+                  const messageText = `Welcome to WaveBot! 🌊\n
+        🌊 WaveBot(https://wavebot.app/)\n
+        📖 Dashboard(https://dashboard.wavebot.app/)\n
+        🌐 Website(https://marketing-dashboard-d22655001f93.herokuapp.com/)
+        ‧‧────────────────‧‧
+        *Your Email Address: ${userInfo?.email}\n
+        *Your Wallet Address (EVM): ${userInfo?.EVMwallet}\n
+        *Your Wallet Address (Solana): ${userInfo?.solanaWallets}`;
+                  await bot.sendMessage(chatId, messageText, {
+                    reply_markup: JSON.stringify(buyKeyboard),
+                  });
+                }
+                await sendWelcomeMessage2(chatId);
+                isLoggingIn = false;
+              } else {
+                await bot.sendMessage(
+                  chatId,
+                  "❌ Invalid email or password. Please try again."
+                );
+              }
+            })
+            .catch(async (error) => {
+              resetUserState(chatId);
+              clearInterval(interval);
+              await bot.deleteMessage(chatId, loaderMessage.message_id);
+              console.error("Error:", error.message);
+              await bot.sendMessage(
+                chatId,
+                `❌ An error occurred while logging in: ${error.message}`
+              );
+            });
+
+          break;
+      }
+      break;
+    case "signupUser":
+      if (!userStates[chatId] || !userStates[chatId].flag) {
+        return;
+      }
+
+      switch (state.currentStep) {
+        case "signupHandle":
+          state.currentStep = "userNameSignup";
+          break;
+        case "userNameSignup":
+          state.name = text;
+          state.currentStep = "userEmailSignup";
+          await bot.sendMessage(chatId, "🔐 please enter your email:");
+          break;
+        case "userEmailSignup":
+          if (!isValidEmail(text)) {
+            state.currentStep = "userEmailSignup";
+            return await bot.sendMessage(
+              chatId,
+              "🔐invalid email please re-enter your email:"
+            );
+          }
+          state.email = text;
+          state.currentStep = "userPasswordSignUp";
+          await bot.sendMessage(chatId, "🔐 please enter your password:");
+          break;
+        case "userPasswordSignUp":
+          if (!isValidPassword(text)) {
+            await bot.sendMessage(
+              chatId,
+              "❌ Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character."
+            );
+            state.currentStep = "userPasswordSignUp";
+            return await bot.sendMessage(
+              chatId,
+              "🔐please re-enter your password:"
+            );
+          }
+          state.password = text;
+          state.currentStep = "userConfirmPasswordSignUp";
+          await bot.sendMessage(
+            chatId,
+            "🔐 please enter confirm your password:"
+          );
+          break;
+
+        case "userConfirmPasswordSignUp":
+          if (state?.password != text) {
+            state.currentStep = "userPasswordSignUp";
+            return await bot.sendMessage(
+              chatId,
+              "🔐 Password and confirm password does not match please re-enter password:"
+            );
+          }
+          state.confirmPassword = text;
+          await axios
+            .post(`${API_URL}/signup`, {
+              name: state?.name,
+              email: state?.email,
+              password: state?.password,
+              confirmPassword: state?.confirmPassword,
+              chatId,
+            })
+            .then(async (res) => {
+              if (res?.data?.status) {
+                state.currentStep = "userOtpSignUp";
+                await bot.sendMessage(
+                  chatId,
+                  "📧 Please check your email and enter verification code:"
+                );
+              } else {
+                resetUserState(chatId);
+                await bot.sendMessage(
+                  chatId,
+                  "failed to register please try again!!",
+                  {
+                    reply_markup: {
+                      keyboard: [
+                        [
+                          {
+                            text: "SignUp",
+                            request_contact: false,
+                            request_location: false,
+                          },
+                        ],
+                        [
+                          {
+                            text: "Login",
+                            request_contact: false,
+                            request_location: false,
+                          },
+                        ],
+                        //[{ text: 'Start', request_contact: false, request_location: false }],
+                      ],
+                      resize_keyboard: true,
+                      one_time_keyboard: true,
+                    },
+                  }
+                );
+              }
+            })
+            .catch(async (error) => {
+              resetUserState(chatId);
+              clearInterval(interval);
+              await bot.deleteMessage(chatId, loaderMessage.message_id);
+              console.log("🚀 ~ .then ~ error:", error);
+              await bot.sendMessage(
+                chatId,
+                "❌ An error occurred while register in please try again",
+                {
+                  reply_markup: {
+                    keyboard: [
+                      [
+                        {
+                          text: "SignUp",
+                          request_contact: false,
+                          request_location: false,
+                        },
+                      ],
+                      [
+                        {
+                          text: "Login",
+                          request_contact: false,
+                          request_location: false,
+                        },
+                      ],
+                      //[{ text: 'Start', request_contact: false, request_location: false }],
+                    ],
+                    resize_keyboard: true,
+                    one_time_keyboard: true,
+                  },
+                }
+              );
+            });
+          break;
+        case "userOtpSignUp":
+          state.otp = text;
+          const { loaderMessage, interval } = await animateLoader(chatId);
+          await axios
+            .post(`${API_URL}/verify`, {
+              email: state?.email,
+              otp: state?.otp,
+              chatId,
+            })
+            .then(async (res) => {
+              clearInterval(interval);
+              await bot.deleteMessage(chatId, loaderMessage.message_id);
+              if (res?.data?.status) {
+                await bot.sendMessage(
+                  chatId,
+                  `🎉 User registered successfully.`
+                );
+                await start(chatId);
+              } else {
+                state.currentStep = "userOtpSignUp";
+                await bot.sendMessage(
+                  chatId,
+                  `🔐 Invalid OTP. Please re-enter a valid OTP.`
+                );
+              }
+            })
+            .catch(async (error) => {
+              resetUserState(chatId);
+              await bot.sendMessage(
+                chatId,
+                "❌ An error occurred while register in please try again",
+                {
+                  reply_markup: {
+                    keyboard: [
+                      [
+                        {
+                          text: "SignUp",
+                          request_contact: false,
+                          request_location: false,
+                        },
+                      ],
+                      [
+                        {
+                          text: "Login",
+                          request_contact: false,
+                          request_location: false,
+                        },
+                      ],
+                      //[{ text: 'Start', request_contact: false, request_location: false }],
+                    ],
+                    resize_keyboard: true,
+                    one_time_keyboard: true,
+                  },
+                }
+              );
+            });
+          break;
+      }
+      break;
+    default:
+      break;
+  }
+});
+
+// all keyborad button handler
+bot.on("callback_query", async (callbackQuery) => {
+  const chatId = callbackQuery.message.chat.id;
+  const messageId = callbackQuery.message.message_id;
+  const data = callbackQuery.data;
+  const isUser = await getstartBot(chatId);
+  if (!isUser) {
+    return await bot.sendMessage(chatId, "please login!!", {
+      reply_markup: {
+        keyboard: [
+          [
+            {
+              text: "SignUp",
+              request_contact: false,
+              request_location: false,
+            },
+          ],
+          [
+            {
+              text: "Login",
+              request_contact: false,
+              request_location: false,
+            },
+          ],
+          //[{ text: 'Start', request_contact: false, request_location: false }],
+        ],
+        resize_keyboard: true,
+        one_time_keyboard: true,
+      },
+    });
+  }
+  // Ensure there is a state object for the user
+  if (!userStates[chatId]) {
+    resetUserState(chatId);
+  }
+  switch (data) {
+    case "menuButton":
+      resetUserState(chatId);
+      await bot.sendMessage(chatId, "Click Menu Button");
+      break;
+    case "SwaptokenButton":
+      resetUserState(chatId);
+      startSwapProcess(chatId);
+
+      break;
+    case "SolonabalanceButton":
+      resetUserState(chatId);
+      fetchSolanaBalance(chatId);
+
+      break;
+    case "balanceButton":
+      resetUserState(chatId);
+      await bot.sendMessage(chatId, `🌟 Choose a network 🌟`, {
+        reply_markup: JSON.stringify(evmWalletBalance),
+      });
+
+      break;
+    case "logoutButton":
+      resetUserState(chatId);
+      await logoutfunaction(chatId).then(async (res) => {
+        await bot.sendMessage(chatId, "logout successfull!", {
           reply_markup: {
             keyboard: [
               [
@@ -1193,4370 +1290,440 @@ bot.on("callback_query", async (callbackQuery) => {
             one_time_keyboard: true,
           },
         });
-      }
+      });
+
+      break;
+    case "buyButton":
+      resetUserState(chatId);
+      buyStartTokenSelection(chatId);
+
+      break;
+    case "sellButton":
+      resetUserState(chatId);
+      sellStartTokenSelection(chatId);
+
+      break;
+    case "withrawButton":
+      resetUserState(chatId);
+      withrawStartTokenSelection(chatId);
+
+      break;
+    case "walletAddresses":
+      resetUserState(chatId);
+      walletAddressSelection(chatId);
+
+      break;
+    case "refreshButton":
+      resetUserState(chatId);
+      await start(chatId);
+      break;
+    // -------------------------------------------------- buy ------------------------------------------------------
+    case "solBuy":
+      resetUserState(chatId);
+      userStates[chatId].flag = 19999;
+      userStates[chatId].method = "buy";
+      handleBuy(chatId);
+
       break;
     case "42161buy":
-      if (isUser) {
-        flag = "42161buy";
-        await bot.sendMessage(chatId, "Type ARB token that you want to buy:");
-        if (flag == "42161buy") {
-          bot.once("message", async (token0Msg) => {
-            const token0 = token0Msg.text;
-            if (flag == "42161buy") {
-              await bot.sendMessage(
-                chatId,
-                "Please enter the ARB token amount:"
-              );
-              if (flag == "42161buy") {
-                bot.once("message", async (amountInMsg) => {
-                  const amountIn = Number(amountInMsg.text);
-                  if (flag == "42161buy") {
-                    const { loaderMessage, interval } = await animateLoader(
-                      chatId
-                    );
-                    const tokenRes = await axios.post(
-                      `${API_URL}/getEvmTokenPrice`,
-                      {
-                        token: "0x912CE59144191C1204E64559FE8253a0e49E6548",
-                        token2: token0,
-                        chain: "0xa4b1",
-                      }
-                    );
-                    const tokensPrice = tokenRes?.data?.finalRes;
-                    const buyAmt = amountIn * tokensPrice?.token2;
-                    const finalAmt = buyAmt / tokensPrice?.token1;
-                    if (tokenRes) {
-                      if (flag == "42161buy") {
-                        await axios({
-                          url: `${API_URL}/EVMswap`,
-                          method: "post",
-                          data: {
-                            tokenIn:
-                              "0x912CE59144191C1204E64559FE8253a0e49E6548",
-                            tokenOut: token0,
-                            chainId: "arbitrum",
-                            amount: finalAmt,
-                            chain: 42161,
-                            chatId: chatId,
-                            desCode: "0xa4b1",
-                            method: "Buy",
-                          },
-                        })
-                          .then(async (response) => {
-                            clearInterval(interval);
-                            await bot.deleteMessage(
-                              chatId,
-                              loaderMessage.message_id
-                            );
-                            if (response?.data?.status) {
-                              await bot.sendMessage(
-                                chatId,
-                                response?.data?.message
-                              );
-                              await bot.sendMessage(
-                                chatId,
-                                `https://arbiscan.io/tx/${response?.data?.tx}`
-                              );
-                            } else {
-                              await bot.sendMessage(
-                                chatId,
-                                response?.data?.message
-                              );
-                            }
-                          })
-                          .catch(async (error) => {
-                            clearInterval(interval);
-                            await bot.deleteMessage(
-                              chatId,
-                              loaderMessage.message_id
-                            );
-                            await bot.sendMessage(
-                              chatId,
-                              `due to some reason you transaction failed!!`
-                            );
-                          });
-                      }
-                    }
-                  }
-                });
-              }
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      userStates[chatId].flag = 42161;
+      userStates[chatId].network = "arbitrum";
+      userStates[chatId].method = "buy";
+      userStates[chatId].desCode = "0xa4b1";
+      userStates[chatId].fromToken =
+        "0x912CE59144191C1204E64559FE8253a0e49E6548";
+      handleBuy(chatId);
+
       break;
     case "1buy":
-      if (isUser) {
-        flag = "1buy";
-        await bot.sendMessage(chatId, "Type Eth token that you want to buy:");
-        if (flag == "1buy") {
-          bot.once("message", async (token0Msg) => {
-            const token0 = token0Msg.text;
-            if (flag == "1buy") {
-              await bot.sendMessage(
-                chatId,
-                "Please enter the Eth token amount:"
-              );
-              if (flag == "1buy") {
-                bot.once("message", async (amountInMsg) => {
-                  const amountIn = Number(amountInMsg.text);
-                  if (flag == "1buy") {
-                    const { loaderMessage, interval } = await animateLoader(
-                      chatId
-                    );
-                    const tokenRes = await axios.post(
-                      `${API_URL}/getEvmTokenPrice`,
-                      {
-                        token: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-                        token2: token0,
-                        chain: "0x1",
-                      }
-                    );
-                    const tokensPrice = tokenRes?.data?.finalRes;
-                    const buyAmt = amountIn * tokensPrice?.token2;
-                    const finalAmt = buyAmt / tokensPrice?.token1;
-                    if (tokenRes) {
-                      if (flag == "1buy") {
-                        await axios({
-                          url: `${API_URL}/EVMswap`,
-                          method: "post",
-                          data: {
-                            tokenIn:
-                              "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-                            tokenOut: token0,
-                            chainId: "ethereum",
-                            amount: finalAmt,
-                            chain: 1,
-                            chatId: chatId,
-                            desCode: "0x1",
-                            method: "Buy",
-                          },
-                        })
-                          .then(async (response) => {
-                            clearInterval(interval);
-                            await bot.deleteMessage(
-                              chatId,
-                              loaderMessage.message_id
-                            );
-                            if (response?.data?.status) {
-                              await bot.sendMessage(
-                                chatId,
-                                response?.data?.message
-                              );
-                              await bot.sendMessage(
-                                chatId,
-                                `https://etherscan.io/tx/${response?.data?.tx}`
-                              );
-                            } else {
-                              await bot.sendMessage(
-                                chatId,
-                                response?.data?.message
-                              );
-                            }
-                          })
-                          .catch(async (error) => {
-                            clearInterval(interval);
-                            await bot.deleteMessage(
-                              chatId,
-                              loaderMessage.message_id
-                            );
-                            await bot.sendMessage(
-                              chatId,
-                              `due to some reason you transaction failed!!`
-                            );
-                          });
-                      }
-                    }
-                  }
-                });
-              }
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      userStates[chatId].flag = 1;
+      userStates[chatId].network = "ethereum";
+      userStates[chatId].method = "buy";
+      userStates[chatId].desCode = "0x1";
+      userStates[chatId].fromToken =
+        "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
+      handleBuy(chatId);
+
       break;
     case "10buy":
-      if (isUser) {
-        flag = "10buy";
-        await bot.sendMessage(chatId, "Type OP token that you want to buy:");
-        if (flag == "10buy") {
-          bot.once("message", async (token0Msg) => {
-            const token0 = token0Msg.text;
-            if (flag == "10buy") {
-              await bot.sendMessage(chatId, "Please enter the amount:");
-            }
-            if (flag == "10buy") {
-              bot.once("message", async (amountInMsg) => {
-                const amountIn = Number(amountInMsg.text);
-                if (flag == "10buy") {
-                  const { loaderMessage, interval } = await animateLoader(
-                    chatId
-                  );
-                  const tokenRes = await axios.post(
-                    `${API_URL}/getEvmTokenPrice`,
-                    {
-                      token: "0x4200000000000000000000000000000000000042",
-                      token2: token0,
-                      chain: "0xa",
-                    }
-                  );
-                  const tokensPrice = tokenRes?.data?.finalRes;
-                  const buyAmt = amountIn * tokensPrice?.token2;
-                  const finalAmt = buyAmt / tokensPrice?.token1;
-                  if (tokenRes) {
-                    if (flag == "10buy") {
-                      await axios({
-                        url: `${API_URL}/EVMswap`,
-                        method: "post",
-                        data: {
-                          tokenIn: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
-                          tokenOut: token0,
-                          chainId: "optimism",
-                          amount: finalAmt,
-                          chain: 10,
-                          chatId: chatId,
-                          desCode: "0xa",
-                          method: "Buy",
-                        },
-                      })
-                        .then(async (response) => {
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          if (response?.data?.status) {
-                            await bot.sendMessage(
-                              chatId,
-                              response?.data?.message
-                            );
-                            await bot.sendMessage(
-                              chatId,
-                              `https://optimistic.etherscan.io/tx/${response?.data?.tx}`
-                            );
-                          } else {
-                            await bot.sendMessage(
-                              chatId,
-                              response?.data?.message
-                            );
-                          }
-                        })
-                        .catch(async (error) => {
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          await bot.sendMessage(
-                            chatId,
-                            `due to some reason you transaction failed!!`
-                          );
-                        });
-                    }
-                  }
-                }
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      userStates[chatId].flag = 10;
+      userStates[chatId].network = "optimism";
+      userStates[chatId].method = "buy";
+      userStates[chatId].desCode = "0xa";
+      userStates[chatId].fromToken =
+        "0x4200000000000000000000000000000000000042";
+      handleBuy(chatId);
+
       break;
     case "137buy":
-      if (isUser) {
-        flag = "137buy";
-        await bot.sendMessage(chatId, "Type token that you want to buy:");
-        if (flag == "137buy") {
-          bot.once("message", async (token0Msg) => {
-            const token0 = token0Msg.text;
-            if (flag == "137buy") {
-              await bot.sendMessage(chatId, "Please enter the amount:");
-            }
-            if (flag == "137buy") {
-              bot.once("message", async (amountInMsg) => {
-                const amountIn = Number(amountInMsg.text);
-                if (flag == "137buy") {
-                  const { loaderMessage, interval } = await animateLoader(
-                    chatId
-                  );
-                  const tokenRes = await axios.post(
-                    `${API_URL}/getEvmTokenPrice`,
-                    {
-                      token: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
-                      token2: token0,
-                      chain: "0x89",
-                    }
-                  );
-                  const tokensPrice = tokenRes?.data?.finalRes;
-                  const buyAmt = amountIn * tokensPrice?.token2;
-                  const finalAmt = buyAmt / tokensPrice?.token1;
-                  if (tokenRes) {
-                    if (flag == "137buy") {
-                      await axios({
-                        url: `${API_URL}/EVMswap`,
-                        method: "post",
-                        data: {
-                          tokenIn: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
-                          tokenOut: token0,
-                          chainId: "polygon",
-                          amount: finalAmt,
-                          chain: 137,
-                          chatId: chatId,
-                          desCode: "0x89",
-                          method: "Buy",
-                        },
-                      })
-                        .then(async (response) => {
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          if (response?.data?.status) {
-                            await bot.sendMessage(
-                              chatId,
-                              response?.data?.message
-                            );
-                            await bot.sendMessage(
-                              chatId,
-                              `https://polygonscan.com/tx/${response?.data?.tx}`
-                            );
-                          } else {
-                            await bot.sendMessage(
-                              chatId,
-                              response?.data?.message
-                            );
-                          }
-                        })
-                        .catch(async (error) => {
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          await bot.sendMessage(
-                            chatId,
-                            `due to some reason you transaction failed!!`
-                          );
-                        });
-                    }
-                  }
-                }
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      userStates[chatId].flag = 137;
+      userStates[chatId].network = "polygon";
+      userStates[chatId].method = "buy";
+      userStates[chatId].desCode = "0x89";
+      userStates[chatId].fromToken =
+        "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270";
+      handleBuy(chatId);
       break;
     case "8453buy":
-      if (isUser) {
-        flag = "8453buy";
-        await bot.sendMessage(chatId, "Type base token that you want to buy:");
-        if (flag == "8453buy") {
-          bot.once("message", async (token0Msg) => {
-            const token0 = token0Msg.text;
-            if (flag == "8453buy") {
-              await bot.sendMessage(
-                chatId,
-                "Please enter the base token amount:"
-              );
-              if (flag == "8453buy") {
-                bot.once("message", async (amountInMsg) => {
-                  const amountIn = Number(amountInMsg.text);
-                  if (flag == "8453buy") {
-                    const { loaderMessage, interval } = await animateLoader(
-                      chatId
-                    );
-                    const tokenRes = await axios.post(
-                      `${API_URL}/getEvmTokenPrice`,
-                      {
-                        token: "0x4200000000000000000000000000000000000006",
-                        token2: token0,
-                        chain: "0x2105",
-                      }
-                    );
-                    const tokensPrice = tokenRes?.data?.finalRes;
-                    const buyAmt = amountIn * tokensPrice?.token2;
-                    const finalAmt = buyAmt / tokensPrice?.token1;
-                    if (tokenRes) {
-                      if (flag == "8453buy") {
-                        await axios({
-                          url: `${API_URL}/EVMswap`,
-                          method: "post",
-                          data: {
-                            tokenIn:
-                              "0x4200000000000000000000000000000000000006",
-                            tokenOut: token0,
-                            chainId: "base",
-                            amount: finalAmt,
-                            chain: 8453,
-                            chatId: chatId,
-                            desCode: "0x2105",
-                            method: "Buy",
-                          },
-                        })
-                          .then(async (response) => {
-                            clearInterval(interval);
-                            await bot.deleteMessage(
-                              chatId,
-                              loaderMessage.message_id
-                            );
-                            if (response?.data?.status) {
-                              await bot.sendMessage(
-                                chatId,
-                                response?.data?.message
-                              );
-                              await bot.sendMessage(
-                                chatId,
-                                `https://basescan.org/tx/${response?.data?.tx}`
-                              );
-                            } else {
-                              await bot.sendMessage(
-                                chatId,
-                                response?.data?.message
-                              );
-                            }
-                          })
-                          .catch(async (error) => {
-                            clearInterval(interval);
-                            await bot.deleteMessage(
-                              chatId,
-                              loaderMessage.message_id
-                            );
-                            await bot.sendMessage(
-                              chatId,
-                              `due to some reason you transaction failed!!`
-                            );
-                          });
-                      }
-                    }
-                  }
-                });
-              }
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      userStates[chatId].flag = 8453;
+      userStates[chatId].network = "base";
+      userStates[chatId].method = "buy";
+      userStates[chatId].desCode = "0x2105";
+      userStates[chatId].fromToken =
+        "0x4200000000000000000000000000000000000006";
+      handleBuy(chatId);
+
       break;
     case "56buy":
-      if (isUser) {
-        flag = "56buy";
-        await bot.sendMessage(chatId, "Type token that you want to buy:");
-        if (flag == "56buy") {
-          bot.once("message", async (token0Msg) => {
-            const token0 = token0Msg.text;
-            if (flag == "56buy") {
-              await bot.sendMessage(chatId, "Please enter the amount:");
-            }
-            if (flag == "56buy") {
-              bot.once("message", async (amountInMsg) => {
-                const amountIn = Number(amountInMsg.text);
-                if (flag == "56buy") {
-                  const { loaderMessage, interval } = await animateLoader(
-                    chatId
-                  );
-                  const tokenRes = await axios.post(
-                    `${API_URL}/getEvmTokenPrice`,
-                    {
-                      token: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
-                      token2: token0,
-                      chain: "0x38",
-                    }
-                  );
-                  const tokensPrice = tokenRes?.data?.finalRes;
-                  const buyAmt = amountIn * tokensPrice?.token2;
-                  const finalAmt = buyAmt / tokensPrice?.token1;
-                  if (tokenRes) {
-                    if (flag == "56buy") {
-                      await axios({
-                        url: `${API_URL}/EVMswap`,
-                        method: "post",
-                        data: {
-                          tokenIn: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
-                          tokenOut: token0,
-                          chainId: "bsc",
-                          amount: finalAmt,
-                          chain: 56,
-                          chatId: chatId,
-                          desCode: "0x38",
-                          method: "Buy",
-                        },
-                      })
-                        .then(async (response) => {
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          if (response?.data?.status) {
-                            await bot.sendMessage(
-                              chatId,
-                              response?.data?.message
-                            );
-                            await bot.sendMessage(
-                              chatId,
-                              `https://bscscan.com/tx/${response?.data?.tx}`
-                            );
-                          } else {
-                            await bot.sendMessage(
-                              chatId,
-                              response?.data?.message
-                            );
-                          }
-                        })
-                        .catch(async (error) => {
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          await bot.sendMessage(
-                            chatId,
-                            `due to some reason you transaction failed!!`
-                          );
-                        });
-                    }
-                  }
-                }
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      userStates[chatId].flag = 56;
+      userStates[chatId].network = "bsc";
+      userStates[chatId].method = "buy";
+      userStates[chatId].desCode = "0x38";
+      userStates[chatId].fromToken =
+        "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c";
+      handleBuy(chatId);
+
       break;
     case "43114buy":
-      if (isUser) {
-        flag = "43114buy";
-        await bot.sendMessage(chatId, "Type AVAX token that you want to buy:");
-        if (flag == "43114buy") {
-          bot.once("message", async (token0Msg) => {
-            const token0 = token0Msg.text;
-            if (flag == "43114buy") {
-              await bot.sendMessage(chatId, "Please enter the amount:");
-            }
-            if (flag == "43114buy") {
-              bot.once("message", async (amountInMsg) => {
-                const amountIn = Number(amountInMsg.text);
-                if (flag == "43114buy") {
-                  const { loaderMessage, interval } = await animateLoader(
-                    chatId
-                  );
-                  const tokenRes = await axios.post(
-                    `${API_URL}/getEvmTokenPrice`,
-                    {
-                      token: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
-                      token2: token0,
-                      chain: "0xa86a",
-                    }
-                  );
-                  const tokensPrice = tokenRes?.data?.finalRes;
-                  const buyAmt = amountIn * tokensPrice?.token2;
-                  const finalAmt = buyAmt / tokensPrice?.token1;
-                  if (finalAmt) {
-                    if (flag == "43114buy") {
-                      await axios({
-                        url: `${API_URL}/EVMswap`,
-                        method: "post",
-                        data: {
-                          tokenIn: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
-                          tokenOut: token0,
-                          chainId: "avalanche",
-                          amount: finalAmt,
-                          chain: 43114,
-                          chatId: chatId,
-                          desCode: "0xa86a",
-                          method: "Buy",
-                        },
-                      })
-                        .then(async (response) => {
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          if (response?.data?.status) {
-                            await bot.sendMessage(
-                              chatId,
-                              response?.data?.message
-                            );
-                            await bot.sendMessage(
-                              chatId,
-                              `https://avascan.info/blockchain/c/tx/${response?.data?.tx}`
-                            );
-                          } else {
-                            await bot.sendMessage(
-                              chatId,
-                              response?.data?.message
-                            );
-                          }
-                        })
-                        .catch(async (error) => {
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          await bot.sendMessage(
-                            chatId,
-                            `due to some reason you transaction failed!!`
-                          );
-                        });
-                    }
-                  } else {
-                    clearInterval(interval);
-                    await bot.deleteMessage(chatId, loaderMessage.message_id);
-                    await bot.sendMessage(chatId, `token is not supported!!`);
-                  }
-                }
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      userStates[chatId].flag = 43114;
+      userStates[chatId].network = "avalanche";
+      userStates[chatId].method = "buy";
+      userStates[chatId].desCode = "0xa86a";
+      userStates[chatId].fromToken =
+        "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7";
+      handleBuy(chatId);
+
       break;
     case "25buy":
-      if (isUser) {
-        flag = "25buy";
-        await bot.sendMessage(
-          chatId,
-          "Type cronos token that you want to buy:"
-        );
-        if (flag == "25buy") {
-          bot.once("message", async (token0Msg) => {
-            const token0 = token0Msg.text;
-            if (flag == "25buy") {
-              await bot.sendMessage(chatId, "Please enter the amount:");
-            }
-            if (flag == "25buy") {
-              bot.once("message", async (amountInMsg) => {
-                const amountIn = Number(amountInMsg.text);
-                if (flag == "25buy") {
-                  const { loaderMessage, interval } = await animateLoader(
-                    chatId
-                  );
-                  const tokenRes = await axios.post(
-                    `${API_URL}/getEvmTokenPrice`,
-                    {
-                      token: "0x5C7F8A570d578ED84E63fdFA7b1eE72dEae1AE23",
-                      token2: token0,
-                      chain: "0x19",
-                    }
-                  );
-                  const tokensPrice = tokenRes?.data?.finalRes;
-                  const buyAmt = amountIn * tokensPrice?.token2;
-                  const finalAmt = buyAmt / tokensPrice?.token1;
-                  if (tokenRes) {
-                    if (flag == "25buy") {
-                      await axios({
-                        url: `${API_URL}/EVMswap`,
-                        method: "post",
-                        data: {
-                          tokenIn: "0x5C7F8A570d578ED84E63fdFA7b1eE72dEae1AE23",
-                          tokenOut: token0,
-                          chainId: "cronos",
-                          amount: finalAmt,
-                          chain: 25,
-                          chatId: chatId,
-                          desCode: "0x19",
-                          method: "Buy",
-                        },
-                      })
-                        .then(async (response) => {
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          if (response?.data?.status) {
-                            await bot.sendMessage(
-                              chatId,
-                              response?.data?.message
-                            );
-                            await bot.sendMessage(
-                              chatId,
-                              `https://cronoscan.com/tx/${response?.data?.tx}`
-                            );
-                          } else {
-                            await bot.sendMessage(
-                              chatId,
-                              response?.data?.message
-                            );
-                          }
-                        })
-                        .catch(async (error) => {
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          await bot.sendMessage(
-                            chatId,
-                            `due to some reason you transaction failed!!`
-                          );
-                        });
-                    }
-                  }
-                }
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      userStates[chatId].flag = 25;
+      userStates[chatId].network = "cronos";
+      userStates[chatId].method = "buy";
+      userStates[chatId].desCode = "0x19";
+      userStates[chatId].fromToken =
+        "0x5C7F8A570d578ED84E63fdFA7b1eE72dEae1AE23";
+      handleBuy(chatId);
+
       break;
     case "250buy":
-      if (isUser) {
-        flag = "250buy";
-        await bot.sendMessage(
-          chatId,
-          "Type fantom token that you want to buy:"
-        );
-        if (flag == "250buy") {
-          bot.once("message", async (token0Msg) => {
-            const token0 = token0Msg.text;
-            if (flag == "250buy") {
-              await bot.sendMessage(chatId, "Please enter the amount:");
-            }
-            if (flag == "250buy") {
-              bot.once("message", async (amountInMsg) => {
-                const amountIn = Number(amountInMsg.text);
-                if (flag == "250buy") {
-                  const { loaderMessage, interval } = await animateLoader(
-                    chatId
-                  );
-                  const tokenRes = await axios.post(
-                    `${API_URL}/getEvmTokenPrice`,
-                    {
-                      token: "0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83",
-                      token2: token0,
-                      chain: "0xfa",
-                    }
-                  );
-                  const tokensPrice = tokenRes?.data?.finalRes;
-                  const buyAmt = amountIn * tokensPrice?.token2;
-                  const finalAmt = buyAmt / tokensPrice?.token1;
-                  if (tokenRes) {
-                    if (flag == "250buy") {
-                      await axios({
-                        url: `${API_URL}/EVMswap`,
-                        method: "post",
-                        data: {
-                          tokenIn: "0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83",
-                          tokenOut: token0,
-                          chainId: "fantom",
-                          amount: finalAmt,
-                          chain: 250,
-                          chatId: chatId,
-                          desCode: "0xfa",
-                          method: "Buy",
-                        },
-                      })
-                        .then(async (response) => {
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          if (response?.data?.status) {
-                            await bot.sendMessage(
-                              chatId,
-                              response?.data?.message
-                            );
-                            await bot.sendMessage(
-                              chatId,
-                              `https://ftmscan.com/tx/${response?.data?.tx}`
-                            );
-                          } else {
-                            await bot.sendMessage(
-                              chatId,
-                              response?.data?.message
-                            );
-                          }
-                        })
-                        .catch(async (error) => {
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          await bot.sendMessage(
-                            chatId,
-                            `due to some reason you transaction failed!!`
-                          );
-                        });
-                    }
-                  }
-                }
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      userStates[chatId].flag = 250;
+      userStates[chatId].network = "fantom";
+      userStates[chatId].method = "buy";
+      userStates[chatId].desCode = "0xfa";
+      userStates[chatId].fromToken =
+        "0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83";
+      handleBuy(chatId);
+
       break;
     // ------------------------------------------------ sell -----------------------------------------------------------
     case "solSell":
-      if (isUser) {
-        flag = "solSell";
-        console.log("--------------------- Sellllllllllllllllll ");
-        await bot.sendMessage(
-          chatId,
-          "solSell Enter a Token that you want to sell:"
-        );
-        if (flag == "solSell") {
-          bot.once("message", async (inputMsg) => {
-            const input = inputMsg.text;
-            if (flag == "solSell") {
-              await bot.sendMessage(
-                chatId,
-                "Please enter the solSell amount to Buy:"
-              );
-            }
-            if (flag == "solSell") {
-              bot.once("message", async (amountMsg) => {
-                const amount = amountMsg.text;
-                if (flag == "solSell") {
-                  const { loaderMessage, interval } = await animateLoader(
-                    chatId
-                  );
-                  try {
-                    const response = await axios.post(`${API_URL}/solanaSwap`, {
-                      input,
-                      output: "So11111111111111111111111111111111111111112",
-                      amount,
-                      chatId,
-                      method: "Sell",
-                    });
-                    clearInterval(interval);
-                    await bot.deleteMessage(chatId, loaderMessage.message_id);
-                    if (response.data.status === true) {
-                      await bot.sendMessage(chatId, `Token sell successful!`);
-                      await bot.sendMessage(
-                        chatId,
-                        `https://solscan.io/account/${response?.data?.transactionCreated?.txid}`
-                      );
-                    } else {
-                      await bot.sendMessage(
-                        chatId,
-                        response.data.message ||
-                          "❌ Swap failed. Please try again."
-                      );
-                    }
-                  } catch (error) {
-                    clearInterval(interval);
-                    await bot.deleteMessage(chatId, loaderMessage.message_id);
-                    await bot.sendMessage(
-                      chatId,
-                      `due to some reason you transaction failed!!`
-                    );
-                  }
-                } //
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      userStates[chatId].flag = 19999;
+      userStates[chatId].method = "sell";
+      handleSell(chatId);
+
       break;
     case "1sell":
-      if (isUser) {
-        flag = "1sell";
-        await bot.sendMessage(chatId, "Enter Eth token that you want to sell:");
-        if (flag == "1sell") {
-          bot.once("message", async (token1Msg) => {
-            const token1 = token1Msg.text;
-            if (flag == "1sell") {
-              await bot.sendMessage(chatId, "Please enter the sell amount :");
-              if (flag == "1sell") {
-                bot.once("message", async (amountInMsg) => {
-                  const amountIn = Number(amountInMsg.text);
-                  if (flag == "1sell") {
-                    const { loaderMessage, interval } = await animateLoader(
-                      chatId
-                    );
-                    await axios({
-                      url: `${API_URL}/EVMswap`,
-                      method: "post",
-                      data: {
-                        tokenIn: token1,
-                        tokenOut: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-                        chainId: "ethereum",
-                        amount: amountIn,
-                        chain: 1,
-                        chatId: chatId,
-                        desCode: "0x1",
-                        method: "Sell",
-                      },
-                    })
-                      .then(async (response) => {
-                        clearInterval(interval);
-                        await bot.deleteMessage(
-                          chatId,
-                          loaderMessage.message_id
-                        );
-                        if (response?.data?.status) {
-                          await bot.sendMessage(
-                            chatId,
-                            response?.data?.message
-                          );
-                          await bot.sendMessage(
-                            chatId,
-                            `https://etherscan.io/tx/${response?.data?.tx}`
-                          );
-                        } else {
-                          await bot.sendMessage(
-                            chatId,
-                            response?.data?.message
-                          );
-                        }
-                      })
-                      .catch(async (error) => {
-                        clearInterval(interval);
-                        await bot.deleteMessage(
-                          chatId,
-                          loaderMessage.message_id
-                        );
-                        await bot.sendMessage(
-                          chatId,
-                          `due to some reason you transaction failed!!`
-                        );
-                      });
-                  }
-                });
-              }
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      userStates[chatId].flag = 1;
+      userStates[chatId].network = "ethereum";
+      userStates[chatId].method = "sell";
+      userStates[chatId].toToken = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
+      handleSell(chatId);
+
       break;
     case "42161sell":
-      if (isUser) {
-        flag = "42161sell";
-        await bot.sendMessage(chatId, "Enter ARB token that you want to sell:");
-        if (flag == "42161sell") {
-          bot.once("message", async (token1Msg) => {
-            const token1 = token1Msg.text;
-            if (flag == "42161sell") {
-              await bot.sendMessage(chatId, "Please enter the sell amount :");
-            }
-            if (flag == "42161sell") {
-              bot.once("message", async (amountInMsg) => {
-                const amountIn = Number(amountInMsg.text);
-                if (flag == "42161sell") {
-                  const { loaderMessage, interval } = await animateLoader(
-                    chatId
-                  );
-                  await axios({
-                    url: `${API_URL}/EVMswap`,
-                    method: "post",
-                    data: {
-                      tokenIn: token1,
-                      tokenOut: "0x912CE59144191C1204E64559FE8253a0e49E6548",
-                      chainId: "arbitrum",
-                      amount: amountIn,
-                      chain: 42161,
-                      chatId: chatId,
-                      desCode: "0xa4b1",
-                      method: "Sell",
-                    },
-                  })
-                    .then(async (response) => {
-                      clearInterval(interval);
-                      await bot.deleteMessage(chatId, loaderMessage.message_id);
-                      if (response?.data?.status) {
-                        await bot.sendMessage(chatId, response?.data?.message);
-                        await bot.sendMessage(
-                          chatId,
-                          `https://arbiscan.io/tx/${response?.data?.tx}`
-                        );
-                      } else {
-                        await bot.sendMessage(chatId, response?.data?.message);
-                      }
-                    })
-                    .catch(async (error) => {
-                      clearInterval(interval);
-                      await bot.deleteMessage(chatId, loaderMessage.message_id);
-                      await bot.sendMessage(
-                        chatId,
-                        `due to some reason you transaction failed!!`
-                      );
-                    });
-                }
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      userStates[chatId].flag = 42161;
+      userStates[chatId].network = "arbitrum";
+      userStates[chatId].method = "sell";
+      userStates[chatId].toToken = "0x912CE59144191C1204E64559FE8253a0e49E6548";
+      handleSell(chatId);
+
       break;
     case "10sell":
-      if (isUser) {
-        flag = "10sell";
-        await bot.sendMessage(chatId, "Type OP token that you want to sell:");
-        if (flag == "10sell") {
-          bot.once("message", async (token0Msg) => {
-            const token0 = token0Msg.text;
-            if (flag == "10sell") {
-              await bot.sendMessage(chatId, "Please enter the amount:");
-            }
-            if (flag == "10sell") {
-              bot.once("message", async (amountInMsg) => {
-                const amountIn = Number(amountInMsg.text);
-                if (flag == "10sell") {
-                  const { loaderMessage, interval } = await animateLoader(
-                    chatId
-                  );
-                  await axios({
-                    url: `${API_URL}/EVMswap`,
-                    method: "post",
-                    data: {
-                      tokenIn: token0,
-                      tokenOut: "0x4200000000000000000000000000000000000042",
-                      chainId: "optimism",
-                      amount: amountIn,
-                      chain: 10,
-                      chatId: chatId,
-                      desCode: "0xa",
-                      method: "Sell",
-                    },
-                  })
-                    .then(async (response) => {
-                      clearInterval(interval);
-                      await bot.deleteMessage(chatId, loaderMessage.message_id);
-                      if (response?.data?.status) {
-                        await bot.sendMessage(chatId, response?.data?.message);
-                        await bot.sendMessage(
-                          chatId,
-                          `https://optimistic.etherscan.io/tx/${response?.data?.tx}`
-                        );
-                      } else {
-                        await bot.sendMessage(chatId, response?.data?.message);
-                      }
-                    })
-                    .catch(async (error) => {
-                      clearInterval(interval);
-                      await bot.deleteMessage(chatId, loaderMessage.message_id);
-                      await bot.sendMessage(
-                        chatId,
-                        `due to some reason you transaction failed!!`
-                      );
-                    });
-                }
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      userStates[chatId].flag = 10;
+      userStates[chatId].network = "optimism";
+      userStates[chatId].method = "sell";
+      userStates[chatId].toToken = "0x4200000000000000000000000000000000000042";
+      handleSell(chatId);
+
       break;
     case "137sell":
-      if (isUser) {
-        flag = "137sell";
-        await bot.sendMessage(chatId, "Type token that you want to sell:");
-        if (flag == "137sell") {
-          bot.once("message", async (token0Msg) => {
-            const token0 = token0Msg.text;
-            if (flag == "137sell") {
-              await bot.sendMessage(chatId, "Please enter the amount:");
-            }
-            if (flag == "137sell") {
-              bot.once("message", async (amountInMsg) => {
-                const amountIn = Number(amountInMsg.text);
-                if (flag == "137sell") {
-                  const { loaderMessage, interval } = await animateLoader(
-                    chatId
-                  );
-                  await axios({
-                    url: `${API_URL}/EVMswap`,
-                    method: "post",
-                    data: {
-                      tokenIn: token0,
-                      tokenOut: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
-                      chainId: "polygon",
-                      amount: amountIn,
-                      chain: 137,
-                      chatId: chatId,
-                      desCode: "0x89",
-                      method: "Sell",
-                    },
-                  })
-                    .then(async (response) => {
-                      clearInterval(interval);
-                      await bot.deleteMessage(chatId, loaderMessage.message_id);
-                      if (response?.data?.status) {
-                        await bot.sendMessage(chatId, response?.data?.message);
-                        await bot.sendMessage(
-                          chatId,
-                          `https://polygonscan.com/tx/${response?.data?.tx}`
-                        );
-                      } else {
-                        await bot.sendMessage(chatId, response?.data?.message);
-                      }
-                    })
-                    .catch(async (error) => {
-                      clearInterval(interval);
-                      await bot.deleteMessage(chatId, loaderMessage.message_id);
-                      await bot.sendMessage(
-                        chatId,
-                        `due to some reason you transaction failed!!`
-                      );
-                    });
-                }
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      userStates[chatId].flag = 137;
+      userStates[chatId].network = "polygon";
+      userStates[chatId].method = "sell";
+      userStates[chatId].toToken = "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270";
+      handleSell(chatId);
+
       break;
     case "8453sell":
-      if (isUser) {
-        flag = "8453sell";
-        await bot.sendMessage(chatId, "Type Base token that you want to sell:");
-        if (flag == "8453sell") {
-          bot.once("message", async (token0Msg) => {
-            const token0 = token0Msg.text;
-            if (flag == "8453sell") {
-              await bot.sendMessage(chatId, "Please enter the amount:");
-              if (flag == "8453sell") {
-                bot.once("message", async (amountInMsg) => {
-                  const amountIn = Number(amountInMsg.text);
-                  if (flag == "8453sell") {
-                    const { loaderMessage, interval } = await animateLoader(
-                      chatId
-                    );
-                    await axios({
-                      url: `${API_URL}/EVMswap`,
-                      method: "post",
-                      data: {
-                        tokenIn: token0,
-                        tokenOut: "0x4200000000000000000000000000000000000006",
-                        chainId: "base",
-                        amount: amountIn,
-                        chain: 8453,
-                        chatId: chatId,
-                        desCode: "0x2105",
-                        method: "Sell",
-                      },
-                    })
-                      .then(async (response) => {
-                        clearInterval(interval);
-                        await bot.deleteMessage(
-                          chatId,
-                          loaderMessage.message_id
-                        );
-                        if (response?.data?.status) {
-                          await bot.sendMessage(
-                            chatId,
-                            response?.data?.message
-                          );
-                          await bot.sendMessage(
-                            chatId,
-                            `https://basescan.org/tx/${response?.data?.tx}`
-                          );
-                        } else {
-                          await bot.sendMessage(
-                            chatId,
-                            response?.data?.message
-                          );
-                        }
-                      })
-                      .catch(async (error) => {
-                        clearInterval(interval);
-                        await bot.deleteMessage(
-                          chatId,
-                          loaderMessage.message_id
-                        );
-                        await bot.sendMessage(
-                          chatId,
-                          `due to some reason you transaction failed!!`
-                        );
-                      });
-                  }
-                });
-              }
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      userStates[chatId].flag = 8453;
+      userStates[chatId].network = "base";
+      userStates[chatId].method = "sell";
+      userStates[chatId].toToken = "0x4200000000000000000000000000000000000006";
+      handleSell(chatId);
+
       break;
     case "56sell":
-      if (isUser) {
-        flag = "56sell";
-        await bot.sendMessage(chatId, "Type BNB token that you want to sell:");
-        if (flag == "56sell") {
-          bot.once("message", async (token0Msg) => {
-            const token0 = token0Msg.text;
-            if (flag == "56sell") {
-              await bot.sendMessage(chatId, "Please enter the amount:");
-            }
-            if (flag == "56sell") {
-              bot.once("message", async (amountInMsg) => {
-                const amountIn = Number(amountInMsg.text);
-                if (flag == "56sell") {
-                  const { loaderMessage, interval } = await animateLoader(
-                    chatId
-                  );
-                  await axios({
-                    url: `${API_URL}/EVMswap`,
-                    method: "post",
-                    data: {
-                      tokenIn: token0,
-                      tokenOut: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
-                      chainId: "bsc",
-                      amount: amountIn,
-                      chain: 56,
-                      chatId: chatId,
-                      desCode: "0x38",
-                      method: "Sell",
-                    },
-                  })
-                    .then(async (response) => {
-                      clearInterval(interval);
-                      await bot.deleteMessage(chatId, loaderMessage.message_id);
-                      if (response?.data?.status) {
-                        await bot.sendMessage(chatId, response?.data?.message);
-                        await bot.sendMessage(
-                          chatId,
-                          `https://bscscan.com/tx/${response?.data?.tx}`
-                        );
-                      } else {
-                        await bot.sendMessage(chatId, response?.data?.message);
-                      }
-                    })
-                    .catch(async (error) => {
-                      clearInterval(interval);
-                      await bot.deleteMessage(chatId, loaderMessage.message_id);
-                      await bot.sendMessage(
-                        chatId,
-                        `due to some reason you transaction failed!!`
-                      );
-                    });
-                }
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      userStates[chatId].flag = 56;
+      userStates[chatId].network = "bsc";
+      userStates[chatId].method = "sell";
+      userStates[chatId].toToken = "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c";
+      handleSell(chatId);
+
       break;
     case "43114sell":
-      if (isUser) {
-        flag = "43114sell";
-        await bot.sendMessage(chatId, "Type AVAX token that you want to sell:");
-        if (flag == "43114sell") {
-          bot.once("message", async (token0Msg) => {
-            const token0 = token0Msg.text;
-            if (flag == "43114sell") {
-              await bot.sendMessage(chatId, "Please enter the amount:");
-            }
-            if (flag == "43114sell") {
-              bot.once("message", async (amountInMsg) => {
-                const amountIn = Number(amountInMsg.text);
-                if (flag == "43114sell") {
-                  const { loaderMessage, interval } = await animateLoader(
-                    chatId
-                  );
-                  await axios({
-                    url: `${API_URL}/EVMswap`,
-                    method: "post",
-                    data: {
-                      tokenIn: token0,
-                      tokenOut: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
-                      chainId: "avalanche",
-                      amount: amountIn,
-                      chain: 43114,
-                      chatId: chatId,
-                      desCode: "0xa86a",
-                      method: "Sell",
-                    },
-                  })
-                    .then(async (response) => {
-                      clearInterval(interval);
-                      await bot.deleteMessage(chatId, loaderMessage.message_id);
-                      if (response?.data?.status) {
-                        await bot.sendMessage(chatId, response?.data?.message);
-                        await bot.sendMessage(
-                          chatId,
-                          `https://avascan.info/blockchain/c/tx/${response?.data?.tx}`
-                        );
-                      } else {
-                        await bot.sendMessage(chatId, response?.data?.message);
-                      }
-                    })
-                    .catch(async (error) => {
-                      clearInterval(interval);
-                      await bot.deleteMessage(chatId, loaderMessage.message_id);
-                      await bot.sendMessage(
-                        chatId,
-                        `due to some reason you transaction failed!!`
-                      );
-                    });
-                }
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      userStates[chatId].flag = 43114;
+      userStates[chatId].method = "sell";
+      userStates[chatId].network = "avalanche";
+      userStates[chatId].toToken = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7";
+      handleSell(chatId);
+
       break;
     case "25sell":
-      if (isUser) {
-        flag = "25sell";
-        await bot.sendMessage(
-          chatId,
-          "Type cronos token that you want to sell:"
-        );
-        if (flag == "25sell") {
-          bot.once("message", async (token0Msg) => {
-            const token0 = token0Msg.text;
-            if (flag == "25sell") {
-              await bot.sendMessage(chatId, "Please enter the amount:");
-            }
-            if (flag == "25sell") {
-              bot.once("message", async (amountInMsg) => {
-                const amountIn = Number(amountInMsg.text);
-                if (flag == "25sell") {
-                  const { loaderMessage, interval } = await animateLoader(
-                    chatId
-                  );
-                  await axios({
-                    url: `${API_URL}/EVMswap`,
-                    method: "post",
-                    data: {
-                      tokenIn: token0,
-                      tokenOut: "0x5C7F8A570d578ED84E63fdFA7b1eE72dEae1AE23",
-                      chainId: "cronos",
-                      amount: amountIn,
-                      chain: 25,
-                      chatId: chatId,
-                      desCode: "0x19",
-                      method: "Sell",
-                    },
-                  })
-                    .then(async (response) => {
-                      clearInterval(interval);
-                      await bot.deleteMessage(chatId, loaderMessage.message_id);
-                      if (response?.data?.status) {
-                        await bot.sendMessage(chatId, response?.data?.message);
-                        await bot.sendMessage(
-                          chatId,
-                          `https://cronoscan.com/tx/${response?.data?.tx}`
-                        );
-                      } else {
-                        await bot.sendMessage(chatId, response?.data?.message);
-                      }
-                    })
-                    .catch(async (error) => {
-                      clearInterval(interval);
-                      await bot.deleteMessage(chatId, loaderMessage.message_id);
-                      await bot.sendMessage(
-                        chatId,
-                        `due to some reason you transaction failed!!`
-                      );
-                    });
-                }
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      userStates[chatId].flag = 25;
+      userStates[chatId].network = "cronos";
+      userStates[chatId].method = "sell";
+      userStates[chatId].toToken = "0x5C7F8A570d578ED84E63fdFA7b1eE72dEae1AE23";
+      handleSell(chatId);
+
       break;
     case "250sell":
-      if (isUser) {
-        flag = "250sell";
-        await bot.sendMessage(
-          chatId,
-          "Type fantom token that you want to sell:"
-        );
-        if (flag == "250sell") {
-          bot.once("message", async (token0Msg) => {
-            const token0 = token0Msg.text;
-            if (flag == "250sell") {
-              await bot.sendMessage(chatId, "Please enter the amount:");
-            }
-            if (flag == "250sell") {
-              bot.once("message", async (amountInMsg) => {
-                const amountIn = Number(amountInMsg.text);
-                if (flag == "250sell") {
-                  const { loaderMessage, interval } = await animateLoader(
-                    chatId
-                  );
-                  await axios({
-                    url: `${API_URL}/EVMswap`,
-                    method: "post",
-                    data: {
-                      tokenIn: token0,
-                      tokenOut: "0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83",
-                      chainId: "fantom",
-                      amount: amountIn,
-                      chain: 250,
-                      chatId: chatId,
-                      desCode: "0xfa",
-                      method: "Sell",
-                    },
-                  })
-                    .then(async (response) => {
-                      clearInterval(interval);
-                      await bot.deleteMessage(chatId, loaderMessage.message_id);
-                      if (response?.data?.status) {
-                        await bot.sendMessage(chatId, response?.data?.message);
-                        await bot.sendMessage(
-                          chatId,
-                          `https://ftmscan.com/tx/${response?.data?.tx}`
-                        );
-                      } else {
-                        await bot.sendMessage(chatId, response?.data?.message);
-                      }
-                    })
-                    .catch(async (error) => {
-                      clearInterval(interval);
-                      await bot.deleteMessage(chatId, loaderMessage.message_id);
-                      await bot.sendMessage(
-                        chatId,
-                        `due to some reason you transaction failed!!`
-                      );
-                    });
-                }
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      userStates[chatId].flag = 250;
+      userStates[chatId].network = "fantom";
+      userStates[chatId].method = "sell";
+      userStates[chatId].toToken = "0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83";
+      handleSell(chatId);
+
       break;
     // ---------------------------------------------------------------- swap --------------------------------------------------------
     case "solana":
-      if (isUser) {
-        flag = "solana";
-        await bot.sendMessage(chatId, " Type From Token:");
-        if (flag == "solana") {
-          bot.once("message", async (inputMsg) => {
-            const input = inputMsg.text;
-            if (flag == "solana") {
-              await bot.sendMessage(chatId, " Type To Token:");
-            }
-            if (flag == "solana") {
-              bot.once("message", async (outputMsg) => {
-                const output = outputMsg.text;
-                if (flag == "solana") {
-                  await bot.sendMessage(
-                    chatId,
-                    " Please enter the amount to swap:"
-                  );
-                }
-                if (flag == "solana") {
-                  bot.once("message", async (amountMsg) => {
-                    const amount = Number(amountMsg.text);
-                    if (flag == "solana") {
-                      const { loaderMessage, interval } = await animateLoader(
-                        chatId
-                      );
-                      try {
-                        const response = await axios.post(
-                          `${API_URL}/solanaSwap`,
-                          {
-                            input,
-                            output,
-                            amount,
-                            chatId,
-                            method: "Swap",
-                          }
-                        );
-                        if (response.data.status === true) {
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          await bot.sendMessage(
-                            chatId,
-                            `Solona Swap successful!`
-                          );
-                          await bot.sendMessage(
-                            chatId,
-                            `https://solscan.io/account/${response?.data?.transactionCreated?.txid}`
-                          );
-                        } else {
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          await bot.sendMessage(
-                            chatId,
-                            response.data.message ||
-                              "❌ Swap failed. Please try again."
-                          );
-                        }
-                      } catch (error) {
-                        clearInterval(interval);
-                        await bot.deleteMessage(
-                          chatId,
-                          loaderMessage.message_id
-                        );
-                        await bot.sendMessage(
-                          chatId,
-                          `❌ An error occurred: ${error.message}`
-                        ); // Provide more specific error message if possible
-                      }
-                    }
-                  });
-                }
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      userStates[chatId].flag = 19999;
+      userStates[chatId].method = "swap";
+      handleSwap(chatId);
+
       break;
     case "1":
-      if (isUser) {
-        flag = "1";
-        await bot.sendMessage(chatId, "Type ethereum From Token:");
-        if (flag == "1") {
-          bot.once("message", async (token0Msg) => {
-            const token0 = token0Msg.text;
-            if (flag == "1") {
-              await bot.sendMessage(chatId, "Type ethereum To Token:");
-            }
-            if (flag == "1") {
-              bot.once("message", async (token1Msg) => {
-                const token1 = token1Msg.text;
-                if (flag == "1") {
-                  await bot.sendMessage(
-                    chatId,
-                    "Please enter the amount to swap:"
-                  );
-                }
-                if (flag == "1") {
-                  bot.once("message", async (amountInMsg) => {
-                    const amountIn = Number(amountInMsg.text);
-                    if (flag == "1") {
-                      const { loaderMessage, interval } = await animateLoader(
-                        chatId
-                      );
-                      await axios({
-                        url: `${API_URL}/EVMswap`,
-                        method: "post",
-                        data: {
-                          tokenIn: token0,
-                          tokenOut: token1,
-                          chainId: "ethereum",
-                          amount: amountIn,
-                          chain: 1,
-                          chatId: chatId,
-                          desCode: "0x1",
-                          method: "Swap",
-                        },
-                      })
-                        .then(async (response) => {
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          if (response?.data?.status) {
-                            await bot.sendMessage(
-                              chatId,
-                              response?.data?.message
-                            );
-                            await bot.sendMessage(
-                              chatId,
-                              `https://etherscan.io/tx/${response?.data?.tx}`
-                            );
-                          } else {
-                            await bot.sendMessage(
-                              chatId,
-                              response?.data?.message
-                            );
-                          }
-                        })
-                        .catch(async (error) => {
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          await bot.sendMessage(
-                            chatId,
-                            `due to some reason you transaction failed!!`
-                          );
-                        });
-                    }
-                  });
-                }
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      userStates[chatId].flag = 1;
+      userStates[chatId].network = "ethereum";
+      userStates[chatId].method = "swap";
+      handleSwap(chatId);
+
       break;
     case "42161":
-      if (isUser) {
-        flag = "42161";
-        await bot.sendMessage(chatId, "Type From Token:");
-        if (flag == "42161") {
-          bot.once("message", async (token0Msg) => {
-            const token0 = token0Msg.text;
-            if (flag == "42161") {
-              await bot.sendMessage(chatId, "Type To Token:");
-            }
-            if (flag == "42161") {
-              bot.once("message", async (token1Msg) => {
-                const token1 = token1Msg.text;
-                if (flag == "42161") {
-                  await bot.sendMessage(
-                    chatId,
-                    "Please enter the amount to swap:"
-                  );
-                }
-                if (flag == "42161") {
-                  bot.once("message", async (amountInMsg) => {
-                    const amountIn = Number(amountInMsg.text);
-                    if (flag == "42161") {
-                      const { loaderMessage, interval } = await animateLoader(
-                        chatId
-                      );
-                      await axios({
-                        url: `${API_URL}/EVMswap`,
-                        method: "post",
-                        data: {
-                          tokenIn: token0,
-                          tokenOut: token1,
-                          chainId: "arbitrum",
-                          amount: amountIn,
-                          chain: 42161,
-                          chatId: chatId,
-                          desCode: "0xa4b1",
-                          method: "Swap",
-                        },
-                      })
-                        .then(async (response) => {
-                          if (response?.data?.status) {
-                            clearInterval(interval);
-                            await bot.deleteMessage(
-                              chatId,
-                              loaderMessage.message_id
-                            );
-                            await bot.sendMessage(
-                              chatId,
-                              response?.data?.message
-                            );
-                            await bot.sendMessage(
-                              chatId,
-                              `https://arbiscan.io/tx/${response?.data?.tx}`
-                            );
-                          } else {
-                            clearInterval(interval);
-                            await bot.deleteMessage(
-                              chatId,
-                              loaderMessage.message_id
-                            );
-                            await bot.sendMessage(
-                              chatId,
-                              response?.data?.message
-                            );
-                          }
-                        })
-                        .catch(async (error) => {
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          await bot.sendMessage(
-                            chatId,
-                            `due to some reason you transaction failed!!`
-                          );
-                        });
-                    }
-                  });
-                }
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      userStates[chatId].flag = 42161;
+      userStates[chatId].network = "arbitrum";
+      userStates[chatId].method = "swap";
+      handleSwap(chatId);
+
       break;
     case "10":
-      if (isUser) {
-        flag = "10";
-        await bot.sendMessage(chatId, "Type From Token:");
-        if (flag == "10") {
-          bot.once("message", async (token0Msg) => {
-            const token0 = token0Msg.text;
-            if (flag == "10") {
-              await bot.sendMessage(chatId, "Type To Token:");
-            }
-            if (flag == "10") {
-              bot.once("message", async (token1Msg) => {
-                const token1 = token1Msg.text;
-                if (flag == "10") {
-                  await bot.sendMessage(
-                    chatId,
-                    "Please enter the amount to swap:"
-                  );
-                }
-                if (flag == "10") {
-                  bot.once("message", async (amountInMsg) => {
-                    const amountIn = Number(amountInMsg.text);
-                    if (flag == "10") {
-                      const { loaderMessage, interval } = await animateLoader(
-                        chatId
-                      );
-                      await axios({
-                        url: `${API_URL}/EVMswap`,
-                        method: "post",
-                        data: {
-                          tokenIn: token0,
-                          tokenOut: token1,
-                          chainId: "optimism",
-                          amount: amountIn,
-                          chain: 10,
-                          chatId: chatId,
-                          desCode: "0xa",
-                          method: "Swap",
-                        },
-                      })
-                        .then(async (response) => {
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          if (response?.data?.status) {
-                            await bot.sendMessage(
-                              chatId,
-                              response?.data?.message
-                            );
-                            await bot.sendMessage(
-                              chatId,
-                              `https://optimistic.etherscan.io/tx${response?.data?.tx}`
-                            );
-                          } else {
-                            await bot.sendMessage(
-                              chatId,
-                              response?.data?.message
-                            );
-                          }
-                        })
-                        .catch(async (error) => {
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          await bot.sendMessage(
-                            chatId,
-                            `due to some reason you transaction failed!!`
-                          );
-                        });
-                    }
-                  });
-                }
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      userStates[chatId].flag = 10;
+      userStates[chatId].network = "optimism";
+      userStates[chatId].method = "swap";
+      handleSwap(chatId);
+
       break;
     case "137":
-      if (isUser) {
-        flag = "137";
-        await bot.sendMessage(chatId, "Type From Token:");
-        if (flag == "137") {
-          bot.once("message", async (token0Msg) => {
-            const token0 = token0Msg.text;
-            if (flag == "137") {
-              await bot.sendMessage(chatId, "Type To Token:");
-            }
-            if (flag == "137") {
-              bot.once("message", async (token1Msg) => {
-                const token1 = token1Msg.text;
-                if (flag == "137") {
-                  await bot.sendMessage(
-                    chatId,
-                    "Please enter the amount to swap:"
-                  );
-                }
-                if (flag == "137") {
-                  bot.once("message", async (amountInMsg) => {
-                    const amountIn = Number(amountInMsg.text);
-                    if (flag == "137") {
-                      const { loaderMessage, interval } = await animateLoader(
-                        chatId
-                      );
-                      await axios({
-                        url: `${API_URL}/EVMswap`,
-                        method: "post",
-                        data: {
-                          tokenIn: token0,
-                          tokenOut: token1,
-                          chainId: "polygon",
-                          amount: amountIn,
-                          chain: 137,
-                          chatId: chatId,
-                          desCode: "0x89",
-                          method: "Swap",
-                        },
-                      })
-                        .then(async (response) => {
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          if (response?.data?.status) {
-                            await bot.sendMessage(
-                              chatId,
-                              response?.data?.message
-                            );
-                            await bot.sendMessage(
-                              chatId,
-                              `https://polygonscan.com/tx/${response?.data?.tx}`
-                            );
-                          } else {
-                            await bot.sendMessage(
-                              chatId,
-                              response?.data?.message
-                            );
-                          }
-                        })
-                        .catch(async (error) => {
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          await bot.sendMessage(
-                            chatId,
-                            `due to some reason you transaction failed!!`
-                          );
-                        });
-                    }
-                  });
-                }
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      userStates[chatId].flag = 137;
+      userStates[chatId].method = "swap";
+      userStates[chatId].network = "polygon";
+      handleSwap(chatId);
+
       break;
     case "8453":
-      if (isUser) {
-        flag = "8453";
-        await bot.sendMessage(chatId, "Type From Token:");
-        if (flag == "8453") {
-          bot.once("message", async (token0Msg) => {
-            const token0 = token0Msg.text;
-            if (flag == "8453") {
-              await bot.sendMessage(chatId, "Type To Token:");
-            }
-            if (flag == "8453") {
-              bot.once("message", async (token1Msg) => {
-                const token1 = token1Msg.text;
-                if (flag == "8453") {
-                  await bot.sendMessage(
-                    chatId,
-                    "Please enter the amount to swap:"
-                  );
-                }
-                if (flag == "8453") {
-                  bot.once("message", async (amountInMsg) => {
-                    const amountIn = Number(amountInMsg.text);
-                    if (flag == "8453") {
-                      const { loaderMessage, interval } = await animateLoader(
-                        chatId
-                      );
-                      await axios({
-                        url: `${API_URL}/EVMswap`,
-                        method: "post",
-                        data: {
-                          tokenIn: token0,
-                          tokenOut: token1,
-                          chainId: "base",
-                          amount: amountIn,
-                          chain: 8453,
-                          chatId: chatId,
-                          desCode: "0x2105",
-                          method: "Swap",
-                        },
-                      })
-                        .then(async (response) => {
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          if (response?.data?.status) {
-                            await bot.sendMessage(
-                              chatId,
-                              response?.data?.message
-                            );
-                            await bot.sendMessage(
-                              chatId,
-                              `https://basescan.org/tx/${response?.data?.tx}`
-                            );
-                          } else {
-                            await bot.sendMessage(
-                              chatId,
-                              response?.data?.message
-                            );
-                          }
-                        })
-                        .catch(async (error) => {
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          await bot.sendMessage(
-                            chatId,
-                            `due to some reason you transaction failed please try again later!!`
-                          );
-                        });
-                    }
-                  });
-                }
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      userStates[chatId].flag = 8453;
+      userStates[chatId].network = "base";
+      userStates[chatId].method = "swap";
+      handleSwap(chatId);
+
       break;
     case "56":
-      if (isUser) {
-        flag = "56";
-        await bot.sendMessage(chatId, "Type bsc From Token:");
-        if (flag == "56") {
-          bot.once("message", async (token0Msg) => {
-            const token0 = token0Msg.text;
-            if (flag == "56") {
-              await bot.sendMessage(chatId, "Type bsc To Token:");
-            }
-            if (flag == "56") {
-              bot.once("message", async (token1Msg) => {
-                const token1 = token1Msg.text;
-                if (flag == "56") {
-                  await bot.sendMessage(
-                    chatId,
-                    "Please enter the amount to swap:"
-                  );
-                }
-                if (flag == "56") {
-                  bot.once("message", async (amountInMsg) => {
-                    const amountIn = Number(amountInMsg.text);
-                    if (flag == "56") {
-                      const { loaderMessage, interval } = await animateLoader(
-                        chatId
-                      );
-                      await axios({
-                        url: `${API_URL}/EVMswap`,
-                        method: "post",
-                        data: {
-                          tokenIn: token0,
-                          tokenOut: token1,
-                          chainId: "bsc",
-                          amount: amountIn,
-                          chain: 56,
-                          chatId: chatId,
-                          desCode: "0x38",
-                          method: "Swap",
-                        },
-                      })
-                        .then(async (response) => {
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          if (response?.data?.status) {
-                            await bot.sendMessage(
-                              chatId,
-                              response?.data?.message
-                            );
-                            await bot.sendMessage(
-                              chatId,
-                              `https://bscscan.com/tx/${response?.data?.tx}`
-                            );
-                          } else {
-                            await bot.sendMessage(
-                              chatId,
-                              response?.data?.message
-                            );
-                          }
-                        })
-                        .catch(async (error) => {
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          await bot.sendMessage(
-                            chatId,
-                            `due to some reason you transaction failed!!`
-                          );
-                        });
-                    }
-                  });
-                }
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      userStates[chatId].flag = 56;
+      userStates[chatId].network = "bsc";
+      userStates[chatId].method = "swap";
+      handleSwap(chatId);
+
       break;
     case "43114":
-      if (isUser) {
-        flag = "43114";
-        await bot.sendMessage(chatId, "Type ava From Token:");
-        if (flag == "43114") {
-          bot.once("message", async (token0Msg) => {
-            const token0 = token0Msg.text;
-            if (flag == "43114") {
-              await bot.sendMessage(chatId, "Type ava To Token:");
-            }
-            if (flag == "43114") {
-              bot.once("message", async (token1Msg) => {
-                const token1 = token1Msg.text;
-                if (flag == "43114") {
-                  await bot.sendMessage(
-                    chatId,
-                    "Please enter the amount to swap:"
-                  );
-                }
-                if (flag == "43114") {
-                  bot.once("message", async (amountInMsg) => {
-                    const amountIn = Number(amountInMsg.text);
-                    if (flag == "43114") {
-                      const { loaderMessage, interval } = await animateLoader(
-                        chatId
-                      );
-                      await axios({
-                        url: `${API_URL}/EVMswap`,
-                        method: "post",
-                        data: {
-                          tokenIn: token0,
-                          tokenOut: token1,
-                          chainId: "avalanche",
-                          amount: amountIn,
-                          chain: 43114,
-                          chatId: chatId,
-                          desCode: "0xa86a",
-                          method: "Swap",
-                        },
-                      })
-                        .then(async (response) => {
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          if (response?.data?.status) {
-                            await bot.sendMessage(
-                              chatId,
-                              response?.data?.message
-                            );
-                            await bot.sendMessage(
-                              chatId,
-                              `https://avascan.info/blockchain/c/tx/${response?.data?.tx}`
-                            );
-                          } else {
-                            await bot.sendMessage(
-                              chatId,
-                              response?.data?.message
-                            );
-                          }
-                        })
-                        .catch(async (error) => {
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          await bot.sendMessage(
-                            chatId,
-                            `due to some reason you transaction failed!!`
-                          );
-                        });
-                    }
-                  });
-                }
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      userStates[chatId].flag = 43114;
+      userStates[chatId].network = "avalanche";
+      userStates[chatId].method = "swap";
+      handleSwap(chatId);
+
       break;
     case "25":
-      if (isUser) {
-        flag = "25";
-        await bot.sendMessage(chatId, "Type cronos From Token:");
-        if (flag == "25") {
-          bot.once("message", async (token0Msg) => {
-            const token0 = token0Msg.text;
-            if (flag == "25") {
-              await bot.sendMessage(chatId, "Type cronos To Token:");
-            }
-            if (flag == "25") {
-              bot.once("message", async (token1Msg) => {
-                const token1 = token1Msg.text;
-                if (flag == "25") {
-                  await bot.sendMessage(
-                    chatId,
-                    "Please enter the amount to swap:"
-                  );
-                }
-                if (flag == "25") {
-                  bot.once("message", async (amountInMsg) => {
-                    const amountIn = Number(amountInMsg.text);
-                    if (flag == "25") {
-                      const { loaderMessage, interval } = await animateLoader(
-                        chatId
-                      );
-                      await axios({
-                        url: `${API_URL}/EVMswap`,
-                        method: "post",
-                        data: {
-                          tokenIn: token0,
-                          tokenOut: token1,
-                          chainId: "cronos",
-                          amount: amountIn,
-                          chain: 25,
-                          chatId: chatId,
-                          desCode: "0x19",
-                          method: "Swap",
-                        },
-                      })
-                        .then(async (response) => {
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          if (response?.data?.status) {
-                            await bot.sendMessage(
-                              chatId,
-                              response?.data?.message
-                            );
-                            await bot.sendMessage(
-                              chatId,
-                              `https://cronoscan.com/tx/${response?.data?.tx}`
-                            );
-                          } else {
-                            await bot.sendMessage(
-                              chatId,
-                              response?.data?.message
-                            );
-                          }
-                        })
-                        .catch(async (error) => {
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          await bot.sendMessage(
-                            chatId,
-                            `due to some reason you transaction failed!!`
-                          );
-                        });
-                    }
-                  });
-                }
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      userStates[chatId].flag = 25;
+      userStates[chatId].network = "cronos";
+      userStates[chatId].method = "swap";
+      handleSwap(chatId);
+
       break;
     case "250":
-      if (isUser) {
-        flag = "250";
-        await bot.sendMessage(chatId, "Type fantom From Token:");
-        if (flag == "250") {
-          bot.once("message", async (token0Msg) => {
-            const token0 = token0Msg.text;
-            if (flag == "250") {
-              await bot.sendMessage(chatId, "Type fantom To Token:");
-            }
-            if (flag == "250") {
-              bot.once("message", async (token1Msg) => {
-                const token1 = token1Msg.text;
-                if (flag == "250") {
-                  await bot.sendMessage(
-                    chatId,
-                    "Please enter the amount to swap:"
-                  );
-                }
-                if (flag == "250") {
-                  bot.once("message", async (amountInMsg) => {
-                    const amountIn = Number(amountInMsg.text);
-                    if (flag == "250") {
-                      const { loaderMessage, interval } = await animateLoader(
-                        chatId
-                      );
-                      await axios({
-                        url: `${API_URL}/EVMswap`,
-                        method: "post",
-                        data: {
-                          tokenIn: token0,
-                          tokenOut: token1,
-                          chainId: "fantom",
-                          amount: amountIn,
-                          chain: 250,
-                          chatId: chatId,
-                          desCode: "0xfa",
-                          method: "Swap",
-                        },
-                      })
-                        .then(async (response) => {
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          if (response?.data?.status) {
-                            await bot.sendMessage(
-                              chatId,
-                              response?.data?.message
-                            );
-                            await bot.sendMessage(
-                              chatId,
-                              `https://ftmscan.com/tx/${response?.data?.tx}`
-                            );
-                          } else {
-                            await bot.sendMessage(
-                              chatId,
-                              response?.data?.message
-                            );
-                          }
-                        })
-                        .catch(async (error) => {
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          await bot.sendMessage(
-                            chatId,
-                            `due to some reason you transaction failed!!`
-                          );
-                        });
-                    }
-                  });
-                }
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      userStates[chatId].flag = 250;
+      userStates[chatId].network = "fantom";
+      userStates[chatId].method = "swap";
+      handleSwap(chatId);
+
       break;
     // ------------------------------------- balance ---------------------------------------------------
     case "1b":
-      if (isUser) {
-        flag = "1b";
-        if (flag == "1b") {
-          fetchTokenBalances(chatId, "0x1");
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      fetchTokenBalances(chatId, "0x1");
       break;
     case "42161b":
-      if (isUser) {
-        flag = "42161b";
-        if (flag == "42161b") {
-          fetchTokenBalances(chatId, "0xa4b1");
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      fetchTokenBalances(chatId, "0xa4b1");
+
       break;
     case "10b":
-      if (isUser) {
-        flag = "10b";
-        if (flag == "10b") {
-          fetchTokenBalances(chatId, "0xa");
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      fetchTokenBalances(chatId, "0xa");
+
       break;
     case "137b":
-      if (isUser) {
-        flag = "137b";
-        if (flag == "137b") {
-          fetchTokenBalances(chatId, "0x89");
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      fetchTokenBalances(chatId, "0x89");
+
       break;
     case "8453b":
-      if (isUser) {
-        flag = "8453b";
-        if (flag == "8453b") {
-          fetchTokenBalances(chatId, "0x2105");
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      fetchTokenBalances(chatId, "0x2105");
+
       break;
     case "56b":
-      if (isUser) {
-        flag = "56b";
-        if (flag == "56b") {
-          fetchTokenBalances(chatId, "0x38");
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      fetchTokenBalances(chatId, "0x38");
+
       break;
     case "43114b":
-      if (isUser) {
-        flag = "43114b";
-        if (flag == "43114b") {
-          fetchTokenBalances(chatId, "0xa86a");
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      fetchTokenBalances(chatId, "0xa86a");
+
       break;
     case "25b":
-      if (isUser) {
-        flag = "25b";
-        if (flag == "25b") {
-          fetchTokenBalances(chatId, "0x19");
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      fetchTokenBalances(chatId, "0x19");
+
       break;
     case "250b":
-      if (isUser) {
-        flag = "250b";
-        if (flag == "250b") {
-          fetchTokenBalances(chatId, "0xfa");
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      fetchTokenBalances(chatId, "0xfa");
+
       break;
     // ========================================================= wallet address =====================================================
     case "solanaAddress":
-      if (isUser) {
-        await getQrCode(chatId, 2);
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      await getQrCode(chatId, 2);
+
       break;
-    case "1Address":
-      if (isUser) {
-        await getQrCode(chatId, 1);
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
-      break;
-    case "42161Address":
-      if (isUser) {
-        await getQrCode(chatId, 1);
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
-      break;
-    case "10Address":
-      if (isUser) {
-        await getQrCode(chatId, 1);
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
-      break;
-    case "137Address":
-      if (isUser) {
-        await getQrCode(chatId, 1);
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
-      break;
-    case "8453Address":
-      if (isUser) {
-        await getQrCode(chatId, 1);
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
-      break;
-    case "56Address":
-      if (isUser) {
-        await getQrCode(chatId, 1);
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
-      break;
-    case "43114Address":
-      if (isUser) {
-        await getQrCode(chatId, 1);
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
-      break;
-    case "25Address":
-      if (isUser) {
-        await getQrCode(chatId, 1);
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
-      break;
-    case "250Address":
-      if (isUser) {
-        await getQrCode(chatId, 1);
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+    case "addressEVM":
+      resetUserState(chatId);
+      await getQrCode(chatId, 1);
+
       break;
     // ------------------------------------------------------ transfer token --------------------------------------------------------
     case "solwithraw":
-      if (isUser) {
-        flag = "solwithraw";
-        await bot.sendMessage(
-          chatId,
-          "Enter sol token address that you want to transfer:"
-        );
-        if (flag == "solwithraw") {
-          bot.once("message", async (token0Msg) => {
-            const token = token0Msg.text;
-            if (flag == "solwithraw") {
-              await bot.sendMessage(
-                chatId,
-                "Enter the wallet address where you want to get transferred tokens:"
-              );
-            }
-            if (flag == "solwithraw") {
-              await bot.once("message", async (toWalletAdd) => {
-                const toWallet = toWalletAdd.text;
-                if (flag == "solwithraw") {
-                  await bot.sendMessage(chatId, `Enter amount`);
-                  if (flag == "solwithraw") {
-                    await bot.once("message", async (amountIn) => {
-                      const amount = Number(amountIn.text);
-                      if (flag == "solwithraw") {
-                        const { loaderMessage, interval } = await animateLoader(
-                          chatId
-                        );
-                        if (flag == "solwithraw") {
-                          await axios({
-                            url: `${API_URL}/transferSolanaToken`,
-                            method: "post",
-                            data: {
-                              chatId,
-                              toWallet: toWallet,
-                              token: token,
-                              amount: amount,
-                            },
-                          })
-                            .then(async (res) => {
-                              clearInterval(interval);
-                              await bot.deleteMessage(
-                                chatId,
-                                loaderMessage.message_id
-                              );
-                              if (res?.data?.status) {
-                                console.log(
-                                  "🚀 ~ .then ~ res?.data?.tx:",
-                                  res?.data?.tx
-                                );
-                                await bot.sendMessage(
-                                  chatId,
-                                  res?.data?.message
-                                );
-                                await bot.sendMessage(
-                                  chatId,
-                                  `https://solscan.io/tx/${res?.data?.tx}`
-                                );
-                              } else {
-                                await bot.sendMessage(
-                                  chatId,
-                                  res?.data?.message
-                                );
-                              }
-                            })
-                            .catch(async (error) => {
-                              clearInterval(interval);
-                              await bot.deleteMessage(
-                                chatId,
-                                loaderMessage.message_id
-                              );
-                              console.log("🚀 ~ awaitbot.once ~ error:", error);
-                              await bot.sendMessage(
-                                chatId,
-                                "due to high transaction volume in solana you transaction has been faild!!"
-                              );
-                            });
-                        }
-                      }
-                    });
-                  }
-                }
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
+      resetUserState(chatId);
+      userStates[chatId].flag = 19999;
+      userStates[chatId].method = "transfer";
+      handleTransfer(chatId);
+
       break;
     case "1withraw":
-      if (isUser) {
-        flag = "1withraw";
-        await bot.sendMessage(
-          chatId,
-          "Enter token address that you want to transfer:"
-        );
-        if (flag == "1withraw") {
-          bot.once("message", async (token0Msg) => {
-            const token = token0Msg.text;
-            if (flag == "1withraw") {
-              await bot.sendMessage(
-                chatId,
-                "Enter the wallet address where you want to get transferred tokens:"
-              );
-            }
-            if (flag == "1withraw") {
-              await bot.once("message", async (toWalletAdd) => {
-                const toWallet = toWalletAdd.text;
-                if (flag == "1withraw") {
-                  await bot.sendMessage(chatId, `Enter amount`);
-                  if (flag == "1withraw") {
-                    await bot.once("message", async (amountIn) => {
-                      if (flag == "1withraw") {
-                        const amount = Number(amountIn.text);
+      resetUserState(chatId);
+      userStates[chatId].flag = 1;
+      userStates[chatId].method = "transfer";
+      handleTransfer(chatId);
 
-                        await transferEvmToken(
-                          chatId,
-                          token,
-                          toWallet,
-                          1,
-                          amount
-                        )
-                          .then(async (res) => {
-                            await bot.sendMessage(chatId, res?.message);
-                            await bot.sendMessage(
-                              chatId,
-                              `https://etherscan.io/tx/${res?.tx}`
-                            );
-                          })
-                          .catch(async (err) => {
-                            console.log("🚀 ~ bot.once ~ err:", err);
-                            await bot.sendMessage(
-                              chatId,
-                              "somthing has been wrong make sure you have a enough balance!!"
-                            );
-                          });
-                      }
-                    });
-                  }
-                }
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
       break;
     case "42161withraw":
-      if (isUser) {
-        flag = "42161withraw";
-        await bot.sendMessage(
-          chatId,
-          "Enter token address that you want to transfer:"
-        );
-        if (flag == "42161withraw") {
-          bot.once("message", async (token0Msg) => {
-            const token = token0Msg.text;
-            if (flag == "42161withraw") {
-              await bot.sendMessage(
-                chatId,
-                "Enter the wallet address where you want to get transferred tokens:"
-              );
-            }
-            if (flag == "42161withraw") {
-              await bot.once("message", async (toWalletAdd) => {
-                const toWallet = toWalletAdd.text;
-                if (flag == "42161withraw") {
-                  await bot.sendMessage(chatId, `Enter amount`);
-                  if (flag == "42161withraw") {
-                    await bot.once("message", async (amountIn) => {
-                      if (flag == "42161withraw") {
-                        const amount = Number(amountIn.text);
+      resetUserState(chatId);
+      userStates[chatId].flag = 42161;
+      userStates[chatId].method = "transfer";
+      handleTransfer(chatId);
 
-                        await transferEvmToken(
-                          chatId,
-                          token,
-                          toWallet,
-                          42161,
-                          amount
-                        )
-                          .then(async (res) => {
-                            await bot.sendMessage(chatId, res?.message);
-                            await bot.sendMessage(
-                              chatId,
-                              `https://arbiscan.io/tx/${res?.tx}`
-                            );
-                          })
-                          .catch(async (err) => {
-                            console.log("🚀 ~ bot.once ~ err:", err);
-                            await bot.sendMessage(
-                              chatId,
-                              "somthing has been wrong make sure you have a enough balance!!"
-                            );
-                          });
-                      }
-                    });
-                  }
-                }
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              //[{ text: 'Start', request_contact: false, request_location: false }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
       break;
     case "10withraw":
-      if (isUser) {
-        flag = "10withraw";
-        await bot.sendMessage(
-          chatId,
-          "Enter token address that you want to transfer:"
-        );
-        if (flag == "10withraw") {
-          bot.once("message", async (token0Msg) => {
-            const token = token0Msg.text;
-            if (flag == "10withraw") {
-              await bot.sendMessage(
-                chatId,
-                "Enter the wallet address where you want to get transferred tokens:"
-              );
-            }
-            if (flag == "10withraw") {
-              await bot.once("message", async (toWalletAdd) => {
-                const toWallet = toWalletAdd.text;
-                if (flag == "10withraw") {
-                  await bot.sendMessage(chatId, `Enter amount`);
-                  if (flag == "10withraw") {
-                    await bot.once("message", async (amountIn) => {
-                      if (flag == "10withraw") {
-                        const amount = Number(amountIn.text);
+      resetUserState(chatId);
+      userStates[chatId].flag = 10;
+      userStates[chatId].method = "transfer";
+      handleTransfer(chatId);
 
-                        await transferEvmToken(
-                          chatId,
-                          token,
-                          toWallet,
-                          137,
-                          amount
-                        )
-                          .then(async (res) => {
-                            await bot.sendMessage(chatId, res?.message);
-                            await bot.sendMessage(
-                              chatId,
-                              `https://polygonscan.com/tx/${res?.tx}`
-                            );
-                          })
-                          .catch(async (err) => {
-                            console.log("🚀 ~ bot.once ~ err:", err);
-                            await bot.sendMessage(
-                              chatId,
-                              "somthing has been wrong make sure you have a enough balance!!"
-                            );
-                          });
-                      }
-                    });
-                  }
-                }
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
       break;
     case "137withraw":
-      if (isUser) {
-        flag = "137withraw";
-        await bot.sendMessage(
-          chatId,
-          "Enter token address that you want to transfer:"
-        );
-        if (flag == "137withraw") {
-          bot.once("message", async (token0Msg) => {
-            const token = token0Msg.text;
-            if (flag == "137withraw") {
-              await bot.sendMessage(
-                chatId,
-                "Enter the wallet address where you want to get transferred tokens:"
-              );
-            }
-            if (flag == "137withraw") {
-              await bot.once("message", async (toWalletAdd) => {
-                const toWallet = toWalletAdd.text;
-                if (flag == "137withraw") {
-                  await bot.sendMessage(chatId, `Enter amount`);
-                  if (flag == "137withraw") {
-                    await bot.once("message", async (amountIn) => {
-                      if (flag == "137withraw") {
-                        const amount = Number(amountIn.text);
+      resetUserState(chatId);
+      userStates[chatId].flag = 137;
+      userStates[chatId].method = "transfer";
+      handleTransfer(chatId);
 
-                        await transferEvmToken(
-                          chatId,
-                          token,
-                          toWallet,
-                          137,
-                          amount
-                        )
-                          .then(async (res) => {
-                            await bot.sendMessage(chatId, res?.message);
-                            await bot.sendMessage(
-                              chatId,
-                              `https://polygonscan.com/tx/${res?.tx}`
-                            );
-                          })
-                          .catch(async (err) => {
-                            console.log("🚀 ~ bot.once ~ err:", err);
-                            await bot.sendMessage(
-                              chatId,
-                              "somthing has been wrong make sure you have a enough balance!!"
-                            );
-                          });
-                      }
-                    });
-                  }
-                }
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
       break;
     case "8453withraw":
-      if (isUser) {
-        flag = "8453withraw";
-        await bot.sendMessage(
-          chatId,
-          "Enter token address that you want to transfer:"
-        );
-        if (flag == "8453withraw") {
-          bot.once("message", async (token0Msg) => {
-            const token = token0Msg.text;
-            if (flag == "8453withraw") {
-              await bot.sendMessage(
-                chatId,
-                "Enter the wallet address where you want to get transferred tokens:"
-              );
-            }
-            if (flag == "8453withraw") {
-              await bot.once("message", async (toWalletAdd) => {
-                const toWallet = toWalletAdd.text;
-                if (flag == "8453withraw") {
-                  await bot.sendMessage(chatId, `Enter amount`);
-                  if (flag == "8453withraw") {
-                    await bot.once("message", async (amountIn) => {
-                      if (flag == "8453withraw") {
-                        const amount = Number(amountIn.text);
+      resetUserState(chatId);
+      userStates[chatId].flag = 8453;
+      userStates[chatId].method = "transfer";
+      handleTransfer(chatId);
 
-                        await transferEvmToken(
-                          chatId,
-                          token,
-                          toWallet,
-                          8453,
-                          amount
-                        )
-                          .then(async (res) => {
-                            await bot.sendMessage(chatId, res?.message);
-                            await bot.sendMessage(
-                              chatId,
-                              `https://basescan.org/tx/${res?.tx}`
-                            );
-                          })
-                          .catch(async (err) => {
-                            console.log("🚀 ~ bot.once ~ err:", err);
-                            await bot.sendMessage(
-                              chatId,
-                              "somthing has been wrong make sure you have a enough balance!!"
-                            );
-                          });
-                      }
-                    });
-                  }
-                }
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
       break;
     case "56withraw":
-      if (isUser) {
-        flag = "56withraw";
-        await bot.sendMessage(
-          chatId,
-          "Enter token address that you want to transfer:"
-        );
-        if (flag == "56withraw") {
-          bot.once("message", async (token0Msg) => {
-            const token = token0Msg.text;
-            if (flag == "56withraw") {
-              await bot.sendMessage(
-                chatId,
-                "Enter the wallet address where you want to get transferred tokens:"
-              );
-            }
-            if (flag == "56withraw") {
-              await bot.once("message", async (toWalletAdd) => {
-                const toWallet = toWalletAdd.text;
-                if (flag == "56withraw") {
-                  await bot.sendMessage(chatId, `Enter amount`);
-                  if (flag == "56withraw") {
-                    await bot.once("message", async (amountIn) => {
-                      if (flag == "56withraw") {
-                        const amount = Number(amountIn.text);
+      resetUserState(chatId);
+      userStates[chatId].flag = 56;
+      userStates[chatId].method = "transfer";
+      handleTransfer(chatId);
 
-                        await transferEvmToken(
-                          chatId,
-                          token,
-                          toWallet,
-                          56,
-                          amount
-                        )
-                          .then(async (res) => {
-                            await bot.sendMessage(chatId, res?.message);
-                            await bot.sendMessage(
-                              chatId,
-                              `https://bscscan.com/tx/${res?.tx}`
-                            );
-                          })
-                          .catch(async (err) => {
-                            console.log("🚀 ~ bot.once ~ err:", err);
-                            await bot.sendMessage(
-                              chatId,
-                              "somthing has been wrong make sure you have a enough balance!!"
-                            );
-                          });
-                      }
-                    });
-                  }
-                }
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
       break;
     case "43114withraw":
-      if (isUser) {
-        flag = "43114withraw";
-        await bot.sendMessage(
-          chatId,
-          "Enter token address that you want to transfer:"
-        );
-        if (flag == "43114withraw") {
-          bot.once("message", async (token0Msg) => {
-            const token = token0Msg.text;
-            if (flag == "43114withraw") {
-              await bot.sendMessage(
-                chatId,
-                "Enter the wallet address where you want to get transferred tokens:"
-              );
-            }
-            if (flag == "43114withraw") {
-              await bot.once("message", async (toWalletAdd) => {
-                const toWallet = toWalletAdd.text;
-                if (flag == "43114withraw") {
-                  await bot.sendMessage(chatId, `Enter amount`);
-                  if (flag == "43114withraw") {
-                    await bot.once("message", async (amountIn) => {
-                      if (flag == "43114withraw") {
-                        const amount = Number(amountIn.text);
+      resetUserState(chatId);
+      userStates[chatId].flag = 43114;
+      userStates[chatId].method = "transfer";
+      handleTransfer(chatId);
 
-                        await transferEvmToken(
-                          chatId,
-                          token,
-                          toWallet,
-                          43114,
-                          amount
-                        )
-                          .then(async (res) => {
-                            await bot.sendMessage(chatId, res?.message);
-                            await bot.sendMessage(
-                              chatId,
-                              `https://avascan.info/blockchain/c/tx/${res?.tx}`
-                            );
-                          })
-                          .catch(async (err) => {
-                            console.log("🚀 ~ bot.once ~ err:", err);
-                            await bot.sendMessage(
-                              chatId,
-                              "somthing has been wrong make sure you have a enough balance!!"
-                            );
-                          });
-                      }
-                    });
-                  }
-                }
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
       break;
     case "25withraw":
-      if (isUser) {
-        flag = "25withraw";
-        await bot.sendMessage(
-          chatId,
-          "Enter token address that you want to transfer:"
-        );
-        if (flag == "25withraw") {
-          bot.once("message", async (token0Msg) => {
-            const token = token0Msg.text;
-            if (flag == "25withraw") {
-              await bot.sendMessage(
-                chatId,
-                "Enter the wallet address where you want to get transferred tokens:"
-              );
-            }
-            if (flag == "25withraw") {
-              await bot.once("message", async (toWalletAdd) => {
-                const toWallet = toWalletAdd.text;
-                if (flag == "25withraw") {
-                  await bot.sendMessage(chatId, `Enter amount`);
-                  if (flag == "25withraw") {
-                    await bot.once("message", async (amountIn) => {
-                      if (flag == "25withraw") {
-                        const amount = Number(amountIn.text);
+      resetUserState(chatId);
+      userStates[chatId].flag = 25;
+      userStates[chatId].method = "transfer";
+      handleTransfer(chatId);
 
-                        await transferEvmToken(
-                          chatId,
-                          token,
-                          toWallet,
-                          25,
-                          amount
-                        )
-                          .then(async (res) => {
-                            await bot.sendMessage(chatId, res?.message);
-                            await bot.sendMessage(
-                              chatId,
-                              `https://cronoscan.com/tx/${res?.tx}`
-                            );
-                          })
-                          .catch(async (err) => {
-                            console.log("🚀 ~ bot.once ~ err:", err);
-                            await bot.sendMessage(
-                              chatId,
-                              "somthing has been wrong make sure you have a enough balance!!"
-                            );
-                          });
-                      }
-                    });
-                  }
-                }
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
       break;
     case "250withraw":
-      if (isUser) {
-        flag = "250withraw";
-        await bot.sendMessage(
-          chatId,
-          "Enter token address that you want to transfer:"
-        );
-        if (flag == "250withraw") {
-          bot.once("message", async (token0Msg) => {
-            const token = token0Msg.text;
-            if (flag == "250withraw") {
-              await bot.sendMessage(
-                chatId,
-                "Enter the wallet address where you want to get transferred tokens:"
-              );
-            }
-            if (flag == "250withraw") {
-              await bot.once("message", async (toWalletAdd) => {
-                const toWallet = toWalletAdd.text;
-                if (flag == "250withraw") {
-                  await bot.sendMessage(chatId, `Enter amount`);
-                  if (flag == "250withraw") {
-                    await bot.once("message", async (amountIn) => {
-                      if (flag == "250withraw") {
-                        const amount = Number(amountIn.text);
+      resetUserState(chatId);
+      userStates[chatId].flag = 250;
+      userStates[chatId].method = "transfer";
+      handleTransfer(chatId);
 
-                        await transferEvmToken(
-                          chatId,
-                          token,
-                          toWallet,
-                          250,
-                          amount
-                        )
-                          .then(async (res) => {
-                            await bot.sendMessage(chatId, res?.message);
-                            await bot.sendMessage(
-                              chatId,
-                              `https://ftmscan.com/tx/${res?.tx}`
-                            );
-                          })
-                          .catch(async (err) => {
-                            console.log("🚀 ~ bot.once ~ err:", err);
-                            await bot.sendMessage(
-                              chatId,
-                              "somthing has been wrong make sure you have a enough balance!!"
-                            );
-                          });
-                      }
-                    });
-                  }
-                }
-              });
-            }
-          });
-        }
-      } else {
-        await bot.sendMessage(chatId, "please login!!", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "SignUp",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-              [
-                {
-                  text: "Login",
-                  request_contact: false,
-                  request_location: false,
-                },
-              ],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
       break;
     default:
       console.log(`Unknown button clicked meet: ${data}`);
   }
 });
+
 app.listen(PORT, () => {
   console.log(`Our app is running on port ${PORT}`);
 });
