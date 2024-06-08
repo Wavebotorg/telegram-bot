@@ -922,11 +922,15 @@ bot.on("message", async (msg) => {
               state?.amount
             )
               .then(async (res) => {
+                clearInterval(interval);
+                await bot.deleteMessage(chatId, loaderMessage.message_id);
                 await bot.sendMessage(chatId, res?.message);
                 await bot.sendMessage(chatId, res?.txUrl);
               })
               .catch(async (err) => {
                 console.log("🚀 ~ bot.once ~ err:", err);
+                clearInterval(interval);
+                await bot.deleteMessage(chatId, loaderMessage.message_id);
                 await bot.sendMessage(
                   chatId,
                   "somthing has been wrong make sure you have a enough balance!!"
