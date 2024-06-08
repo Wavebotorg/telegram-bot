@@ -889,6 +889,7 @@ bot.on("message", async (msg) => {
               },
             })
               .then(async (res) => {
+                resetUserState(chatId)
                 clearInterval(interval);
                 await bot.deleteMessage(chatId, loaderMessage.message_id);
                 if (res?.data?.status) {
@@ -903,6 +904,7 @@ bot.on("message", async (msg) => {
                 }
               })
               .catch(async (error) => {
+                resetUserState(chatId)
                 clearInterval(interval);
                 await bot.deleteMessage(chatId, loaderMessage.message_id);
                 console.log("🚀 ~ awaitbot.once ~ error:", error);
@@ -920,8 +922,8 @@ bot.on("message", async (msg) => {
               state?.amount
             )
               .then(async (res) => {
-                await bot.sendMessage(chatId, res?.data?.message);
-                await bot.sendMessage(chatId, res?.data?.txUrl);
+                await bot.sendMessage(chatId, res?.message);
+                await bot.sendMessage(chatId, res?.txUrl);
               })
               .catch(async (err) => {
                 console.log("🚀 ~ bot.once ~ err:", err);
