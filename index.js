@@ -909,28 +909,59 @@ bot.on("message", async (msg) => {
                 );
               });
           } else {
-            await transferEvmToken(
-              chatId,
-              state?.fromToken,
-              state?.toToken,
-              state?.flag,
-              state?.amount
-            )
+            await axios({
+              url: `${API_URL}/transferEvmToken`,
+              method: "post",
+              data: {
+                chatId,
+                token: state?.fromToken,
+                toWallet: state?.toToken,
+                chain: state?.flag,
+                amount: state?.amount,
+              },
+            })
               .then(async (res) => {
                 clearInterval(interval);
                 await bot.deleteMessage(chatId, loaderMessage.message_id);
-                await bot.sendMessage(chatId, res?.message);
-                await bot.sendMessage(chatId, res?.txUrl);
+                if (res?.data?.status) {
+                  await bot.sendMessage(chatId, res?.data?.message);
+                  await bot.sendMessage(chatId, res?.data?.txUrl);
+                } else {
+                  await bot.sendMessage(
+                    chatId,
+                    "somthing has been wrong make sure you have a enough balance!!"
+                  );
+                }
               })
-              .catch(async (err) => {
-                console.log("🚀 ~ bot.once ~ err:", err);
-                clearInterval(interval);
-                await bot.deleteMessage(chatId, loaderMessage.message_id);
+              .catch(async (error) => {
+                console.log("🚀 ~ bot.on ~ error:", error?.message);
                 await bot.sendMessage(
                   chatId,
-                  "somthing has been wrong make sure you have a enough balance!!"
+                  "somthing has been wrong please try again latter!!"
                 );
               });
+            // await transferEvmToken(
+            //   chatId,
+            //   state?.fromToken,
+            //   state?.toToken,
+            //   state?.flag,
+            //   state?.amount
+            // )
+            //   .then(async (res) => {
+            //     clearInterval(interval);
+            //     await bot.deleteMessage(chatId, loaderMessage.message_id);
+            //     await bot.sendMessage(chatId, res?.message);
+            //     await bot.sendMessage(chatId, res?.txUrl);
+            //   })
+            //   .catch(async (err) => {
+            //     console.log("🚀 ~ bot.once ~ err:", err);
+            //     clearInterval(interval);
+            //     await bot.deleteMessage(chatId, loaderMessage.message_id);
+            //     await bot.sendMessage(
+            //       chatId,
+            //       "somthing has been wrong make sure you have a enough balance!!"
+            //     );
+            //   });
           }
           break;
       }
