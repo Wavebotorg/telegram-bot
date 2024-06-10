@@ -458,24 +458,23 @@ async function fetchSolanaBalance(chatId) {
     const response = await axios.post(`${API_URL}/solanaBalance`, {
       chatId: chatId,
     });
-    const balances = response?.data?.data;
+    const balances = response?.data;
     let message = "Your Solana Wallet balances:\n\n";
-    message += `Token Name: Sol\n`;
-    message += `Balance: ${
-      response?.data?.native ? response?.data?.native : 0.0
-    }\n`;
-    if (balances && balances.length > 0) {
-      balances?.slice(0, 4)?.forEach((balance) => {
-        message += `Token Name: ${balance.name}\n`;
-        message += `Balance: ${balance.amount}\n\n`;
-      });
-      message += `For More info (https://solscan.io/account/${response?.data?.walletAddress})\n\n`;
-      message += "Thank you for using our service! ✌️";
-    } else {
+    if (balances) {
       message += `Token Name: Sol\n`;
-      message += `Balance: 0.0000}\n`;
+      message += `Balance: ${
+        response?.data?.native ? response?.data?.native : "0.00000"
+      }\n`;
+      if (balances?.data > 0) {
+        balances?.data?.slice(0, 4)?.forEach((balance) => {
+          message += `Token Name: ${balance?.data?.name}\n`;
+          message += `Balance: ${balance?.data?.amount}\n\n`;
+        });
+        message += `For More info (https://solscan.io/account/${response?.data?.walletAddress})\n\n`;
+        message += "Thank you for using our service! ✌️";
+      }
+      await bot.sendMessage(chatId, message);
     }
-    await bot.sendMessage(chatId, message);
   } catch (error) {
     console.error("Error fetching balance:", error);
     await bot.sendMessage(
