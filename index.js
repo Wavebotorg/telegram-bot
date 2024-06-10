@@ -460,9 +460,11 @@ async function fetchSolanaBalance(chatId) {
     });
     const balances = response?.data?.data;
     let message = "Your Solana Wallet balances:\n\n";
+    message += `Token Name: Sol\n`;
+    message += `Balance: ${
+      response?.data?.native ? response?.data?.native : 0.0
+    }\n\n`;
     if (balances && balances.length > 0) {
-      message += `Token Name: Sol\n`;
-      message += `Balance: ${response?.data?.native}\n\n`;
       balances?.slice(0, 4)?.forEach((balance) => {
         message += `Token Name: ${balance.name}\n`;
         message += `Balance: ${balance.amount}\n\n`;
