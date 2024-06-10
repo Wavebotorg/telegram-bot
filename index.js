@@ -463,7 +463,7 @@ async function fetchSolanaBalance(chatId) {
     message += `Token Name: Sol\n`;
     message += `Balance: ${
       response?.data?.native ? response?.data?.native : 0.0
-    }\n\n`;
+    }\n`;
     if (balances && balances.length > 0) {
       balances?.slice(0, 4)?.forEach((balance) => {
         message += `Token Name: ${balance.name}\n`;
@@ -472,7 +472,8 @@ async function fetchSolanaBalance(chatId) {
       message += `For More info (https://solscan.io/account/${response?.data?.walletAddress})\n\n`;
       message += "Thank you for using our service! ✌️";
     } else {
-      message = "No balances found.";
+      message += `Token Name: Sol\n`;
+      message += `Balance: 0.0000}\n`;
     }
     await bot.sendMessage(chatId, message);
   } catch (error) {
