@@ -422,38 +422,26 @@ async function getstartBot(chatId) {
     console.error("Error fetching data:", error);
   }
 }
-// transfer token function
-async function transferEvmToken(chatId, token, toWallet, chain, amount) {
-  try {
-    const receipt = await axios({
-      url: `${API_URL}/transferEvmToken`,
-      method: "post",
-      data: {
-        chatId,
-        token,
-        toWallet,
-        chain,
-        amount,
-      },
-    });
-    if (!receipt?.data?.status) {
-      console.log("🚀 ~ transferEvmToken ~ receipt:", receipt);
-      return null;
-    }
-    return receipt?.data;
-  } catch (error) {
-    console.log("🚀 ~ transferEvmToken ~ error:", error);
-  }
-}
 // Function to start the bot session
 async function start(chatId) {
   flag = null;
   const userInfo = await getEmailAndWalletFromBackend(chatId);
   if (userInfo?.email) {
-    const messageText = `Welcome to WaveBot! 🌊\n
-  🌊 WaveBot(https://wavebot.app/)\n
-  🌐 Website(https://marketing-dashboard-d22655001f93.herokuapp.com/)
-  ‧‧────────────────‧‧
+    const messageText = `🌊 Follow WaveBotApp on Social Media! 🌊\n
+🌊 WaveBot(https://wavebot.app/)\n
+🌐 Website(https://marketing-dashboard-d22655001f93.herokuapp.com/)\n
+🐦 Twitter: https://x.com/WaveBotApp\n
+💬 Discord: https://discord.gg/w4tFdAA7\n
+👥 Telegram Community: https://t.me/+MX1exQQYjWkxZjBl\n
+📢 Telegram Announcements: https://t.me/WaveAnnouncements\n
+📸 Instagram: https://www.instagram.com/wavebotapp/\n
+🎵 TikTok: https://www.tiktok.com/@wavebotapp\n
+📺 YouTube: https://www.youtube.com/@WaveBotApp\n
+👾 Reddit: https://www.reddit.com/user/wavebotapp/\n
+✍️ Medium: https://medium.com/@wavebotapp\n
+💼 LinkedIn: https://www.linkedin.com/company/wave_protocol/?viewAsMember=true\n
+📘 Facebook: https://www.facebook.com/profile.php?id=61560842638941\n
+  ‧‧────────────────‧‧\n
   *Your Email Address: ${userInfo?.email}\n
   *Your Wallet Address (EVM): ${userInfo?.EVMwallet}\n
   *Your Wallet Address (Solana): ${userInfo?.solanaWallets}`;
@@ -942,28 +930,6 @@ bot.on("message", async (msg) => {
                   "somthing has been wrong please try again latter!!"
                 );
               });
-            // await transferEvmToken(
-            //   chatId,
-            //   state?.fromToken,
-            //   state?.toToken,
-            //   state?.flag,
-            //   state?.amount
-            // )
-            //   .then(async (res) => {
-            //     clearInterval(interval);
-            //     await bot.deleteMessage(chatId, loaderMessage.message_id);
-            //     await bot.sendMessage(chatId, res?.message);
-            //     await bot.sendMessage(chatId, res?.txUrl);
-            //   })
-            //   .catch(async (err) => {
-            //     console.log("🚀 ~ bot.once ~ err:", err);
-            //     clearInterval(interval);
-            //     await bot.deleteMessage(chatId, loaderMessage.message_id);
-            //     await bot.sendMessage(
-            //       chatId,
-            //       "somthing has been wrong make sure you have a enough balance!!"
-            //     );
-            //   });
           }
           break;
       }
@@ -1005,22 +971,7 @@ bot.on("message", async (msg) => {
               await bot.deleteMessage(chatId, loaderMessage.message_id);
               if (response.data.status === true) {
                 await bot.sendMessage(chatId, `✅ Login successfull!`);
-                const userInfo = await getEmailAndWalletFromBackend(chatId);
-                if (userInfo?.email) {
-                  const messageText = `Welcome to WaveBot! 🌊\n
-        🌊 WaveBot(https://wavebot.app/)\n
-        📖 Dashboard(https://dashboard.wavebot.app/)\n
-        🌐 Website(https://marketing-dashboard-d22655001f93.herokuapp.com/)
-        ‧‧────────────────‧‧
-        *Your Email Address: ${userInfo?.email}\n
-        *Your Wallet Address (EVM): ${userInfo?.EVMwallet}\n
-        *Your Wallet Address (Solana): ${userInfo?.solanaWallets}`;
-                  await bot.sendMessage(chatId, messageText, {
-                    reply_markup: JSON.stringify(buyKeyboard),
-                  });
-                }
-                await sendWelcomeMessage2(chatId);
-                isLoggingIn = false;
+                await start(start);
               } else {
                 await bot.sendMessage(
                   chatId,
