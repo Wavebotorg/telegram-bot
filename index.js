@@ -743,7 +743,10 @@ bot.on("message", async (msg) => {
                     await bot.deleteMessage(chatId, loaderMessage.message_id);
                     if (response?.data?.status) {
                       await bot.sendMessage(chatId, response?.data?.message);
-                      return await bot.sendMessage(chatId, response?.data?.txUrl);
+                      return await bot.sendMessage(
+                        chatId,
+                        response?.data?.txUrl
+                      );
                     } else {
                       await bot.sendMessage(chatId, response?.data?.message);
                     }
@@ -868,8 +871,8 @@ bot.on("message", async (msg) => {
         case "amountTransfer":
           state.amount = Number(text);
 
+          const { loaderMessage, interval } = await animateLoader(chatId);
           if (state.flag == 19999) {
-            const { loaderMessage, interval } = await animateLoader(chatId);
             await axios({
               url: `${API_URL}/transferSolanaToken`,
               method: "post",
@@ -906,7 +909,6 @@ bot.on("message", async (msg) => {
                 );
               });
           } else {
-            const { loaderMessage, interval } = await animateLoader(chatId);
             await transferEvmToken(
               chatId,
               state?.fromToken,
