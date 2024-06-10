@@ -974,6 +974,7 @@ bot.on("message", async (msg) => {
               if (response.data.status === true) {
                 await bot.sendMessage(chatId, `✅ Login successfull!`);
                 await start(chatId);
+                await sendWelcomeMessage2(chatId);
               } else {
                 await bot.sendMessage(
                   chatId,
