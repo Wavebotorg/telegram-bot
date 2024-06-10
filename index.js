@@ -429,7 +429,6 @@ async function start(chatId) {
   if (userInfo?.email) {
     const messageText = `🌊 Follow WaveBotApp on Social Media! 🌊\n
 🌊 WaveBot(https://wavebot.app/)\n
-🌐 Website(https://marketing-dashboard-d22655001f93.herokuapp.com/)\n
 🐦 Twitter: https://x.com/WaveBotApp\n
 💬 Discord: https://discord.gg/w4tFdAA7\n
 👥 Telegram Community: https://t.me/+MX1exQQYjWkxZjBl\n
