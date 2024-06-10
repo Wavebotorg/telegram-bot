@@ -425,7 +425,6 @@ async function getstartBot(chatId) {
 // transfer token function
 async function transferEvmToken(chatId, token, toWallet, chain, amount) {
   try {
-    const { loaderMessage, interval } = await animateLoader(chatId);
     const receipt = await axios({
       url: `${API_URL}/transferEvmToken`,
       method: "post",
@@ -437,20 +436,12 @@ async function transferEvmToken(chatId, token, toWallet, chain, amount) {
         amount,
       },
     });
-    clearInterval(interval);
-    if (loaderMessage) {
-      await bot.deleteMessage(chatId, loaderMessage.message_id);
-    }
     if (!receipt?.data?.status) {
       console.log("🚀 ~ transferEvmToken ~ receipt:", receipt);
       return null;
     }
     return receipt?.data;
   } catch (error) {
-    clearInterval(interval);
-    if (loaderMessage) {
-      await bot.deleteMessage(chatId, loaderMessage.message_id);
-    }
     console.log("🚀 ~ transferEvmToken ~ error:", error);
   }
 }
@@ -723,7 +714,7 @@ bot.on("message", async (msg) => {
               });
           } else {
             const { loaderMessage, interval } = await animateLoader(chatId);
-            const tokenRes = await axios
+            await axios
               .post(`${API_URL}/getEvmTokenPrice`, {
                 token: state?.fromToken,
                 token2: state?.toToken,
@@ -915,6 +906,7 @@ bot.on("message", async (msg) => {
                 );
               });
           } else {
+            const { loaderMessage, interval } = await animateLoader(chatId);
             await transferEvmToken(
               chatId,
               state?.fromToken,
@@ -923,12 +915,15 @@ bot.on("message", async (msg) => {
               state?.amount
             )
               .then(async (res) => {
+                clearInterval(interval);
+                await bot.deleteMessage(chatId, loaderMessage.message_id);
                 await bot.sendMessage(chatId, res?.message);
                 await bot.sendMessage(chatId, res?.txUrl);
               })
               .catch(async (err) => {
                 console.log("🚀 ~ bot.once ~ err:", err);
-
+                clearInterval(interval);
+                await bot.deleteMessage(chatId, loaderMessage.message_id);
                 await bot.sendMessage(
                   chatId,
                   "somthing has been wrong make sure you have a enough balance!!"
