@@ -971,7 +971,7 @@ bot.on("message", async (msg) => {
               await bot.deleteMessage(chatId, loaderMessage.message_id);
               if (response.data.status === true) {
                 await bot.sendMessage(chatId, `✅ Login successfull!`);
-                await start(start);
+                await start(chatId);
               } else {
                 await bot.sendMessage(
                   chatId,
