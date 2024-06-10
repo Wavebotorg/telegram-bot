@@ -63,7 +63,7 @@ const buyKeyboard = {
     [
       { text: "⬇️ Buy", callback_data: "buyButton" },
       { text: "⬆️ Sell", callback_data: "sellButton" },
-      { text: "↗️ Transfer", callback_data: "withrawButton" },
+      { text: "↗️ Withraw", callback_data: "withrawButton" },
     ],
     [
       { text: "✅ Position", callback_data: "positionButton" },
