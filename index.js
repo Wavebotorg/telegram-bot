@@ -77,7 +77,7 @@ const buyKeyboard = {
     ],
     [
       { text: "🔄 Refresh", callback_data: "refreshButton" },
-      { text: "Logout", callback_data: "logoutButton" },
+      { text: "🙅‍♂️ Logout", callback_data: "logoutButton" },
     ],
   ],
 };
