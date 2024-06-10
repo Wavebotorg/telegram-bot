@@ -752,7 +752,7 @@ bot.on("message", async (msg) => {
                     await bot.deleteMessage(chatId, loaderMessage.message_id);
                     if (response?.data?.status) {
                       await bot.sendMessage(chatId, response?.data?.message);
-                      return await bot.sendMessage(chatId, res?.data?.txUrl);
+                      return await bot.sendMessage(chatId, response?.data?.txUrl);
                     } else {
                       await bot.sendMessage(chatId, response?.data?.message);
                     }
