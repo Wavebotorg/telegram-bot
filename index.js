@@ -464,7 +464,8 @@ async function fetchSolanaBalance(chatId) {
       message += `Token Name: Sol\n`;
       message += `Balance: ${
         response?.data?.native ? response?.data?.native : "0.00000"
-      }\n`;
+      }\n\n`;
+      
       balances?.data?.slice(0, 4)?.forEach((balance) => {
         message += `Token Name: ${balance?.name}\n`;
         message += `Balance: ${balance?.amount}\n\n`;
