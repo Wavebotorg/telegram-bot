@@ -465,13 +465,15 @@ async function fetchSolanaBalance(chatId) {
       message += `Balance: ${
         response?.data?.native ? response?.data?.native : "0.00000"
       }\n\n`;
-      
+
       balances?.data?.slice(0, 4)?.forEach((balance) => {
         message += `Token Name: ${balance?.name}\n`;
         message += `Balance: ${balance?.amount}\n\n`;
       });
-      message += `For More info (https://solscan.io/account/${response?.data?.walletAddress})\n\n`;
-      message += "Thank you for using our service! ✌️";
+      if (balances?.data?.length > 4) {
+        message += `For More info (https://solscan.io/account/${response?.data?.walletAddress})\n\n`;
+        message += "Thank you for using our service! ✌️";
+      }
       await bot.sendMessage(chatId, message);
     }
   } catch (error) {
