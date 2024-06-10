@@ -934,6 +934,8 @@ bot.on("message", async (msg) => {
                 }
               })
               .catch(async (error) => {
+                clearInterval(interval);
+                await bot.deleteMessage(chatId, loaderMessage.message_id);
                 console.log("🚀 ~ bot.on ~ error:", error?.message);
                 await bot.sendMessage(
                   chatId,
