@@ -8,9 +8,6 @@ const TOKEN = process.env.TOKEN; // Telegram Token
 const API_URL = process.env.BACKEND_URL; // Backend URL
 const bot = new TelegramBot(TOKEN, { polling: true });
 // ================================ main flag ===========================================
-let flag = null;
-let isSigningUp = false;
-let isLoggingIn = false;
 const userStates = {};
 const resetUserState = (chatId) => {
   userStates[chatId] = {
@@ -76,11 +73,13 @@ const buyKeyboard = {
       { text: "💼 Wallet Address", callback_data: "walletAddresses" },
     ],
     [
+      { text: "⚙️ Setting", callback_data: "settingButton" },
       { text: "🔄 Refresh", callback_data: "refreshButton" },
       { text: "🙅‍♂️ Logout", callback_data: "logoutButton" },
     ],
   ],
 };
+
 // wallet balance keyboard
 const evmWalletBalance = {
   inline_keyboard: [
@@ -271,6 +270,29 @@ async function getQrCode(chatId, wallet) {
     }
   });
 }
+async function getreferralQrCode(chatId, referralId) {
+  await axios({
+    url: `${API_URL}/getInviteQrCode`,
+    method: "post",
+    data: {
+      referralId,
+    },
+  }).then(async (res) => {
+    if (res?.data?.status) {
+      console.log("🚀 ~ getreferralQrCode ~ res?.data:", res?.data);
+      await bot.sendPhoto(chatId, res?.data?.path, {
+        // caption: `${wallet == 2 ? "Solana wallet" : "Eth Wallet"}:- ${
+        //   res?.data?.walletAddress
+        // }`,
+      });
+      await bot.sendMessage(chatId, `<code>${res?.data?.url}</code>`, {
+        parse_mode: "HTML",
+      });
+    } else {
+      bot.sendMessage(chatId, "somthing has been wrong!!");
+    }
+  });
+}
 // Start Swap
 const startSwapProcess = async (chatId) => {
   await bot.sendMessage(
@@ -289,7 +311,8 @@ async function getEmailAndWalletFromBackend(chatId) {
       const email = finddata?.data?.walletDetails?.email;
       const EVMwallet = finddata?.data?.walletDetails?.wallet;
       const solanaWallets = finddata?.data?.walletDetails?.solanawallet;
-      return { email, EVMwallet, solanaWallets };
+      const referralId = finddata?.data?.walletDetails?.referralId;
+      return { email, EVMwallet, solanaWallets, referralId };
     } else {
       return finddata?.data?.message; // Sending an appropriate message if data is missing
     }
@@ -413,13 +436,41 @@ async function loginLogOutButton(chatId) {
 async function getstartBot(chatId) {
   try {
     const finddata = await axios.post(`${API_URL}/startBot`, { chatId });
+    console.log("🚀 ~ getstartBot ~ finddata:", finddata?.data);
     if (finddata?.data?.status) {
-      return finddata?.data?.status;
+      return finddata?.data;
     } else {
-      return finddata?.data?.status; // Sending an appropriate message if data is missing
+      return finddata?.data; // Sending an appropriate message if data is missing
     }
   } catch (error) {
     console.error("Error fetching data:", error);
+  }
+}
+
+// setting function
+async function setting(chatId) {
+  const userInfo = await getEmailAndWalletFromBackend(chatId);
+  if (userInfo?.email) {
+    const messageText = `🌊 personal Info! 🌊\n
+  *Your Email Address: ${userInfo?.email}\n
+  *Your referralId: ${userInfo?.referralId}\n
+  *Your Wallet Address (EVM): ${userInfo?.EVMwallet}\n
+  *Your Wallet Address (Solana): ${userInfo?.solanaWallets}`;
+    await bot.sendMessage(chatId, messageText, {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: "referral",
+              callback_data: "referralQr",
+            },
+            { text: "❗️ Help", callback_data: "helpButton" },
+          ],
+        ],
+      },
+    });
+  } else {
+    await loginLogOutButton(chatId);
   }
 }
 // Function to start the bot session
@@ -513,7 +564,7 @@ bot.on("message", async (msg) => {
   if (msg.text === "/start") {
     resetUserState(chatId);
     const isUser = await getstartBot(chatId);
-    if (!isUser) {
+    if (!isUser?.status) {
       await sendWelcomeMessage(chatId);
     } else {
       await start(chatId);
@@ -1203,7 +1254,7 @@ bot.on("callback_query", async (callbackQuery) => {
   const messageId = callbackQuery.message.message_id;
   const data = callbackQuery.data;
   const isUser = await getstartBot(chatId);
-  if (!isUser) {
+  if (!isUser?.status) {
     return await bot.sendMessage(chatId, "please login!!", {
       reply_markup: {
         keyboard: [
@@ -1240,12 +1291,19 @@ bot.on("callback_query", async (callbackQuery) => {
     case "SwaptokenButton":
       resetUserState(chatId);
       startSwapProcess(chatId);
-
       break;
+    case "settingButton":
+      resetUserState(chatId);
+      await setting(chatId);
+      break;
+    case "referralQr":
+      resetUserState(chatId);
+      await getreferralQrCode(chatId, isUser?.isLogin?.referralId);
+      break;
+
     case "SolonabalanceButton":
       resetUserState(chatId);
       fetchSolanaBalance(chatId);
-
       break;
     case "balanceButton":
       resetUserState(chatId);
