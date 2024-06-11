@@ -491,10 +491,7 @@ async function start(chatId) {
 ✍️ Medium: https://medium.com/@wavebotapp\n
 💼 LinkedIn: https://www.linkedin.com/company/wave_protocol/?viewAsMember=true\n
 📘 Facebook: https://www.facebook.com/profile.php?id=61560842638941\n
-  ‧‧────────────────‧‧\n
-  *Your Email Address: ${userInfo?.email}\n
-  *Your Wallet Address (EVM): ${userInfo?.EVMwallet}\n
-  *Your Wallet Address (Solana): ${userInfo?.solanaWallets}`;
+  ‧‧────────────────‧‧\n`;
     await bot.sendMessage(chatId, messageText, {
       reply_markup: JSON.stringify(buyKeyboard),
     });
