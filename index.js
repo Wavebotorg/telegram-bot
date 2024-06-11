@@ -271,30 +271,36 @@ async function getQrCode(chatId, wallet) {
     }
   });
 }
+
+// get referral QR code
 async function getreferralQrCode(chatId, referralId) {
   console.log("🚀 ~ getreferralQrCode ~ referralId:", referralId);
-  await axios({
-    url: `${API_URL}/getInviteQrCode`,
-    method: "post",
-    data: {
-      referralId,
-    },
-  })
-    .then(async (res) => {
-      if (res?.data?.status) {
-        console.log("🚀 ~ getreferralQrCode ~ res?.data:", res?.data);
-        await bot.sendPhoto(chatId, res?.data?.path, {
-          caption: `<code>${res?.data?.url}</code>`,
+
+  try {
+    const res = await axios.post(`${API_URL}/getInviteQrCode`, { referralId });
+
+    if (res?.data?.status) {
+      console.log("🚀 ~ getreferralQrCode ~ res?.data:", res?.data);
+
+      // Fetch the image as a buffer
+      const imageResponse = await axios.get(res?.data?.path, { responseType: 'arraybuffer' });
+
+      if (imageResponse.status === 200) {
+        const imageBuffer = Buffer.from(imageResponse.data, 'binary');
+        await bot.sendPhoto(chatId, imageBuffer, {
+          caption: `<code>${res.data.url}</code>`,
           parse_mode: "HTML",
         });
       } else {
-        bot.sendMessage(chatId, "somthing has been wrong!!");
+        throw new Error('Image URL is not accessible');
       }
-    })
-    .catch(async (err) => {
-      console.log("🚀 ~ getreferralQrCode ~ err:", err.message);
-      await bot.sendMessage(chatId, "somthing has been wrong!!");
-    });
+    } else {
+      await bot.sendMessage(chatId, "Something went wrong!!");
+    }
+  } catch (err) {
+    console.log("🚀 ~ getreferralQrCode ~ err:", err.message);
+    await bot.sendMessage(chatId, "Something went wrong!!");
+  }
 }
 // Start Swap
 const startSwapProcess = async (chatId) => {
