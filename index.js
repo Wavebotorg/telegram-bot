@@ -281,11 +281,7 @@ async function getreferralQrCode(chatId, referralId) {
     if (res?.data?.status) {
       console.log("🚀 ~ getreferralQrCode ~ res?.data:", res?.data);
       await bot.sendPhoto(chatId, res?.data?.path, {
-        // caption: `${wallet == 2 ? "Solana wallet" : "Eth Wallet"}:- ${
-        //   res?.data?.walletAddress
-        // }`,
-      });
-      await bot.sendMessage(chatId, `<code>${res?.data?.url}</code>`, {
+        caption: `<code>${res?.data?.url}</code>`,
         parse_mode: "HTML",
       });
     } else {
@@ -456,26 +452,20 @@ async function setting(chatId) {
   *Your referralId: <code>${userInfo?.referralId}</code>\n
   *Your Wallet Address (EVM): <code>${userInfo?.EVMwallet}</code>\n
   *Your Wallet Address (Solana): <code>${userInfo?.solanaWallets}</code>`;
-    await bot.sendMessage(
-      chatId,
-      messageText,
-      {
-        parse_mode: "HTML",
-      },
-      {
-        reply_markup: {
-          inline_keyboard: [
-            [
-              {
-                text: "referral",
-                callback_data: "referralQr",
-              },
-              { text: "❗️ Help", callback_data: "helpButton" },
-            ],
+    await bot.sendMessage(chatId, messageText, {
+      parse_mode: "HTML",
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: "referral",
+              callback_data: "referralQr",
+            },
+            { text: "❗️ Help", callback_data: "helpButton" },
           ],
-        },
-      }
-    );
+        ],
+      },
+    });
   } else {
     await loginLogOutButton(chatId);
   }
