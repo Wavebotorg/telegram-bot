@@ -458,7 +458,7 @@ async function setting(chatId) {
         inline_keyboard: [
           [
             {
-              text: "referral",
+              text: "Invite",
               callback_data: "referralQr",
             },
             { text: "❗️ Help", callback_data: "helpButton" },
