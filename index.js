@@ -283,16 +283,18 @@ async function getreferralQrCode(chatId, referralId) {
       console.log("🚀 ~ getreferralQrCode ~ res?.data:", res?.data);
 
       // Fetch the image as a buffer
-      const imageResponse = await axios.get(res?.data?.path, { responseType: 'arraybuffer' });
+      const imageResponse = await axios.get(res?.data?.path, {
+        responseType: "arraybuffer",
+      });
 
       if (imageResponse.status === 200) {
-        const imageBuffer = Buffer.from(imageResponse.data, 'binary');
+        const imageBuffer = Buffer.from(imageResponse.data, "binary");
         await bot.sendPhoto(chatId, imageBuffer, {
           caption: `<code>${res.data.url}</code>`,
           parse_mode: "HTML",
         });
       } else {
-        throw new Error('Image URL is not accessible');
+        throw new Error("Image URL is not accessible");
       }
     } else {
       await bot.sendMessage(chatId, "Something went wrong!!");
@@ -1038,7 +1040,29 @@ bot.on("message", async (msg) => {
               } else {
                 await bot.sendMessage(
                   chatId,
-                  "❌ Invalid email or password. Please try again."
+                  `❌ Invalid email or password. Please try again.`,
+                  {
+                    reply_markup: {
+                      keyboard: [
+                        [
+                          {
+                            text: "SignUp",
+                            request_contact: false,
+                            request_location: false,
+                          },
+                        ],
+                        [
+                          {
+                            text: "Login",
+                            request_contact: false,
+                            request_location: false,
+                          },
+                        ],
+                      ],
+                      resize_keyboard: true,
+                      one_time_keyboard: true,
+                    },
+                  }
                 );
               }
             })
@@ -1049,7 +1073,29 @@ bot.on("message", async (msg) => {
               console.error("Error:", error.message);
               await bot.sendMessage(
                 chatId,
-                `❌ An error occurred while logging in: ${error.message}`
+                `❌ An error occurred while logging in: ${error.message}`,
+                {
+                  reply_markup: {
+                    keyboard: [
+                      [
+                        {
+                          text: "SignUp",
+                          request_contact: false,
+                          request_location: false,
+                        },
+                      ],
+                      [
+                        {
+                          text: "Login",
+                          request_contact: false,
+                          request_location: false,
+                        },
+                      ],
+                    ],
+                    resize_keyboard: true,
+                    one_time_keyboard: true,
+                  },
+                }
               );
             });
 
