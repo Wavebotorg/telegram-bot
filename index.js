@@ -24,6 +24,7 @@ const resetUserState = (chatId) => {
     confirmPassword: null,
     otp: null,
     name: null,
+    referral: null,
   };
 };
 
@@ -271,23 +272,29 @@ async function getQrCode(chatId, wallet) {
   });
 }
 async function getreferralQrCode(chatId, referralId) {
+  console.log("🚀 ~ getreferralQrCode ~ referralId:", referralId);
   await axios({
     url: `${API_URL}/getInviteQrCode`,
     method: "post",
     data: {
       referralId,
     },
-  }).then(async (res) => {
-    if (res?.data?.status) {
-      console.log("🚀 ~ getreferralQrCode ~ res?.data:", res?.data);
-      await bot.sendPhoto(chatId, res?.data?.path, {
-        caption: `<code>${res?.data?.url}</code>`,
-        parse_mode: "HTML",
-      });
-    } else {
-      bot.sendMessage(chatId, "somthing has been wrong!!");
-    }
-  });
+  })
+    .then(async (res) => {
+      if (res?.data?.status) {
+        console.log("🚀 ~ getreferralQrCode ~ res?.data:", res?.data);
+        await bot.sendPhoto(chatId, res?.data?.path, {
+          caption: `<code>${res?.data?.url}</code>`,
+          parse_mode: "HTML",
+        });
+      } else {
+        bot.sendMessage(chatId, "somthing has been wrong!!");
+      }
+    })
+    .catch(async (err) => {
+      console.log("🚀 ~ getreferralQrCode ~ err:", err.message);
+      await bot.sendMessage(chatId, "somthing has been wrong!!");
+    });
 }
 // Start Swap
 const startSwapProcess = async (chatId) => {
@@ -1098,6 +1105,18 @@ bot.on("message", async (msg) => {
             );
           }
           state.confirmPassword = text;
+          state.currentStep = "userReferralSignUp";
+          await bot.sendMessage(
+            chatId,
+            "Enter referral code If you have otherwise type 0 to continue"
+          );
+          break;
+        case "userReferralSignUp":
+          if (text != 0) {
+            state.referral = text;
+          } else {
+            state.referral = null;
+          }
           await axios
             .post(`${API_URL}/signup`, {
               name: state?.name,
@@ -1105,6 +1124,7 @@ bot.on("message", async (msg) => {
               password: state?.password,
               confirmPassword: state?.confirmPassword,
               chatId,
+              refferal: state?.referral?.toString(),
             })
             .then(async (res) => {
               if (res?.data?.status) {
@@ -1117,7 +1137,7 @@ bot.on("message", async (msg) => {
                 resetUserState(chatId);
                 await bot.sendMessage(
                   chatId,
-                  "failed to register please try again!!",
+                  `${res?.data?.msg} please register again!!`,
                   {
                     reply_markup: {
                       keyboard: [
@@ -1135,7 +1155,6 @@ bot.on("message", async (msg) => {
                             request_location: false,
                           },
                         ],
-                        //[{ text: 'Start', request_contact: false, request_location: false }],
                       ],
                       resize_keyboard: true,
                       one_time_keyboard: true,
@@ -1196,6 +1215,7 @@ bot.on("message", async (msg) => {
                   `🎉 User registered successfully.`
                 );
                 await start(chatId);
+                await sendWelcomeMessage2(chatId);
               } else {
                 state.currentStep = "userOtpSignUp";
                 await bot.sendMessage(
@@ -1245,9 +1265,9 @@ bot.on("message", async (msg) => {
 // all keyborad button handler
 bot.on("callback_query", async (callbackQuery) => {
   const chatId = callbackQuery.message.chat.id;
-  const messageId = callbackQuery.message.message_id;
   const data = callbackQuery.data;
   const isUser = await getstartBot(chatId);
+  console.log("🚀 ~ bot.on ~ isUser:", isUser);
   if (!isUser?.status) {
     return await bot.sendMessage(chatId, "please login!!", {
       reply_markup: {
@@ -1294,7 +1314,6 @@ bot.on("callback_query", async (callbackQuery) => {
       resetUserState(chatId);
       await getreferralQrCode(chatId, isUser?.isLogin?.referralId);
       break;
-
     case "SolonabalanceButton":
       resetUserState(chatId);
       fetchSolanaBalance(chatId);
