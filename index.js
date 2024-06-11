@@ -452,23 +452,30 @@ async function setting(chatId) {
   const userInfo = await getEmailAndWalletFromBackend(chatId);
   if (userInfo?.email) {
     const messageText = `🌊 personal Info! 🌊\n
-  *Your Email Address: ${userInfo?.email}\n
-  *Your referralId: ${userInfo?.referralId}\n
-  *Your Wallet Address (EVM): ${userInfo?.EVMwallet}\n
-  *Your Wallet Address (Solana): ${userInfo?.solanaWallets}`;
-    await bot.sendMessage(chatId, messageText, {
-      reply_markup: {
-        inline_keyboard: [
-          [
-            {
-              text: "referral",
-              callback_data: "referralQr",
-            },
-            { text: "❗️ Help", callback_data: "helpButton" },
-          ],
-        ],
+  *Your Email Address: <code>${userInfo?.email}</code>\n
+  *Your referralId: <code>${userInfo?.referralId}</code>\n
+  *Your Wallet Address (EVM): <code>${userInfo?.EVMwallet}</code>\n
+  *Your Wallet Address (Solana): <code>${userInfo?.solanaWallets}</code>`;
+    await bot.sendMessage(
+      chatId,
+      messageText,
+      {
+        parse_mode: "HTML",
       },
-    });
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: "referral",
+                callback_data: "referralQr",
+              },
+              { text: "❗️ Help", callback_data: "helpButton" },
+            ],
+          ],
+        },
+      }
+    );
   } else {
     await loginLogOutButton(chatId);
   }
