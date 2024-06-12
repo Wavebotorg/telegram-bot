@@ -57,26 +57,26 @@ const handleSignUp = async (chatId) => {
 // main keyboard
 const buyKeyboard = {
   inline_keyboard: [
-    [{ text: "↕️ SwapToken", callback_data: "SwaptokenButton" }],
+    [{ text: "🔄 SwapToken", callback_data: "SwaptokenButton" }],
     [
-      { text: "⬇️ Buy", callback_data: "buyButton" },
-      { text: "⬆️ Sell", callback_data: "sellButton" },
-      { text: "↗️ Withraw", callback_data: "withrawButton" },
+      { text: "📈 Buy", callback_data: "buyButton" },
+      { text: "📉 Sell", callback_data: "sellButton" },
+      { text: "💵 Withdraw", callback_data: "withrawButton" },
     ],
     [
-      { text: "✅ Position", callback_data: "positionButton" },
-      { text: "❇️ Limit Orders", callback_data: "limitButton" },
+      { text: "📊 Position", callback_data: "positionButton" },
+      { text: "📋 Limit Orders", callback_data: "limitButton" },
       // { text: "DCA Orders", callback_data: "dcaOrdersButton" },
     ],
     [
-      { text: "💼 Balance EVM", callback_data: "balanceButton" },
-      { text: "💼 Balance Solona", callback_data: "SolonabalanceButton" },
-      { text: "💼 Wallet Address", callback_data: "walletAddresses" },
+      { text: "💰 Balance EVM", callback_data: "balanceButton" },
+      { text: "💰 Balance Solona", callback_data: "SolonabalanceButton" },
+      { text: "🏦 Wallet Address", callback_data: "walletAddresses" },
     ],
     [
       { text: "⚙️ Setting", callback_data: "settingButton" },
       { text: "🔄 Refresh", callback_data: "refreshButton" },
-      { text: "🙅‍♂️ Logout", callback_data: "logoutButton" },
+      { text: "🚪 Logout", callback_data: "logoutButton" },
     ],
   ],
 };
@@ -599,6 +599,21 @@ bot.on("message", async (msg) => {
     resetUserState(chatId);
     flag = null;
     await start(chatId);
+  } else if (msg.text === "/buy") {
+    resetUserState(chatId);
+    buyStartTokenSelection(chatId);
+  } else if (msg.text === "/sell") {
+    resetUserState(chatId);
+    sellStartTokenSelection(chatId);
+  } else if (msg.text === "/withdraw") {
+    resetUserState(chatId);
+    withrawStartTokenSelection(chatId);
+  } else if (msg.text === "/invite") {
+    resetUserState(chatId);
+    await setting(chatId);
+  } else if (msg.text === "/swap") {
+    resetUserState(chatId);
+    await startSwapProcess(chatId);
   }
 });
 
@@ -1356,7 +1371,7 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     case "SwaptokenButton":
       resetUserState(chatId);
-      startSwapProcess(chatId);
+      await startSwapProcess(chatId);
       break;
     case "settingButton":
       resetUserState(chatId);
