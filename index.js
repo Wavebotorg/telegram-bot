@@ -469,6 +469,92 @@ async function getstartBot(chatId) {
   }
 }
 
+// solana swap function
+async function solanaSwapHandle(chatId, input, output, amount, method, desBot) {
+  try {
+    const { loaderMessage, interval } = await animateLoader(chatId);
+    await axios
+      .post(`${API_URL}/solanaSwap`, {
+        input,
+        output,
+        amount,
+        chatId,
+        desBot,
+        method,
+      })
+      .then(async (response) => {
+        resetUserState(chatId);
+        clearInterval(interval);
+        await bot.deleteMessage(chatId, loaderMessage.message_id);
+        if (response?.data?.status) {
+          await bot.sendMessage(chatId, `✅ Token buy successful!`);
+          await bot.sendMessage(
+            chatId,
+            `https://solscan.io/tx/${response?.data?.transactionCreated?.txid}`
+          );
+        } else {
+          await bot.sendMessage(
+            chatId,
+            response.data.message || "❌ buy failed. Please try again."
+          );
+        }
+      })
+      .catch(async (err) => {
+        console.log("🚀 ~ bot.on ~ err:", err);
+        resetUserState(chatId);
+        clearInterval(interval);
+        await bot.deleteMessage(chatId, loaderMessage.message_id);
+        await bot.sendMessage(
+          chatId,
+          `due to some reason you transaction failed!!`
+        );
+      });
+  } catch (error) {
+    console.log("🚀 ~ solanaSwapHandle ~ error:", error);
+  }
+}
+// EVM swap function
+async function evmSwapHandle(amount, chatId, method) {
+  try {
+    const { loaderMessage, interval } = await animateLoader(chatId);
+    await axios({
+      url: `${API_URL}/EVMswap`,
+      method: "post",
+      data: {
+        tokenIn: userStates[chatId]?.fromToken,
+        tokenOut: userStates[chatId]?.toToken,
+        chainId: userStates[chatId]?.network,
+        amount,
+        chain: userStates[chatId]?.flag,
+        chatId,
+        method,
+      },
+    })
+      .then(async (response) => {
+        resetUserState(chatId);
+        clearInterval(interval);
+        await bot.deleteMessage(chatId, loaderMessage.message_id);
+        if (response?.data?.status) {
+          await bot.sendMessage(chatId, `✅ ${response?.data?.message}`);
+          return await bot.sendMessage(chatId, response?.data?.txUrl);
+        } else {
+          await bot.sendMessage(chatId, response?.data?.message);
+        }
+      })
+      .catch(async (error) => {
+        resetUserState(chatId);
+        clearInterval(interval);
+        await bot.deleteMessage(chatId, loaderMessage.message_id);
+        await bot.sendMessage(
+          chatId,
+          `due to some reason you transaction failed!!`
+        );
+      });
+  } catch (error) {
+    console.log("🚀 ~ evmSwapHandle ~ error:", error);
+  }
+}
+
 // setting function
 async function setting(chatId) {
   const userInfo = await getEmailAndWalletFromBackend(chatId);
@@ -515,6 +601,7 @@ async function start(chatId) {
 💼 LinkedIn: https://www.linkedin.com/company/wave_protocol/?viewAsMember=true\n
 📘 Facebook: https://www.facebook.com/profile.php?id=61560842638941\n
   ‧‧────────────────‧‧\n`;
+    sendWelcomeMessage2(chatId);
     await bot.sendMessage(chatId, messageText, {
       reply_markup: JSON.stringify(buyKeyboard),
     });
@@ -763,122 +850,256 @@ bot.on("message", async (msg) => {
       switch (state.currentStep) {
         case "fromTokenBuy":
           state.toToken = text;
-          const { loaderMessage, interval } = await animateLoader(chatId);
-          if (state?.flag == 19999) {
-            await axios
-              .post(`${API_URL}/getSolanaSingleTokenPrice`, {
-                address: state.toToken,
-              })
-              .then(async (res) => {
-                console.log("🚀 ~ bot.on ~ res:", res?.data?.data);
-                if (res?.data?.status) {
-                  await axios
-                    .post(`${API_URL}/solanaBalance`, {
+          try {
+            const { loaderMessage, interval } = await animateLoader(chatId);
+            if (state?.flag == 19999) {
+              await axios
+                .post(`${API_URL}/getSolanaSingleTokenPrice`, {
+                  address: state?.toToken,
+                })
+                .then(async (res) => {
+                  console.log("🚀 ~ bot.on ~ res:", res?.data?.data);
+                  if (res?.data?.status) {
+                    await axios
+                      .post(`${API_URL}/solanaBalance`, {
+                        chatId,
+                      })
+                      .then(async (response) => {
+                        state.toBuyAddresName = res?.data?.data?.name;
+                        clearInterval(interval);
+                        await bot.deleteMessage(
+                          chatId,
+                          loaderMessage.message_id
+                        );
+                        await bot.sendMessage(
+                          chatId,
+                          `Balance : ${Number(response?.data?.native)?.toFixed(
+                            5
+                          )}sol
+  Token : ${res?.data?.data?.name}  <code>${res?.data?.data?.address}</code>
+  ${res?.data?.data?.name} price : ${Number(res?.data?.data?.price)?.toFixed(
+                            6
+                          )}$
+  https://dexscreener.com/solana/${state.toToken}`,
+                          {
+                            parse_mode: "HTML",
+                            reply_markup: {
+                              inline_keyboard: [
+                                [
+                                  {
+                                    text: "⬅️ Back",
+                                    callback_data: "buyButton",
+                                  },
+                                  {
+                                    text: "🔄 Refresh",
+                                    callback_data: "refreshButton",
+                                  },
+                                ],
+                                [
+                                  {
+                                    text: "0.5 SOL",
+                                    callback_data: "0.5Sol",
+                                  },
+                                  {
+                                    text: "1 SOL",
+                                    callback_data: "1Sol",
+                                  },
+                                  {
+                                    text: "3 SOL",
+                                    callback_data: "3Sol",
+                                  },
+                                ],
+                                [
+                                  {
+                                    text: "5 SOL",
+                                    callback_data: "5Sol",
+                                  },
+                                  {
+                                    text: "10 SOL",
+                                    callback_data: "10Sol",
+                                  },
+                                  {
+                                    text: "SOL ✏️",
+                                    callback_data: "customSol",
+                                  },
+                                ],
+                              ],
+                            },
+                          }
+                        );
+                      })
+                      .catch(async (err) => {
+                        clearInterval(interval);
+                        await bot.deleteMessage(
+                          chatId,
+                          loaderMessage.message_id
+                        );
+                        console.log("🚀 ~ .then ~ err:", err);
+                        await bot.sendMessage(
+                          chatId,
+                          "somthing has been wrong plase try again later!!"
+                        );
+                      });
+                  } else {
+                    clearInterval(interval);
+                    await bot.deleteMessage(chatId, loaderMessage.message_id);
+                    resetUserState(chatId);
+                    await bot.sendMessage(
                       chatId,
-                    })
-                    .then(async (response) => {
-                      state.toBuyAddresName = res?.data?.data?.name;
-                      clearInterval(interval);
-                      await bot.deleteMessage(chatId, loaderMessage.message_id);
-                      await bot.sendMessage(
-                        chatId,
-                        `Balance : ${Number(response?.data?.native)?.toFixed(
-                          5
-                        )}sol
-Token : ${res?.data?.data?.name}  <code>${res?.data?.data?.address}</code>
-${res?.data?.data?.name} price : ${Number(res?.data?.data?.price)?.toFixed(6)}$
-https://dexscreener.com/solana/${state.toToken}`,
-                        {
-                          parse_mode: "HTML",
-                        }
-                      );
-                      state.currentStep = "amountBuy";
-                      await bot.sendMessage(
-                        chatId,
-                        `Enter the Qty of  ${state?.toBuyAddresName}:`
-                      );
-                    })
-                    .catch(async (err) => {
-                      clearInterval(interval);
-                      await bot.deleteMessage(chatId, loaderMessage.message_id);
-                      console.log("🚀 ~ .then ~ err:", err);
-                      await bot.sendMessage(
-                        chatId,
-                        "somthing has been wrong plase try again later!!"
-                      );
-                    });
-                } else {
+                      "Token you entered is not supported!!"
+                    );
+                  }
+                })
+                .catch(async (error) => {
                   clearInterval(interval);
                   await bot.deleteMessage(chatId, loaderMessage.message_id);
-                  resetUserState(chatId);
+                  console.log("🚀 ~ .then ~ error:", error?.message);
                   await bot.sendMessage(
                     chatId,
-                    "Token you entered is not supported!!"
+                    "somthing has been wrong while fetching token price!!"
                   );
-                }
-              })
-              .catch(async (error) => {
-                clearInterval(interval);
-                await bot.deleteMessage(chatId, loaderMessage.message_id);
-                console.log("🚀 ~ .then ~ error:", error?.message);
-                await bot.sendMessage(
+                });
+            } else {
+              await axios
+                .post(`${API_URL}/getSingleTokenPrice`, {
+                  chain: state.flag,
+                  address: state.toToken,
+                  nativeToken: state?.fromToken,
                   chatId,
-                  "somthing has been wrong while fetching token price!!"
-                );
-              });
-          } else {
-            await axios
-              .post(`${API_URL}/getSingleTokenPrice`, {
-                chain: state.flag,
-                address: state.toToken,
-              })
-              .then(async (res) => {
-                clearInterval(interval);
-                await bot.deleteMessage(chatId, loaderMessage.message_id);
-                if (res?.data?.status) {
-                  state.toBuyAddresName = res?.data?.data?.tokenSymbol;
-                  await bot.sendMessage(
-                    chatId,
-                    `Token : ${res?.data?.data?.tokenSymbol}  <code>${
-                      res?.data?.data?.tokenAddress
-                    }</code>
+                })
+                .then(async (res) => {
+                  clearInterval(interval);
+                  await bot.deleteMessage(chatId, loaderMessage.message_id);
+                  if (res?.data?.status) {
+                    state.toBuyAddresName = res?.data?.data?.tokenSymbol;
+                    await bot.sendMessage(
+                      chatId,
+                      `${
+                        res?.data?.nativeToken[0]
+                          ? res?.data?.nativeToken[0]?.symbol
+                          : ""
+                      } Balance: ${Number(
+                        res?.data?.nativeToken[0]
+                          ? res?.data?.nativeToken[0]?.balance_formatted
+                          : 0.0
+                      ).toFixed(4)}(${Number(
+                        res?.data?.nativeToken[0]
+                          ? res?.data?.nativeToken[0]?.usd_value
+                          : 0
+                      ).toFixed(4)} USD)
+Token : ${res?.data?.data?.tokenSymbol}  <code>${
+                        res?.data?.data?.tokenAddress
+                      }</code>
 ${res?.data?.data?.tokenName} price : ${Number(
-                      res?.data?.data?.usdPriceFormatted
-                    )?.toFixed(5)}$
+                        res?.data?.data?.usdPriceFormatted
+                      )?.toFixed(5)}$
 24hrPercentChange : ${Number(res?.data?.data["24hrPercentChange"])?.toFixed(3)}%
 network : ${state?.network}
+${
+  !res?.data?.nativeToken[0]
+    ? `🔴 Insufficient balance for buy amount + gas ⇅`
+    : ""
+}
 https://dexscreener.com/${state?.network}/${state.toToken}`,
-                    {
-                      parse_mode: "HTML",
-                    }
-                  );
-                  state.currentStep = "amountBuy";
-                  await bot.sendMessage(
-                    chatId,
-                    `Enter the Qty of  ${state?.toBuyAddresName}:`
-                  );
-                } else {
+                      {
+                        parse_mode: "HTML",
+                        reply_markup: {
+                          inline_keyboard: [
+                            [
+                              {
+                                text: "⬅️ Back",
+                                callback_data: "buyButton",
+                              },
+                              {
+                                text: "🔄 Refresh",
+                                callback_data: "refreshButton",
+                              },
+                            ],
+                            [
+                              {
+                                text: `0.5 ${
+                                  res?.data?.nativeToken[0]
+                                    ? res?.data?.nativeToken[0]?.symbol
+                                    : ""
+                                }`,
+                                callback_data: "0.5EVM",
+                              },
+                              {
+                                text: `1 ${
+                                  res?.data?.nativeToken[0]
+                                    ? res?.data?.nativeToken[0]?.symbol
+                                    : ""
+                                }`,
+                                callback_data: "1EVM",
+                              },
+                              {
+                                text: `3 ${
+                                  res?.data?.nativeToken[0]
+                                    ? res?.data?.nativeToken[0]?.symbol
+                                    : ""
+                                }`,
+                                callback_data: "3EVM",
+                              },
+                            ],
+                            [
+                              {
+                                text: `5 ${
+                                  res?.data?.nativeToken[0]
+                                    ? res?.data?.nativeToken[0]?.symbol
+                                    : ""
+                                }`,
+                                callback_data: "5EVM",
+                              },
+                              {
+                                text: `10 ${
+                                  res?.data?.nativeToken[0]
+                                    ? res?.data?.nativeToken[0]?.symbol
+                                    : ""
+                                }`,
+                                callback_data: "10EVM",
+                              },
+                              {
+                                text: `${
+                                  res?.data?.nativeToken[0]
+                                    ? res?.data?.nativeToken[0]?.symbol
+                                    : ""
+                                } ✏️`,
+                                callback_data: "customEVM",
+                              },
+                            ],
+                          ],
+                        },
+                      }
+                    );
+                  } else {
+                    clearInterval(interval);
+                    await bot.deleteMessage(chatId, loaderMessage.message_id);
+                    resetUserState(chatId);
+                    await bot.sendMessage(
+                      chatId,
+                      "🔴Token you entered is not supported!!"
+                    );
+                  }
+                })
+                .catch(async (error) => {
                   clearInterval(interval);
                   await bot.deleteMessage(chatId, loaderMessage.message_id);
-                  resetUserState(chatId);
+                  console.log("🚀 ~ .then ~ error:", error?.message);
                   await bot.sendMessage(
                     chatId,
-                    "Token you entered is not supported!!"
+                    "🔴somthing has been wrong while fetching token price!!"
                   );
-                }
-              })
-              .catch(async (error) => {
-                clearInterval(interval);
-                await bot.deleteMessage(chatId, loaderMessage.message_id);
-                console.log("🚀 ~ .then ~ error:", error?.message);
-                await bot.sendMessage(
-                  chatId,
-                  "somthing has been wrong while fetching token price!!"
-                );
-              });
+                });
+            }
+          } catch (error) {
+            console.log("🚀 ~ bot.on ~ error:", error);
+            resetUserState(chatId);
+            await bot.sendMessage(
+              chatId,
+              "🔴Token you entered is not supported or may be wrong!!"
+            );
           }
           break;
-
         case "amountBuy":
           if (
             text == "/start" ||
@@ -891,109 +1112,16 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
           } else {
             state.amount = Number(text);
             if (state.flag == 19999) {
-              const { loaderMessage, interval } = await animateLoader(chatId);
-              await axios
-                .post(`${API_URL}/getSolanaTokenPrice`, {
-                  token: "So11111111111111111111111111111111111111112",
-                  token2: state?.toToken,
-                })
-                .then(async (res) => {
-                  const tokensPrice = res?.data?.finalRes;
-                  const buyAmt = state.amount * tokensPrice?.to;
-                  const finalAmt = buyAmt / tokensPrice?.sol;
-                  await axios
-                    .post(`${API_URL}/solanaSwap`, {
-                      input: "So11111111111111111111111111111111111111112",
-                      output: state?.toToken,
-                      amount: Number(finalAmt?.toFixed(5)),
-                      chatId,
-                      desBot: 9,
-                      method: "Buy",
-                    })
-                    .then(async (response) => {
-                      resetUserState(chatId);
-                      clearInterval(interval);
-                      await bot.deleteMessage(chatId, loaderMessage.message_id);
-                      if (response?.data?.status) {
-                        await bot.sendMessage(
-                          chatId,
-                          `✅ Token buy successful!`
-                        );
-                        await bot.sendMessage(
-                          chatId,
-                          `https://solscan.io/tx/${response?.data?.transactionCreated?.txid}`
-                        );
-                      } else {
-                        await bot.sendMessage(
-                          chatId,
-                          response.data.message ||
-                            "❌ buy failed. Please try again."
-                        );
-                      }
-                    });
-                })
-                .catch(async (err) => {
-                  console.log("🚀 ~ bot.on ~ err:", err);
-                  resetUserState(chatId);
-                  clearInterval(interval);
-                  await bot.deleteMessage(chatId, loaderMessage.message_id);
-                  await bot.sendMessage(
-                    chatId,
-                    `due to some reason you transaction failed!!`
-                  );
-                });
+              await solanaSwapHandle(
+                chatId,
+                "So11111111111111111111111111111111111111112",
+                state?.toToken,
+                Number(state.amount?.toFixed(5)),
+                "Buy",
+                9
+              );
             } else {
-              const { loaderMessage, interval } = await animateLoader(chatId);
-              await axios
-                .post(`${API_URL}/getEvmTokenPrice`, {
-                  token: state?.fromToken,
-                  token2: state?.toToken,
-                  chain: state?.desCode,
-                })
-                .then(async (res) => {
-                  const tokensPrice = res?.data?.finalRes;
-                  const buyAmt = state?.amount * tokensPrice?.token2;
-                  const finalAmt = buyAmt / tokensPrice?.token1;
-                  await axios({
-                    url: `${API_URL}/EVMswap`,
-                    method: "post",
-                    data: {
-                      tokenIn: state?.fromToken,
-                      tokenOut: state?.toToken,
-                      chainId: state?.network,
-                      amount: finalAmt,
-                      chain: state?.flag,
-                      chatId: chatId,
-                      method: "Buy",
-                    },
-                  })
-                    .then(async (response) => {
-                      resetUserState(chatId);
-                      clearInterval(interval);
-                      await bot.deleteMessage(chatId, loaderMessage.message_id);
-                      if (response?.data?.status) {
-                        await bot.sendMessage(
-                          chatId,
-                          `✅ ${response?.data?.message}`
-                        );
-                        return await bot.sendMessage(
-                          chatId,
-                          response?.data?.txUrl
-                        );
-                      } else {
-                        await bot.sendMessage(chatId, response?.data?.message);
-                      }
-                    })
-                    .catch(async (error) => {
-                      resetUserState(chatId);
-                      clearInterval(interval);
-                      await bot.deleteMessage(chatId, loaderMessage.message_id);
-                      await bot.sendMessage(
-                        chatId,
-                        `due to some reason you transaction failed!!`
-                      );
-                    });
-                });
+              evmSwapHandle(state.amount, chatId, "Buy");
             }
           }
           break;
@@ -1244,7 +1372,6 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                 if (response.data.status === true) {
                   await bot.sendMessage(chatId, `✅ Login successfull!`);
                   await start(chatId);
-                  sendWelcomeMessage2(chatId);
                 } else {
                   await bot.sendMessage(
                     chatId,
@@ -1642,7 +1769,139 @@ bot.on("callback_query", async (callbackQuery) => {
     case "buyButton":
       resetUserState(chatId);
       buyStartTokenSelection(chatId);
-
+      break;
+    case "0.5Sol":
+      if (userStates[chatId]?.flag == 19999) {
+        await solanaSwapHandle(
+          chatId,
+          "So11111111111111111111111111111111111111112",
+          userStates[chatId]?.toToken,
+          0.5,
+          "Buy",
+          9
+        );
+      } else {
+        resetUserState(chatId);
+        buyStartTokenSelection(chatId);
+      }
+      break;
+    case "1Sol":
+      if (userStates[chatId]?.flag == 19999) {
+        await solanaSwapHandle(
+          chatId,
+          "So11111111111111111111111111111111111111112",
+          userStates[chatId]?.toToken,
+          1,
+          "Buy",
+          9
+        );
+      } else {
+        resetUserState(chatId);
+        buyStartTokenSelection(chatId);
+      }
+      break;
+    case "3Sol":
+      if (userStates[chatId]?.flag == 19999) {
+        await solanaSwapHandle(
+          chatId,
+          "So11111111111111111111111111111111111111112",
+          userStates[chatId]?.toToken,
+          3,
+          "Buy",
+          9
+        );
+      } else {
+        resetUserState(chatId);
+        buyStartTokenSelection(chatId);
+      }
+      break;
+    case "5Sol":
+      if (userStates[chatId]?.flag == 19999) {
+        await solanaSwapHandle(
+          chatId,
+          "So11111111111111111111111111111111111111112",
+          userStates[chatId]?.toToken,
+          5,
+          "Buy",
+          9
+        );
+      } else {
+        resetUserState(chatId);
+        buyStartTokenSelection(chatId);
+      }
+      break;
+    case "10Sol":
+      if (userStates[chatId]?.flag == 19999) {
+        await solanaSwapHandle(
+          chatId,
+          "So11111111111111111111111111111111111111112",
+          userStates[chatId]?.toToken,
+          10,
+          "Buy",
+          9
+        );
+      } else {
+        resetUserState(chatId);
+        buyStartTokenSelection(chatId);
+      }
+      break;
+    case "customSol":
+      if (userStates[chatId]?.flag == 19999) {
+        userStates[chatId].currentStep = "amountBuy";
+        await bot.sendMessage(chatId, "please enter a sol Qty");
+      } else {
+        resetUserState(chatId);
+        buyStartTokenSelection(chatId);
+      }
+      break;
+    case "0.5EVM":
+      if (userStates[chatId]?.flag) {
+        evmSwapHandle(0.5, chatId, "Buy");
+      } else {
+        resetUserState(chatId);
+        buyStartTokenSelection(chatId);
+      }
+      break;
+    case "1EVM":
+      if (userStates[chatId]?.flag) {
+        evmSwapHandle(1, chatId, "Buy");
+      } else {
+        resetUserState(chatId);
+        buyStartTokenSelection(chatId);
+      }
+      break;
+    case "3EVM":
+      if (userStates[chatId]?.flag) {
+        evmSwapHandle(3, chatId, "Buy");
+      } else {
+        resetUserState(chatId);
+        buyStartTokenSelection(chatId);
+      }
+      break;
+    case "5EVM":
+      if (userStates[chatId]?.flag) {
+        evmSwapHandle(5, chatId, "Buy");
+      } else {
+        resetUserState(chatId);
+        buyStartTokenSelection(chatId);
+      }
+      break;
+    case "10EVM":
+      if (userStates[chatId]?.flag) {
+        evmSwapHandle(10, chatId, "Buy");
+      } else {
+        resetUserState(chatId);
+        buyStartTokenSelection(chatId);
+      }
+      break;
+    case "customEVM":
+      if (userStates[chatId]?.flag) {
+        userStates[chatId].currentStep = "amountBuy";
+        await bot.sendMessage(chatId, "please enter Qty");
+      } else {
+        resetUserState(chatId);
+        buyStartTokenSelection(chatId);
+      }
       break;
     case "sellButton":
       resetUserState(chatId);
