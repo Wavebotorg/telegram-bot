@@ -30,7 +30,6 @@ const resetUserState = (chatId) => {
     amountMsg: null,
     toBuyAddresName: null,
     statusFalse: null,
-    messageIds: [],
   };
 };
 
@@ -421,19 +420,13 @@ async function sendWelcomeMessage(chatId) {
         [{ text: "SignUp", request_contact: false, request_location: false }],
         [{ text: "Login", request_contact: false, request_location: false }],
       ];
-  await bot.sendMessage(
-    chatId,
-    `👋 Welcome to the Wavebot! 👋
-  Thank you for joining us! To get started, simply press start Button. 
-  Our bot is here to assist you with anything you need!🤖💬`,
-    {
-      reply_markup: {
-        keyboard: keyboard,
-        resize_keyboard: true,
-        one_time_keyboard: true,
-      },
-    }
-  );
+  await bot.sendMessage(chatId, `please Login!!🤖💬`, {
+    reply_markup: {
+      keyboard: keyboard,
+      resize_keyboard: true,
+      one_time_keyboard: true,
+    },
+  });
 }
 //Send welcome Msg
 async function sendWelcomeMessage2(chatId) {
@@ -585,52 +578,16 @@ async function fetchTokenBalances(chatId, chainId) {
   }
 }
 
-// delete all messages
-async function deleteAllmessages(chatId) {
-  if (userStates[chatId]?.messageIds) {
-    for (const messageId of userStates[chatId].messageIds) {
-      try {
-        await bot.deleteMessage(chatId, messageId);
-      } catch (error) {
-        console.error(`Failed to delete message ${messageId}:`, error);
-      }
-    }
-  }
-  if (userStates[chatId]?.fromMsg) {
-    await bot.deleteMessage(chatId, userStates[chatId]?.fromMsg?.message_id);
-  }
-  if (userStates[chatId]?.toMsg) {
-    await bot.deleteMessage(chatId, userStates[chatId]?.toMsg?.message_id);
-  }
-  if (userStates[chatId]?.amountMsg) {
-    await bot.deleteMessage(chatId, userStates[chatId]?.amountMsg?.message_id);
-  }
-  if (userStates[chatId]?.methodTransactions) {
-    await bot.deleteMessage(
-      chatId,
-      userStates[chatId]?.methodTransactions?.message_id
-    );
-  }
-  if (userStates[chatId]?.statusFalse) {
-    await bot.deleteMessage(
-      chatId,
-      userStates[chatId]?.statusFalse?.message_id
-    );
-  }
-}
-
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
-  const userId = msg.from.id;
-  const isUser = await getstartBot(chatId);
   // Handle '/start' command
   if (msg.text === "/start") {
     resetUserState(chatId);
-    if (!isUser?.status) {
+    const isUser = await getstartBot(chatId);
+    if (!isUser) {
       await sendWelcomeMessage(chatId);
     } else {
       await start(chatId);
-      // await sendWelcomeMessage2(chatId);
     }
   }
   // Handle 'SignUp' command
@@ -649,44 +606,44 @@ bot.on("message", async (msg) => {
   }
   // Handle 'Start' command
   else if (msg.text === "Start") {
-    // await deleteAllmessages(chatId);
+    const isUser = await getstartBot(chatId);
     if (!isUser) {
-      return bot.sendMessage(chatId, "Please login!!");
+      return await sendWelcomeMessage(chatId);
     }
     resetUserState(chatId);
     await start(chatId);
   } else if (msg.text === "/buy") {
-    // await deleteAllmessages(chatId);
+    const isUser = await getstartBot(chatId);
     if (!isUser) {
-      return bot.sendMessage(chatId, "Please login!!");
+      return await sendWelcomeMessage(chatId);
     }
     resetUserState(chatId);
     buyStartTokenSelection(chatId);
   } else if (msg.text === "/sell") {
-    // await deleteAllmessages(chatId);
+    const isUser = await getstartBot(chatId);
     if (!isUser) {
-      return bot.sendMessage(chatId, "Please login!!");
+      return await sendWelcomeMessage(chatId);
     }
     resetUserState(chatId);
     sellStartTokenSelection(chatId);
   } else if (msg.text === "/withdraw") {
-    // await deleteAllmessages(chatId);
+    const isUser = await getstartBot(chatId);
     if (!isUser) {
-      return bot.sendMessage(chatId, "Please login!!");
+      return await sendWelcomeMessage(chatId);
     }
     resetUserState(chatId);
     withrawStartTokenSelection(chatId);
   } else if (msg.text === "/invite") {
-    // await deleteAllmessages(chatId);
+    const isUser = await getstartBot(chatId);
     if (!isUser) {
-      return bot.sendMessage(chatId, "Please login!!");
+      return await sendWelcomeMessage(chatId);
     }
     resetUserState(chatId);
     await setting(chatId);
   } else if (msg.text === "/swap") {
-    // await deleteAllmessages(chatId);
+    const isUser = await getstartBot(chatId);
     if (!isUser) {
-      return bot.sendMessage(chatId, "Please login!!");
+      return await sendWelcomeMessage(chatId);
     }
     resetUserState(chatId);
     await startSwapProcess(chatId);
@@ -701,7 +658,6 @@ bot.on("message", async (msg) => {
   }
   const state = userStates[chatId];
   const text = msg.text;
-  userStates[chatId].messageIds.push(msg.message_id);
   switch (state.method) {
     case "swap":
       if (!userStates[chatId] || !userStates[chatId].flag) {
@@ -712,18 +668,13 @@ bot.on("message", async (msg) => {
         case "fromTokenSwap":
           state.fromToken = text;
           state.currentStep = "toTokenSwap";
-          state.toMsg = await bot.sendMessage(chatId, "Type To Token:");
-          userStates[chatId].messageIds.push(msg.message_id);
+          await bot.sendMessage(chatId, "Type To Token:");
           break;
 
         case "toTokenSwap":
           state.toToken = text;
           state.currentStep = "amountSwap";
-          state.amountMsg = await bot.sendMessage(
-            chatId,
-            "Please enter the amount to swap:"
-          );
-          userStates[chatId].messageIds.push(msg.message_id);
+          await bot.sendMessage(chatId, "Please enter the amount to swap:");
           break;
 
         case "amountSwap":
@@ -737,10 +688,9 @@ bot.on("message", async (msg) => {
             resetUserState(chatId);
           } else {
             state.amount = Number(text);
-            userStates[chatId].messageIds.push(msg.message_id);
             const { loaderMessage, interval } = await animateLoader(chatId);
             if (state.flag == 19999) {
-              response = await axios
+              await axios
                 .post(`${API_URL}/solanaSwap`, {
                   input: state?.fromToken,
                   output: state?.toToken,
@@ -749,7 +699,6 @@ bot.on("message", async (msg) => {
                   method: "Swap",
                 })
                 .then(async (res) => {
-                  // await deleteAllmessages(chatId);
                   clearInterval(interval);
                   await bot.deleteMessage(chatId, loaderMessage.message_id);
                   if (res?.data?.status) {
@@ -757,21 +706,17 @@ bot.on("message", async (msg) => {
                     await bot.sendMessage(chatId, "✅ solana swap successfull");
                   } else {
                     resetUserState(chatId);
-                    userStates[chatId].statusFalse = await bot.sendMessage(
+                    await bot.sendMessage(
                       chatId,
                       "somthing has been wrong in solana swap!!!"
                     );
                   }
                 })
                 .catch(async (err) => {
-                  // await deleteAllmessages(chatId);
                   resetUserState(chatId);
                   clearInterval(interval);
                   await bot.deleteMessage(chatId, loaderMessage.message_id);
-                  userStates[chatId].methodTransactions = await bot.sendMessage(
-                    chatId,
-                    err?.message
-                  );
+                  await bot.sendMessage(chatId, err?.message);
                 });
             } else {
               response = await axios
@@ -793,7 +738,7 @@ bot.on("message", async (msg) => {
                     await bot.sendMessage(chatId, `✅ ${res?.data?.message}`);
                     return await bot.sendMessage(chatId, res?.data?.txUrl);
                   } else {
-                    userStates[chatId].statusFalse = await bot.sendMessage(
+                    await bot.sendMessage(
                       chatId,
                       `somthing has been wrong in swap!!!`
                     );
@@ -818,7 +763,6 @@ bot.on("message", async (msg) => {
       switch (state.currentStep) {
         case "fromTokenBuy":
           state.toToken = text;
-          userStates[chatId].messageIds.push(msg.message_id);
           const { loaderMessage, interval } = await animateLoader(chatId);
           if (state?.flag == 19999) {
             await axios
@@ -849,7 +793,7 @@ https://dexscreener.com/solana/${state.toToken}`,
                         }
                       );
                       state.currentStep = "amountBuy";
-                      state.amountMsg = await bot.sendMessage(
+                      await bot.sendMessage(
                         chatId,
                         `Enter the Qty of  ${state?.toBuyAddresName}:`
                       );
@@ -909,7 +853,7 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                     }
                   );
                   state.currentStep = "amountBuy";
-                  state.amountMsg = await bot.sendMessage(
+                  await bot.sendMessage(
                     chatId,
                     `Enter the Qty of  ${state?.toBuyAddresName}:`
                   );
@@ -946,10 +890,9 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
             resetUserState(chatId);
           } else {
             state.amount = Number(text);
-            userStates[chatId].messageIds.push(msg.message_id);
             if (state.flag == 19999) {
               const { loaderMessage, interval } = await animateLoader(chatId);
-              const tokenRes = await axios
+              await axios
                 .post(`${API_URL}/getSolanaTokenPrice`, {
                   token: "So11111111111111111111111111111111111111112",
                   token2: state?.toToken,
@@ -1065,12 +1008,8 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
       switch (state.currentStep) {
         case "toTokenSell":
           state.fromToken = text;
-          userStates[chatId].messageIds.push(msg.message_id);
           state.currentStep = "amountSell";
-          state.amountMsg = await bot.sendMessage(
-            chatId,
-            "Please enter amount:"
-          );
+          await bot.sendMessage(chatId, "Please enter amount:");
           break;
 
         case "amountSell":
@@ -1162,22 +1101,14 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
       switch (state.currentStep) {
         case "tokenTransfer":
           state.fromToken = text;
-          userStates[chatId].messageIds.push(msg.message_id);
           state.currentStep = "toWalletTransfer";
-          userStates[chatId].toMsg = await bot.sendMessage(
-            chatId,
-            "Type To Wallet Address:"
-          );
+          await bot.sendMessage(chatId, "Type To Wallet Address:");
           break;
 
         case "toWalletTransfer":
           state.toToken = text;
-          userStates[chatId].messageIds.push(msg.message_id);
           state.currentStep = "amountTransfer";
-          state.amountMsg = await bot.sendMessage(
-            chatId,
-            "Please enter amount:"
-          );
+          await bot.sendMessage(chatId, "Please enter amount:");
           break;
 
         case "amountTransfer":
@@ -1271,7 +1202,6 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
       if (!userStates[chatId] || !userStates[chatId].flag) {
         return;
       }
-
       switch (state.currentStep) {
         case "loginEmail":
           state.currentStep = "userPasswordLogin";
