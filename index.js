@@ -876,7 +876,7 @@ bot.on("message", async (msg) => {
                           `Balance : ${Number(response?.data?.native)?.toFixed(
                             5
                           )}sol
-Token : ${res?.data?.data?.name}<code>${res?.data?.data?.address}</code>
+Token : ${res?.data?.data?.name} <code>${res?.data?.data?.address}</code>
 ${res?.data?.data?.name} price : ${Number(res?.data?.data?.price)?.toFixed(
                             6
                           )}$
