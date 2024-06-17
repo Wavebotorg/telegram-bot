@@ -876,11 +876,11 @@ bot.on("message", async (msg) => {
                           `Balance : ${Number(response?.data?.native)?.toFixed(
                             5
                           )}sol
-  Token : ${res?.data?.data?.name}  <code>${res?.data?.data?.address}</code>
-  ${res?.data?.data?.name} price : ${Number(res?.data?.data?.price)?.toFixed(
+Token : ${res?.data?.data?.name}<code>${res?.data?.data?.address}</code>
+${res?.data?.data?.name} price : ${Number(res?.data?.data?.price)?.toFixed(
                             6
                           )}$
-  https://dexscreener.com/solana/${state.toToken}`,
+https://dexscreener.com/solana/${state.toToken}`,
                           {
                             parse_mode: "HTML",
                             reply_markup: {
