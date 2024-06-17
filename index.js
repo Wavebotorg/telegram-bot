@@ -26,6 +26,7 @@ const resetUserState = (chatId) => {
     otp: null,
     name: null,
     referral: null,
+    nativeBalance: null,
     toMsg: null,
     fromMsg: null,
     amountMsg: null,
@@ -463,87 +464,145 @@ async function getstartBot(chatId) {
 
 // solana swap function
 async function solanaSwapHandle(chatId, input, output, amount, method, desBot) {
-  try {
-    const { loaderMessage, interval } = await animateLoader(chatId);
-    await axios
-      .post(`${API_URL}/solanaSwap`, {
-        input,
-        output,
-        amount,
-        chatId,
-        desBot,
-        method,
-      })
-      .then(async (response) => {
-        resetUserState(chatId);
-        clearInterval(interval);
-        await bot.deleteMessage(chatId, loaderMessage.message_id);
-        if (response?.data?.status) {
-          await bot.sendMessage(chatId, `✅ Token buy successful!`);
-          await bot.sendMessage(
-            chatId,
-            `https://solscan.io/tx/${response?.data?.transactionCreated?.txid}`
-          );
-        } else {
-          await bot.sendMessage(
-            chatId,
-            response.data.message || "❌ buy failed. Please try again."
-          );
-        }
-      })
-      .catch(async (err) => {
-        console.log("🚀 ~ bot.on ~ err:", err);
-        resetUserState(chatId);
-        clearInterval(interval);
-        await bot.deleteMessage(chatId, loaderMessage.message_id);
-        await bot.sendMessage(
+  if (
+    userStates[chatId]?.buyTokenNativename?.balance_formatted <= amount ||
+    !userStates[chatId]?.buyTokenNativename?.balance_formatted
+  ) {
+    resetUserState(chatId);
+    return bot.sendMessage(
+      chatId,
+      "You do not have sufficient fund+gas to perform this transaction!!",
+      {
+        reply_markup: {
+          inline_keyboard: [
+            {
+              text: "⬅️ Back",
+              callback_data: "buyButton",
+            },
+            {
+              text: "⬆️ Main Menu",
+              callback_data: "refreshButton",
+            },
+          ],
+
+          resize_keyboard: true,
+          one_time_keyboard: true,
+        },
+      }
+    );
+  } else {
+    try {
+      const { loaderMessage, interval } = await animateLoader(chatId);
+      await axios
+        .post(`${API_URL}/solanaSwap`, {
+          input,
+          output,
+          amount,
           chatId,
-          `due to some reason you transaction failed!!`
-        );
-      });
-  } catch (error) {
-    console.log("🚀 ~ solanaSwapHandle ~ error:", error);
+          desBot,
+          method,
+        })
+        .then(async (response) => {
+          resetUserState(chatId);
+          clearInterval(interval);
+          await bot.deleteMessage(chatId, loaderMessage.message_id);
+          if (response?.data?.status) {
+            await bot.sendMessage(chatId, `✅ Token buy successful!`);
+            await bot.sendMessage(
+              chatId,
+              `https://solscan.io/tx/${response?.data?.transactionCreated?.txid}`
+            );
+          } else {
+            await bot.sendMessage(
+              chatId,
+              response.data.message || "❌ buy failed. Please try again."
+            );
+          }
+        })
+        .catch(async (err) => {
+          console.log("🚀 ~ bot.on ~ err:", err);
+          resetUserState(chatId);
+          clearInterval(interval);
+          await bot.deleteMessage(chatId, loaderMessage.message_id);
+          await bot.sendMessage(
+            chatId,
+            `due to some reason you transaction failed!!`
+          );
+        });
+    } catch (error) {
+      console.log("🚀 ~ solanaSwapHandle ~ error:", error);
+    }
   }
 }
 // EVM swap function
 async function evmSwapHandle(amount, chatId, method) {
-  try {
-    const { loaderMessage, interval } = await animateLoader(chatId);
-    await axios({
-      url: `${API_URL}/EVMswap`,
-      method: "post",
-      data: {
-        tokenIn: userStates[chatId]?.fromToken,
-        tokenOut: userStates[chatId]?.toToken,
-        chainId: userStates[chatId]?.network,
-        amount,
-        chain: userStates[chatId]?.flag,
-        chatId,
-        method,
-      },
-    })
-      .then(async (response) => {
-        resetUserState(chatId);
-        clearInterval(interval);
-        await bot.deleteMessage(chatId, loaderMessage.message_id);
-        if (response?.data?.status) {
-          await bot.sendMessage(chatId, `✅ ${response?.data?.message}`);
-          return await bot.sendMessage(chatId, response?.data?.txUrl);
-        } else {
-          await bot.sendMessage(chatId, response?.data?.message);
-        }
-      })
-      .catch(async (error) => {
-        resetUserState(chatId);
-        clearInterval(interval);
-        await bot.deleteMessage(chatId, loaderMessage.message_id);
-        await bot.sendMessage(
+  if (
+    userStates[chatId]?.buyTokenNativename?.balance_formatted <= amount ||
+    !userStates[chatId]?.buyTokenNativename?.balance_formatted
+  ) {
+    resetUserState(chatId);
+    return bot.sendMessage(
+      chatId,
+      "🔴 You do not have sufficient fund+gas to perform this transaction!!",
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: "⬅️ Back",
+                callback_data: "buyButton",
+              },
+              {
+                text: "⬆️ Main Menu",
+                callback_data: "refreshButton",
+              },
+            ],
+          ],
+
+          resize_keyboard: true,
+          one_time_keyboard: true,
+        },
+      }
+    );
+  } else {
+    try {
+      const { loaderMessage, interval } = await animateLoader(chatId);
+      await axios({
+        url: `${API_URL}/EVMswap`,
+        method: "post",
+        data: {
+          tokenIn: userStates[chatId]?.fromToken,
+          tokenOut: userStates[chatId]?.toToken,
+          chainId: userStates[chatId]?.network,
+          amount,
+          chain: userStates[chatId]?.flag,
           chatId,
-          `due to some reason you transaction failed!!`
-        );
-      });
-  } catch (error) {
-    console.log("🚀 ~ evmSwapHandle ~ error:", error);
+          method,
+        },
+      })
+        .then(async (response) => {
+          resetUserState(chatId);
+          clearInterval(interval);
+          await bot.deleteMessage(chatId, loaderMessage.message_id);
+          if (response?.data?.status) {
+            await bot.sendMessage(chatId, `✅ ${response?.data?.message}`);
+            return await bot.sendMessage(chatId, response?.data?.txUrl);
+          } else {
+            await bot.sendMessage(chatId, response?.data?.message);
+          }
+        })
+        .catch(async (error) => {
+          resetUserState(chatId);
+          clearInterval(interval);
+          await bot.deleteMessage(chatId, loaderMessage.message_id);
+          await bot.sendMessage(
+            chatId,
+            `due to some reason you transaction failed!!`
+          );
+        });
+    } catch (error) {
+      console.log("🚀 ~ evmSwapHandle ~ error:", error);
+    }
   }
 }
 
@@ -726,6 +785,22 @@ bot.on("message", async (msg) => {
     }
     resetUserState(chatId);
     await startSwapProcess(chatId);
+  } else if (msg.text === "/evmBalance") {
+    const isUser = await getstartBot(chatId);
+    if (!isUser) {
+      return await sendWelcomeMessage(chatId);
+    }
+    resetUserState(chatId);
+    await bot.sendMessage(chatId, `🌟 Choose a network 🌟`, {
+      reply_markup: JSON.stringify(evmWalletBalance),
+    });
+  } else if (msg.text === "/solBalance") {
+    const isUser = await getstartBot(chatId);
+    if (!isUser) {
+      return await sendWelcomeMessage(chatId);
+    }
+    resetUserState(chatId);
+    await fetchSolanaBalance(chatId);
   }
 });
 
@@ -763,7 +838,9 @@ bot.on("message", async (msg) => {
             text == "/sell" ||
             text == "/withdraw" ||
             text == "/invite" ||
-            text == "Start"
+            text == "Start" ||
+            text == "/balance" ||
+            text =="/solBalance"
           ) {
             resetUserState(chatId);
           } else {
@@ -849,7 +926,9 @@ bot.on("message", async (msg) => {
             text == "/sell" ||
             text == "/withdraw" ||
             text == "/invite" ||
-            text == "Start"
+            text == "Start" ||
+            text == "/balance" ||
+            text == "/solBalance"
           ) {
             resetUserState(chatId);
           } else {
@@ -875,6 +954,7 @@ bot.on("message", async (msg) => {
                             loaderMessage.message_id
                           );
                           state.buyPrice = 0.5;
+                          state.nativeBalance = response?.data?.native;
                           state.solanaBuyMessage = await bot.sendMessage(
                             chatId,
                             `Balance : ${Number(
@@ -1165,7 +1245,9 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
             text == "/sell" ||
             text == "/withdraw" ||
             text == "/invite" ||
-            text == "Start"
+            text == "Start" ||
+            text == "/balance" ||
+            text == "/solBalance"
           ) {
             resetUserState(chatId);
           } else {
@@ -1265,7 +1347,9 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
             text == "/sell" ||
             text == "/withdraw" ||
             text == "/invite" ||
-            text == "Start"
+            text == "Start" ||
+            text == "/balance" ||
+            text == "/solBalance"
           ) {
             resetUserState(chatId);
           } else {
@@ -1374,7 +1458,9 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
             text == "/sell" ||
             text == "/withdraw" ||
             text == "/invite" ||
-            text == "Start"
+            text == "Start" ||
+            text == "/balance" ||
+            text == "/solBalance"
           ) {
             resetUserState(chatId);
           } else {
@@ -1531,7 +1617,9 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
             text == "/sell" ||
             text == "/withdraw" ||
             text == "/invite" ||
-            text == "Start"
+            text == "Start" ||
+            text == "/balance" ||
+            text == "/solBalance"
           ) {
             resetUserState(chatId);
           } else {
@@ -1759,14 +1847,9 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     case "balanceButton":
       resetUserState(chatId);
-      userStates[chatId].methodTransactions = await bot.sendMessage(
-        chatId,
-        `🌟 Choose a network 🌟`,
-        {
-          reply_markup: JSON.stringify(evmWalletBalance),
-        }
-      );
-
+      await bot.sendMessage(chatId, `🌟 Choose a network 🌟`, {
+        reply_markup: JSON.stringify(evmWalletBalance),
+      });
       break;
     case "logoutButton":
       resetUserState(chatId);
