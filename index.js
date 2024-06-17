@@ -785,7 +785,7 @@ bot.on("message", async (msg) => {
     }
     resetUserState(chatId);
     await startSwapProcess(chatId);
-  } else if (msg.text === "/evmBalance") {
+  } else if (msg.text === "/evmbalance") {
     const isUser = await getstartBot(chatId);
     if (!isUser) {
       return await sendWelcomeMessage(chatId);
@@ -794,7 +794,7 @@ bot.on("message", async (msg) => {
     await bot.sendMessage(chatId, `🌟 Choose a network 🌟`, {
       reply_markup: JSON.stringify(evmWalletBalance),
     });
-  } else if (msg.text === "/solBalance") {
+  } else if (msg.text === "/solbalance") {
     const isUser = await getstartBot(chatId);
     if (!isUser) {
       return await sendWelcomeMessage(chatId);
@@ -839,8 +839,8 @@ bot.on("message", async (msg) => {
             text == "/withdraw" ||
             text == "/invite" ||
             text == "Start" ||
-            text == "/balance" ||
-            text =="/solBalance"
+            text == "/evmbalance" ||
+            text =="/solbalance"
           ) {
             resetUserState(chatId);
           } else {
@@ -927,8 +927,8 @@ bot.on("message", async (msg) => {
             text == "/withdraw" ||
             text == "/invite" ||
             text == "Start" ||
-            text == "/balance" ||
-            text == "/solBalance"
+            text == "/evmbalance" ||
+            text == "/solbalance"
           ) {
             resetUserState(chatId);
           } else {
@@ -1246,8 +1246,8 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
             text == "/withdraw" ||
             text == "/invite" ||
             text == "Start" ||
-            text == "/balance" ||
-            text == "/solBalance"
+            text == "/evmbalance" ||
+            text == "/solbalance"
           ) {
             resetUserState(chatId);
           } else {
@@ -1348,8 +1348,8 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
             text == "/withdraw" ||
             text == "/invite" ||
             text == "Start" ||
-            text == "/balance" ||
-            text == "/solBalance"
+            text == "/evmbalance" ||
+            text == "/solbalance"
           ) {
             resetUserState(chatId);
           } else {
@@ -1459,8 +1459,8 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
             text == "/withdraw" ||
             text == "/invite" ||
             text == "Start" ||
-            text == "/balance" ||
-            text == "/solBalance"
+            text == "/evmbalance" ||
+            text == "/solbalance"
           ) {
             resetUserState(chatId);
           } else {
@@ -1618,8 +1618,8 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
             text == "/withdraw" ||
             text == "/invite" ||
             text == "Start" ||
-            text == "/balance" ||
-            text == "/solBalance"
+            text == "/evmbalance" ||
+            text == "/solbalance"
           ) {
             resetUserState(chatId);
           } else {
