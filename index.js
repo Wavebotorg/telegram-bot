@@ -840,7 +840,7 @@ bot.on("message", async (msg) => {
             text == "/invite" ||
             text == "Start" ||
             text == "/evmbalance" ||
-            text =="/solbalance"
+            text == "/solbalance"
           ) {
             resetUserState(chatId);
           } else {
@@ -2204,14 +2204,20 @@ bot.on("callback_query", async (callbackQuery) => {
       }
       break;
     case "solanaFinalBuy":
-      await solanaSwapHandle(
-        chatId,
-        "So11111111111111111111111111111111111111112",
-        userStates[chatId]?.toToken,
-        userStates[chatId]?.buyPrice,
-        "Buy",
-        9
-      );
+      if (userStates[chatId]?.flag) {
+        await solanaSwapHandle(
+          chatId,
+          "So11111111111111111111111111111111111111112",
+          userStates[chatId]?.toToken,
+          userStates[chatId]?.buyPrice,
+          "Buy",
+          9
+        );
+      } else {
+        resetUserState(chatId);
+        buyStartTokenSelection(chatId);
+      }
+
       break;
     case "0.5EVM":
       if (userStates[chatId]?.flag) {
@@ -2654,7 +2660,12 @@ bot.on("callback_query", async (callbackQuery) => {
       }
       break;
     case "evmFinalBuy":
-      evmSwapHandle(userStates[chatId]?.buyPrice, chatId, "Buy");
+      if (userStates[chatId]?.flag) {
+        evmSwapHandle(userStates[chatId]?.buyPrice, chatId, "Buy");
+      } else {
+        resetUserState(chatId);
+        buyStartTokenSelection(chatId);
+      }
       break;
     case "sellButton":
       resetUserState(chatId);
