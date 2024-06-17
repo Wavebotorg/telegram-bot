@@ -2,6 +2,7 @@ const TelegramBot = require("node-telegram-bot-api");
 require("dotenv").config();
 const { default: axios } = require("axios");
 const express = require("express");
+const { removeKeyboard } = require("telegraf/markup");
 const app = express();
 const PORT = process.env.PORT || 3333;
 const TOKEN = process.env.TOKEN; // Telegram Token
@@ -30,6 +31,10 @@ const resetUserState = (chatId) => {
     amountMsg: null,
     toBuyAddresName: null,
     statusFalse: null,
+    solanaBuyMessage: null,
+    evmBuyMessage: null,
+    buyPrice: null,
+    buyTokenNativename: null,
   };
 };
 
@@ -428,19 +433,6 @@ async function sendWelcomeMessage(chatId) {
     },
   });
 }
-//Send welcome Msg
-async function sendWelcomeMessage2(chatId) {
-  const keyboard = [
-    [{ text: "Start", request_contact: false, request_location: false }],
-  ];
-  await bot.sendMessage(chatId, `👋 Welcome to the Wavebot!👋`, {
-    reply_markup: {
-      keyboard: keyboard,
-      resize_keyboard: true,
-      one_time_keyboard: true,
-    },
-  });
-}
 // Function to start the bot session
 async function loginLogOutButton(chatId) {
   await bot.sendMessage(chatId, `👋please login!!👋`, {
@@ -601,7 +593,7 @@ async function start(chatId) {
 💼 LinkedIn: https://www.linkedin.com/company/wave_protocol/?viewAsMember=true\n
 📘 Facebook: https://www.facebook.com/profile.php?id=61560842638941\n
   ‧‧────────────────‧‧\n`;
-    sendWelcomeMessage2(chatId);
+
     await bot.sendMessage(chatId, messageText, {
       reply_markup: JSON.stringify(buyKeyboard),
     });
@@ -770,7 +762,8 @@ bot.on("message", async (msg) => {
             text == "/buy" ||
             text == "/sell" ||
             text == "/withdraw" ||
-            text == "/invite"
+            text == "/invite" ||
+            text == "Start"
           ) {
             resetUserState(chatId);
           } else {
@@ -850,149 +843,166 @@ bot.on("message", async (msg) => {
       switch (state.currentStep) {
         case "fromTokenBuy":
           state.toToken = text;
-          try {
-            const { loaderMessage, interval } = await animateLoader(chatId);
-            if (state?.flag == 19999) {
-              await axios
-                .post(`${API_URL}/getSolanaSingleTokenPrice`, {
-                  address: state?.toToken,
-                })
-                .then(async (res) => {
-                  console.log("🚀 ~ bot.on ~ res:", res?.data?.data);
-                  if (res?.data?.status) {
-                    await axios
-                      .post(`${API_URL}/solanaBalance`, {
-                        chatId,
-                      })
-                      .then(async (response) => {
-                        state.toBuyAddresName = res?.data?.data?.name;
-                        clearInterval(interval);
-                        await bot.deleteMessage(
+          if (
+            text == "/start" ||
+            text == "/buy" ||
+            text == "/sell" ||
+            text == "/withdraw" ||
+            text == "/invite" ||
+            text == "Start"
+          ) {
+            resetUserState(chatId);
+          } else {
+            try {
+              const { loaderMessage, interval } = await animateLoader(chatId);
+              if (state?.flag == 19999) {
+                await axios
+                  .post(`${API_URL}/getSolanaSingleTokenPrice`, {
+                    address: state?.toToken,
+                  })
+                  .then(async (res) => {
+                    console.log("🚀 ~ bot.on ~ res:", res?.data?.data);
+                    if (res?.data?.status) {
+                      await axios
+                        .post(`${API_URL}/solanaBalance`, {
                           chatId,
-                          loaderMessage.message_id
-                        );
-                        await bot.sendMessage(
-                          chatId,
-                          `Balance : ${Number(response?.data?.native)?.toFixed(
-                            5
-                          )}sol
+                        })
+                        .then(async (response) => {
+                          state.toBuyAddresName = res?.data?.data?.name;
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
+                          state.buyPrice = 0.5;
+                          state.solanaBuyMessage = await bot.sendMessage(
+                            chatId,
+                            `Balance : ${Number(
+                              response?.data?.native
+                            )?.toFixed(5)}sol
 Token : ${res?.data?.data?.name} <code>${res?.data?.data?.address}</code>
-${res?.data?.data?.name} price : ${Number(res?.data?.data?.price)?.toFixed(
-                            6
-                          )}$
+${res?.data?.data?.name} price : ${Number(res?.data?.data?.price)?.toFixed(6)}$
 https://dexscreener.com/solana/${state.toToken}`,
-                          {
-                            parse_mode: "HTML",
-                            reply_markup: {
-                              inline_keyboard: [
-                                [
-                                  {
-                                    text: "⬅️ Back",
-                                    callback_data: "buyButton",
-                                  },
-                                  {
-                                    text: "🔄 Refresh",
-                                    callback_data: "refreshButton",
-                                  },
+                            {
+                              parse_mode: "HTML",
+                              reply_markup: {
+                                inline_keyboard: [
+                                  [
+                                    {
+                                      text: "⬅️ Back",
+                                      callback_data: "buyButton",
+                                    },
+                                    {
+                                      text: "🔄 Refresh",
+                                      callback_data: "refreshButtonBuySolana",
+                                    },
+                                  ],
+                                  [
+                                    {
+                                      text: "✅ 0.5 SOL",
+                                      callback_data: "0.5Sol",
+                                    },
+                                    {
+                                      text: "1 SOL",
+                                      callback_data: "1Sol",
+                                    },
+                                    {
+                                      text: "3 SOL",
+                                      callback_data: "3Sol",
+                                    },
+                                  ],
+                                  [
+                                    {
+                                      text: "5 SOL",
+                                      callback_data: "5Sol",
+                                    },
+                                    {
+                                      text: "10 SOL",
+                                      callback_data: "10Sol",
+                                    },
+                                    {
+                                      text: "SOL ✏️",
+                                      callback_data: "customSol",
+                                    },
+                                  ],
+                                  [
+                                    {
+                                      text: `Buy`,
+                                      callback_data: "solanaFinalBuy",
+                                    },
+                                  ],
                                 ],
-                                [
-                                  {
-                                    text: "0.5 SOL",
-                                    callback_data: "0.5Sol",
-                                  },
-                                  {
-                                    text: "1 SOL",
-                                    callback_data: "1Sol",
-                                  },
-                                  {
-                                    text: "3 SOL",
-                                    callback_data: "3Sol",
-                                  },
-                                ],
-                                [
-                                  {
-                                    text: "5 SOL",
-                                    callback_data: "5Sol",
-                                  },
-                                  {
-                                    text: "10 SOL",
-                                    callback_data: "10Sol",
-                                  },
-                                  {
-                                    text: "SOL ✏️",
-                                    callback_data: "customSol",
-                                  },
-                                ],
-                              ],
-                            },
-                          }
-                        );
-                      })
-                      .catch(async (err) => {
-                        clearInterval(interval);
-                        await bot.deleteMessage(
-                          chatId,
-                          loaderMessage.message_id
-                        );
-                        console.log("🚀 ~ .then ~ err:", err);
-                        await bot.sendMessage(
-                          chatId,
-                          "somthing has been wrong plase try again later!!"
-                        );
-                      });
-                  } else {
+                              },
+                            }
+                          );
+                        })
+                        .catch(async (err) => {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
+                          console.log("🚀 ~ .then ~ err:", err);
+                          await bot.sendMessage(
+                            chatId,
+                            "🔴 somthing has been wrong plase try again later!!"
+                          );
+                        });
+                    } else {
+                      clearInterval(interval);
+                      await bot.deleteMessage(chatId, loaderMessage.message_id);
+                      resetUserState(chatId);
+                      await bot.sendMessage(
+                        chatId,
+                        "🔴 Token you entered is not supported!!"
+                      );
+                    }
+                  })
+                  .catch(async (error) => {
                     clearInterval(interval);
                     await bot.deleteMessage(chatId, loaderMessage.message_id);
-                    resetUserState(chatId);
+                    console.log("🚀 ~ .then ~ error:", error?.message);
                     await bot.sendMessage(
                       chatId,
-                      "Token you entered is not supported!!"
+                      "🔴 somthing has been wrong while fetching token price!!"
                     );
-                  }
-                })
-                .catch(async (error) => {
-                  clearInterval(interval);
-                  await bot.deleteMessage(chatId, loaderMessage.message_id);
-                  console.log("🚀 ~ .then ~ error:", error?.message);
-                  await bot.sendMessage(
+                  });
+              } else {
+                await axios
+                  .post(`${API_URL}/getSingleTokenPrice`, {
+                    chain: state.flag,
+                    address: state.toToken,
+                    nativeToken: state?.fromToken,
                     chatId,
-                    "somthing has been wrong while fetching token price!!"
-                  );
-                });
-            } else {
-              await axios
-                .post(`${API_URL}/getSingleTokenPrice`, {
-                  chain: state.flag,
-                  address: state.toToken,
-                  nativeToken: state?.fromToken,
-                  chatId,
-                })
-                .then(async (res) => {
-                  clearInterval(interval);
-                  await bot.deleteMessage(chatId, loaderMessage.message_id);
-                  if (res?.data?.status) {
-                    state.toBuyAddresName = res?.data?.data?.tokenSymbol;
-                    await bot.sendMessage(
-                      chatId,
-                      `${
-                        res?.data?.nativeToken[0]
-                          ? res?.data?.nativeToken[0]?.symbol
-                          : ""
-                      } Balance: ${Number(
-                        res?.data?.nativeToken[0]
-                          ? res?.data?.nativeToken[0]?.balance_formatted
-                          : 0.0
-                      ).toFixed(4)}(${Number(
-                        res?.data?.nativeToken[0]
-                          ? res?.data?.nativeToken[0]?.usd_value
-                          : 0
-                      ).toFixed(4)} USD)
+                  })
+                  .then(async (res) => {
+                    clearInterval(interval);
+                    await bot.deleteMessage(chatId, loaderMessage.message_id);
+                    if (res?.data?.status) {
+                      state.buyPrice = 0.5;
+                      state.toBuyAddresName = res?.data?.data?.tokenSymbol;
+                      state.buyTokenNativename = res?.data?.nativeToken[0];
+                      userStates[chatId].evmBuyMessage = await bot.sendMessage(
+                        chatId,
+                        `${
+                          state?.buyTokenNativename
+                            ? state?.buyTokenNativename?.symbol
+                            : ""
+                        } Balance: ${Number(
+                          state?.buyTokenNativename
+                            ? state?.buyTokenNativename?.balance_formatted
+                            : 0.0
+                        ).toFixed(4)}(${Number(
+                          state?.buyTokenNativename
+                            ? state?.buyTokenNativename?.usd_value
+                            : 0
+                        ).toFixed(4)} USD)
 Token : ${res?.data?.data?.tokenSymbol}  <code>${
-                        res?.data?.data?.tokenAddress
-                      }</code>
+                          res?.data?.data?.tokenAddress
+                        }</code>
 ${res?.data?.data?.tokenName} price : ${Number(
-                        res?.data?.data?.usdPriceFormatted
-                      )?.toFixed(5)}$
+                          res?.data?.data?.usdPriceFormatted
+                        )?.toFixed(5)}$
 24hrPercentChange : ${Number(res?.data?.data["24hrPercentChange"])?.toFixed(3)}%
 network : ${state?.network}
 ${
@@ -1001,104 +1011,112 @@ ${
     : ""
 }
 https://dexscreener.com/${state?.network}/${state.toToken}`,
-                      {
-                        parse_mode: "HTML",
-                        reply_markup: {
-                          inline_keyboard: [
-                            [
-                              {
-                                text: "⬅️ Back",
-                                callback_data: "buyButton",
-                              },
-                              {
-                                text: "🔄 Refresh",
-                                callback_data: "refreshButton",
-                              },
+                        {
+                          parse_mode: "HTML",
+                          reply_markup: {
+                            inline_keyboard: [
+                              [
+                                {
+                                  text: "⬅️ Back",
+                                  callback_data: "buyButton",
+                                },
+                                {
+                                  text: "🔄 Refresh",
+                                  callback_data: "refreshEvmButton",
+                                },
+                              ],
+                              [
+                                {
+                                  text: `✅ 0.5 ${
+                                    res?.data?.nativeToken[0]
+                                      ? res?.data?.nativeToken[0]?.symbol
+                                      : ""
+                                  }`,
+                                  callback_data: "0.5EVM",
+                                },
+                                {
+                                  text: `1 ${
+                                    res?.data?.nativeToken[0]
+                                      ? res?.data?.nativeToken[0]?.symbol
+                                      : ""
+                                  }`,
+                                  callback_data: "1EVM",
+                                },
+                                {
+                                  text: `3 ${
+                                    res?.data?.nativeToken[0]
+                                      ? res?.data?.nativeToken[0]?.symbol
+                                      : ""
+                                  }`,
+                                  callback_data: "3EVM",
+                                },
+                              ],
+                              [
+                                {
+                                  text: `5 ${
+                                    res?.data?.nativeToken[0]
+                                      ? res?.data?.nativeToken[0]?.symbol
+                                      : ""
+                                  }`,
+                                  callback_data: "5EVM",
+                                },
+                                {
+                                  text: `10 ${
+                                    res?.data?.nativeToken[0]
+                                      ? res?.data?.nativeToken[0]?.symbol
+                                      : ""
+                                  }`,
+                                  callback_data: "10EVM",
+                                },
+                                {
+                                  text: `${
+                                    res?.data?.nativeToken[0]
+                                      ? res?.data?.nativeToken[0]?.symbol
+                                      : ""
+                                  } ✏️`,
+                                  callback_data: "customEVM",
+                                },
+                              ],
+                              [
+                                {
+                                  text: `Buy`,
+                                  callback_data: "evmFinalBuy",
+                                },
+                              ],
                             ],
-                            [
-                              {
-                                text: `0.5 ${
-                                  res?.data?.nativeToken[0]
-                                    ? res?.data?.nativeToken[0]?.symbol
-                                    : ""
-                                }`,
-                                callback_data: "0.5EVM",
-                              },
-                              {
-                                text: `1 ${
-                                  res?.data?.nativeToken[0]
-                                    ? res?.data?.nativeToken[0]?.symbol
-                                    : ""
-                                }`,
-                                callback_data: "1EVM",
-                              },
-                              {
-                                text: `3 ${
-                                  res?.data?.nativeToken[0]
-                                    ? res?.data?.nativeToken[0]?.symbol
-                                    : ""
-                                }`,
-                                callback_data: "3EVM",
-                              },
-                            ],
-                            [
-                              {
-                                text: `5 ${
-                                  res?.data?.nativeToken[0]
-                                    ? res?.data?.nativeToken[0]?.symbol
-                                    : ""
-                                }`,
-                                callback_data: "5EVM",
-                              },
-                              {
-                                text: `10 ${
-                                  res?.data?.nativeToken[0]
-                                    ? res?.data?.nativeToken[0]?.symbol
-                                    : ""
-                                }`,
-                                callback_data: "10EVM",
-                              },
-                              {
-                                text: `${
-                                  res?.data?.nativeToken[0]
-                                    ? res?.data?.nativeToken[0]?.symbol
-                                    : ""
-                                } ✏️`,
-                                callback_data: "customEVM",
-                              },
-                            ],
-                          ],
-                        },
-                      }
-                    );
-                  } else {
+                          },
+                        }
+                      );
+                    } else {
+                      clearInterval(interval);
+                      await bot.deleteMessage(chatId, loaderMessage.message_id);
+                      resetUserState(chatId);
+                      await bot.sendMessage(
+                        chatId,
+                        "🔴Token you entered is not supported!!"
+                      );
+                    }
+                  })
+                  .catch(async (error) => {
                     clearInterval(interval);
                     await bot.deleteMessage(chatId, loaderMessage.message_id);
-                    resetUserState(chatId);
+                    console.log("🚀 ~ .then ~ error:", error?.message);
                     await bot.sendMessage(
                       chatId,
-                      "🔴Token you entered is not supported!!"
+                      "🔴somthing has been wrong while fetching token price!!"
                     );
-                  }
-                })
-                .catch(async (error) => {
-                  clearInterval(interval);
-                  await bot.deleteMessage(chatId, loaderMessage.message_id);
-                  console.log("🚀 ~ .then ~ error:", error?.message);
-                  await bot.sendMessage(
-                    chatId,
-                    "🔴somthing has been wrong while fetching token price!!"
-                  );
-                });
+                  });
+              }
+            } catch (error) {
+              console.log("🚀 ~ bot.on ~ error:", error);
+              resetUserState(chatId);
+              await bot.sendMessage(
+                chatId,
+                "🔴Token you entered is not supported or may be wrong!!"
+              );
             }
-          } catch (error) {
-            console.log("🚀 ~ bot.on ~ error:", error);
-            resetUserState(chatId);
-            await bot.sendMessage(
-              chatId,
-              "🔴Token you entered is not supported or may be wrong!!"
-            );
           }
+
           break;
         case "amountBuy":
           if (
@@ -1146,7 +1164,8 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
             text == "/buy" ||
             text == "/sell" ||
             text == "/withdraw" ||
-            text == "/invite"
+            text == "/invite" ||
+            text == "Start"
           ) {
             resetUserState(chatId);
           } else {
@@ -1245,7 +1264,8 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
             text == "/buy" ||
             text == "/sell" ||
             text == "/withdraw" ||
-            text == "/invite"
+            text == "/invite" ||
+            text == "Start"
           ) {
             resetUserState(chatId);
           } else {
@@ -1353,7 +1373,8 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
             text == "/buy" ||
             text == "/sell" ||
             text == "/withdraw" ||
-            text == "/invite"
+            text == "/invite" ||
+            text == "Start"
           ) {
             resetUserState(chatId);
           } else {
@@ -1370,7 +1391,11 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                 clearInterval(interval);
                 await bot.deleteMessage(chatId, loaderMessage.message_id);
                 if (response.data.status === true) {
-                  await bot.sendMessage(chatId, `✅ Login successfull!`);
+                  await bot.sendMessage(chatId, `✅ Login successfull!`, {
+                    reply_markup: {
+                      remove_keyboard: true,
+                    },
+                  });
                   await start(chatId);
                 } else {
                   await bot.sendMessage(
@@ -1505,7 +1530,8 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
             text == "/buy" ||
             text == "/sell" ||
             text == "/withdraw" ||
-            text == "/invite"
+            text == "/invite" ||
+            text == "Start"
           ) {
             resetUserState(chatId);
           } else {
@@ -1619,7 +1645,12 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                 if (res?.data?.status) {
                   await bot.sendMessage(
                     chatId,
-                    `🎉 User registered successfully.`
+                    `🎉 User registered successfully.`,
+                    {
+                      reply_markup: {
+                        remove_keyboard: true,
+                      },
+                    }
                   );
                   await start(chatId);
                 } else {
@@ -1772,13 +1803,60 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     case "0.5Sol":
       if (userStates[chatId]?.flag == 19999) {
-        await solanaSwapHandle(
-          chatId,
-          "So11111111111111111111111111111111111111112",
-          userStates[chatId]?.toToken,
-          0.5,
-          "Buy",
-          9
+        userStates[chatId].buyPrice = 0.5;
+        await bot.editMessageReplyMarkup(
+          {
+            inline_keyboard: [
+              [
+                {
+                  text: "⬅️ Back",
+                  callback_data: "buyButton",
+                },
+                {
+                  text: "🔄 Refresh",
+                  callback_data: "refreshButtonBuySolana",
+                },
+              ],
+              [
+                {
+                  text: "✅ 0.5 SOL",
+                  callback_data: "0.5Sol",
+                },
+                {
+                  text: "1 SOL",
+                  callback_data: "1Sol",
+                },
+                {
+                  text: "3 SOL",
+                  callback_data: "3Sol",
+                },
+              ],
+              [
+                {
+                  text: "5 SOL",
+                  callback_data: "5Sol",
+                },
+                {
+                  text: "10 SOL",
+                  callback_data: "10Sol",
+                },
+                {
+                  text: "SOL ✏️",
+                  callback_data: "customSol",
+                },
+              ],
+              [
+                {
+                  text: `Buy`,
+                  callback_data: "solanaFinalBuy",
+                },
+              ],
+            ],
+          },
+          {
+            chat_id: chatId,
+            message_id: userStates[chatId].solanaBuyMessage.message_id,
+          }
         );
       } else {
         resetUserState(chatId);
@@ -1787,13 +1865,60 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     case "1Sol":
       if (userStates[chatId]?.flag == 19999) {
-        await solanaSwapHandle(
-          chatId,
-          "So11111111111111111111111111111111111111112",
-          userStates[chatId]?.toToken,
-          1,
-          "Buy",
-          9
+        userStates[chatId].buyPrice = 1;
+        await bot.editMessageReplyMarkup(
+          {
+            inline_keyboard: [
+              [
+                {
+                  text: "⬅️ Back",
+                  callback_data: "buyButton",
+                },
+                {
+                  text: "🔄 Refresh",
+                  callback_data: "refreshButtonBuySolana",
+                },
+              ],
+              [
+                {
+                  text: "0.5 SOL",
+                  callback_data: "0.5Sol",
+                },
+                {
+                  text: "✅ 1 SOL",
+                  callback_data: "1Sol",
+                },
+                {
+                  text: "3 SOL",
+                  callback_data: "3Sol",
+                },
+              ],
+              [
+                {
+                  text: "5 SOL",
+                  callback_data: "5Sol",
+                },
+                {
+                  text: "10 SOL",
+                  callback_data: "10Sol",
+                },
+                {
+                  text: "SOL ✏️",
+                  callback_data: "customSol",
+                },
+              ],
+              [
+                {
+                  text: `Buy`,
+                  callback_data: "solanaFinalBuy",
+                },
+              ],
+            ],
+          },
+          {
+            chat_id: chatId,
+            message_id: userStates[chatId].solanaBuyMessage.message_id,
+          }
         );
       } else {
         resetUserState(chatId);
@@ -1802,13 +1927,60 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     case "3Sol":
       if (userStates[chatId]?.flag == 19999) {
-        await solanaSwapHandle(
-          chatId,
-          "So11111111111111111111111111111111111111112",
-          userStates[chatId]?.toToken,
-          3,
-          "Buy",
-          9
+        userStates[chatId].buyPrice = 3;
+        await bot.editMessageReplyMarkup(
+          {
+            inline_keyboard: [
+              [
+                {
+                  text: "⬅️ Back",
+                  callback_data: "buyButton",
+                },
+                {
+                  text: "🔄 Refresh",
+                  callback_data: "refreshButtonBuySolana",
+                },
+              ],
+              [
+                {
+                  text: "0.5 SOL",
+                  callback_data: "0.5Sol",
+                },
+                {
+                  text: "1 SOL",
+                  callback_data: "1Sol",
+                },
+                {
+                  text: "✅ 3 SOL",
+                  callback_data: "3Sol",
+                },
+              ],
+              [
+                {
+                  text: "5 SOL",
+                  callback_data: "5Sol",
+                },
+                {
+                  text: "10 SOL",
+                  callback_data: "10Sol",
+                },
+                {
+                  text: "SOL ✏️",
+                  callback_data: "customSol",
+                },
+              ],
+              [
+                {
+                  text: `Buy`,
+                  callback_data: "solanaFinalBuy",
+                },
+              ],
+            ],
+          },
+          {
+            chat_id: chatId,
+            message_id: userStates[chatId].solanaBuyMessage.message_id,
+          }
         );
       } else {
         resetUserState(chatId);
@@ -1817,13 +1989,60 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     case "5Sol":
       if (userStates[chatId]?.flag == 19999) {
-        await solanaSwapHandle(
-          chatId,
-          "So11111111111111111111111111111111111111112",
-          userStates[chatId]?.toToken,
-          5,
-          "Buy",
-          9
+        userStates[chatId].buyPrice = 5;
+        await bot.editMessageReplyMarkup(
+          {
+            inline_keyboard: [
+              [
+                {
+                  text: "⬅️ Back",
+                  callback_data: "buyButton",
+                },
+                {
+                  text: "🔄 Refresh",
+                  callback_data: "refreshButtonBuySolana",
+                },
+              ],
+              [
+                {
+                  text: "0.5 SOL",
+                  callback_data: "0.5Sol",
+                },
+                {
+                  text: "1 SOL",
+                  callback_data: "1Sol",
+                },
+                {
+                  text: "3 SOL",
+                  callback_data: "3Sol",
+                },
+              ],
+              [
+                {
+                  text: "✅ 5 SOL",
+                  callback_data: "5Sol",
+                },
+                {
+                  text: "10 SOL",
+                  callback_data: "10Sol",
+                },
+                {
+                  text: "SOL ✏️",
+                  callback_data: "customSol",
+                },
+              ],
+              [
+                {
+                  text: `Buy`,
+                  callback_data: "solanaFinalBuy",
+                },
+              ],
+            ],
+          },
+          {
+            chat_id: chatId,
+            message_id: userStates[chatId].solanaBuyMessage.message_id,
+          }
         );
       } else {
         resetUserState(chatId);
@@ -1832,13 +2051,60 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     case "10Sol":
       if (userStates[chatId]?.flag == 19999) {
-        await solanaSwapHandle(
-          chatId,
-          "So11111111111111111111111111111111111111112",
-          userStates[chatId]?.toToken,
-          10,
-          "Buy",
-          9
+        userStates[chatId].buyPrice = 10;
+        await bot.editMessageReplyMarkup(
+          {
+            inline_keyboard: [
+              [
+                {
+                  text: "⬅️ Back",
+                  callback_data: "buyButton",
+                },
+                {
+                  text: "🔄 Refresh",
+                  callback_data: "refreshButtonBuySolana",
+                },
+              ],
+              [
+                {
+                  text: "0.5 SOL",
+                  callback_data: "0.5Sol",
+                },
+                {
+                  text: "1 SOL",
+                  callback_data: "1Sol",
+                },
+                {
+                  text: "3 SOL",
+                  callback_data: "3Sol",
+                },
+              ],
+              [
+                {
+                  text: "5 SOL",
+                  callback_data: "5Sol",
+                },
+                {
+                  text: "✅ 10 SOL",
+                  callback_data: "10Sol",
+                },
+                {
+                  text: "SOL ✏️",
+                  callback_data: "customSol",
+                },
+              ],
+              [
+                {
+                  text: `Buy`,
+                  callback_data: "solanaFinalBuy",
+                },
+              ],
+            ],
+          },
+          {
+            chat_id: chatId,
+            message_id: userStates[chatId].solanaBuyMessage.message_id,
+          }
         );
       } else {
         resetUserState(chatId);
@@ -1854,9 +2120,97 @@ bot.on("callback_query", async (callbackQuery) => {
         buyStartTokenSelection(chatId);
       }
       break;
+    case "solanaFinalBuy":
+      await solanaSwapHandle(
+        chatId,
+        "So11111111111111111111111111111111111111112",
+        userStates[chatId]?.toToken,
+        userStates[chatId]?.buyPrice,
+        "Buy",
+        9
+      );
+      break;
     case "0.5EVM":
       if (userStates[chatId]?.flag) {
-        evmSwapHandle(0.5, chatId, "Buy");
+        userStates[chatId].buyPrice = 0.5;
+        await bot.editMessageReplyMarkup(
+          {
+            inline_keyboard: [
+              [
+                {
+                  text: "⬅️ Back",
+                  callback_data: "buyButton",
+                },
+                {
+                  text: "🔄 Refresh",
+                  callback_data: "refreshEvmButton",
+                },
+              ],
+              [
+                {
+                  text: `✅ 0.5 ${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  }`,
+                  callback_data: "0.5EVM",
+                },
+                {
+                  text: `1 ${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  }`,
+                  callback_data: "1EVM",
+                },
+                {
+                  text: `3 ${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  }`,
+                  callback_data: "3EVM",
+                },
+              ],
+              [
+                {
+                  text: `5 ${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  }`,
+                  callback_data: "5EVM",
+                },
+                {
+                  text: `10 ${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  }`,
+                  callback_data: "10EVM",
+                },
+                {
+                  text: `${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  } ✏️`,
+                  callback_data: "customEVM",
+                },
+              ],
+              [
+                {
+                  text: `Buy`,
+                  callback_data: "evmFinalBuy",
+                },
+              ],
+            ],
+          },
+          {
+            chat_id: chatId,
+            message_id: userStates[chatId].evmBuyMessage.message_id,
+          }
+        );
       } else {
         resetUserState(chatId);
         buyStartTokenSelection(chatId);
@@ -1864,7 +2218,86 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     case "1EVM":
       if (userStates[chatId]?.flag) {
-        evmSwapHandle(1, chatId, "Buy");
+        // evmSwapHandle(1, chatId, "Buy");
+        userStates[chatId].buyPrice = 1;
+        await bot.editMessageReplyMarkup(
+          {
+            inline_keyboard: [
+              [
+                {
+                  text: "⬅️ Back",
+                  callback_data: "buyButton",
+                },
+                {
+                  text: "🔄 Refresh",
+                  callback_data: "refreshEvmButton",
+                },
+              ],
+              [
+                {
+                  text: `0.5 ${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  }`,
+                  callback_data: "0.5EVM",
+                },
+                {
+                  text: `✅ 1 ${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  }`,
+                  callback_data: "1EVM",
+                },
+                {
+                  text: `3 ${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  }`,
+                  callback_data: "3EVM",
+                },
+              ],
+              [
+                {
+                  text: `5 ${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  }`,
+                  callback_data: "5EVM",
+                },
+                {
+                  text: `10 ${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  }`,
+                  callback_data: "10EVM",
+                },
+                {
+                  text: `${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  } ✏️`,
+                  callback_data: "customEVM",
+                },
+              ],
+              [
+                {
+                  text: `Buy`,
+                  callback_data: "evmFinalBuy",
+                },
+              ],
+            ],
+          },
+          {
+            chat_id: chatId,
+            message_id: userStates[chatId].evmBuyMessage.message_id,
+          }
+        );
       } else {
         resetUserState(chatId);
         buyStartTokenSelection(chatId);
@@ -1872,7 +2305,85 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     case "3EVM":
       if (userStates[chatId]?.flag) {
-        evmSwapHandle(3, chatId, "Buy");
+        userStates[chatId].buyPrice = 3;
+        await bot.editMessageReplyMarkup(
+          {
+            inline_keyboard: [
+              [
+                {
+                  text: "⬅️ Back",
+                  callback_data: "buyButton",
+                },
+                {
+                  text: "🔄 Refresh",
+                  callback_data: "refreshEvmButton",
+                },
+              ],
+              [
+                {
+                  text: `0.5 ${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  }`,
+                  callback_data: "0.5EVM",
+                },
+                {
+                  text: `1 ${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  }`,
+                  callback_data: "1EVM",
+                },
+                {
+                  text: `✅ 3 ${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  }`,
+                  callback_data: "3EVM",
+                },
+              ],
+              [
+                {
+                  text: `5 ${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  }`,
+                  callback_data: "5EVM",
+                },
+                {
+                  text: `10 ${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  }`,
+                  callback_data: "10EVM",
+                },
+                {
+                  text: `${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  } ✏️`,
+                  callback_data: "customEVM",
+                },
+              ],
+              [
+                {
+                  text: `Buy`,
+                  callback_data: "evmFinalBuy",
+                },
+              ],
+            ],
+          },
+          {
+            chat_id: chatId,
+            message_id: userStates[chatId].evmBuyMessage.message_id,
+          }
+        );
       } else {
         resetUserState(chatId);
         buyStartTokenSelection(chatId);
@@ -1880,7 +2391,85 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     case "5EVM":
       if (userStates[chatId]?.flag) {
-        evmSwapHandle(5, chatId, "Buy");
+        userStates[chatId].buyPrice = 5;
+        await bot.editMessageReplyMarkup(
+          {
+            inline_keyboard: [
+              [
+                {
+                  text: "⬅️ Back",
+                  callback_data: "buyButton",
+                },
+                {
+                  text: "🔄 Refresh",
+                  callback_data: "refreshEvmButton",
+                },
+              ],
+              [
+                {
+                  text: `0.5 ${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  }`,
+                  callback_data: "0.5EVM",
+                },
+                {
+                  text: `1 ${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  }`,
+                  callback_data: "1EVM",
+                },
+                {
+                  text: `3 ${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  }`,
+                  callback_data: "3EVM",
+                },
+              ],
+              [
+                {
+                  text: `✅5 ${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  }`,
+                  callback_data: "5EVM",
+                },
+                {
+                  text: `10 ${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  }`,
+                  callback_data: "10EVM",
+                },
+                {
+                  text: `${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  } ✏️`,
+                  callback_data: "customEVM",
+                },
+              ],
+              [
+                {
+                  text: `Buy`,
+                  callback_data: "evmFinalBuy",
+                },
+              ],
+            ],
+          },
+          {
+            chat_id: chatId,
+            message_id: userStates[chatId].evmBuyMessage.message_id,
+          }
+        );
       } else {
         resetUserState(chatId);
         buyStartTokenSelection(chatId);
@@ -1888,7 +2477,85 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     case "10EVM":
       if (userStates[chatId]?.flag) {
-        evmSwapHandle(10, chatId, "Buy");
+        userStates[chatId].buyPrice = 10;
+        await bot.editMessageReplyMarkup(
+          {
+            inline_keyboard: [
+              [
+                {
+                  text: "⬅️ Back",
+                  callback_data: "buyButton",
+                },
+                {
+                  text: "🔄 Refresh",
+                  callback_data: "refreshEvmButton",
+                },
+              ],
+              [
+                {
+                  text: `0.5 ${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  }`,
+                  callback_data: "0.5EVM",
+                },
+                {
+                  text: `1 ${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  }`,
+                  callback_data: "1EVM",
+                },
+                {
+                  text: `3 ${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  }`,
+                  callback_data: "3EVM",
+                },
+              ],
+              [
+                {
+                  text: `5 ${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  }`,
+                  callback_data: "5EVM",
+                },
+                {
+                  text: `✅ 10 ${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  }`,
+                  callback_data: "10EVM",
+                },
+                {
+                  text: `${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  } ✏️`,
+                  callback_data: "customEVM",
+                },
+              ],
+              [
+                {
+                  text: `Buy`,
+                  callback_data: "evmFinalBuy",
+                },
+              ],
+            ],
+          },
+          {
+            chat_id: chatId,
+            message_id: userStates[chatId].evmBuyMessage.message_id,
+          }
+        );
       } else {
         resetUserState(chatId);
         buyStartTokenSelection(chatId);
@@ -1902,6 +2569,9 @@ bot.on("callback_query", async (callbackQuery) => {
         resetUserState(chatId);
         buyStartTokenSelection(chatId);
       }
+      break;
+    case "evmFinalBuy":
+      evmSwapHandle(userStates[chatId]?.buyPrice, chatId, "Buy");
       break;
     case "sellButton":
       resetUserState(chatId);
@@ -1920,6 +2590,279 @@ bot.on("callback_query", async (callbackQuery) => {
     case "refreshButton":
       resetUserState(chatId);
       await start(chatId);
+      break;
+    // -------------------------------------------------- buy referash button solana------------------------------------------------------
+    case "refreshEvmButton":
+      if (userStates[chatId]?.flag) {
+        if (userStates[chatId]?.evmBuyMessage) {
+          await bot.deleteMessage(
+            chatId,
+            userStates[chatId]?.evmBuyMessage?.message_id
+          );
+        }
+        const { loaderMessage, interval } = await animateLoader(chatId);
+        await axios
+          .post(`${API_URL}/getSingleTokenPrice`, {
+            chain: userStates[chatId]?.flag,
+            address: userStates[chatId]?.toToken,
+            nativeToken: userStates[chatId]?.fromToken,
+            chatId,
+          })
+          .then(async (res) => {
+            clearInterval(interval);
+            await bot.deleteMessage(chatId, loaderMessage.message_id);
+            if (res?.data?.status) {
+              userStates[chatId].buyPrice = 0.5;
+              userStates[chatId].toBuyAddresName = res?.data?.data?.tokenSymbol;
+              userStates[chatId].buyTokenNativename = res?.data?.nativeToken[0];
+              userStates[chatId].evmBuyMessage = await bot.sendMessage(
+                chatId,
+                `${
+                  userStates[chatId]?.buyTokenNativename
+                    ? userStates[chatId]?.buyTokenNativename?.symbol
+                    : ""
+                } Balance: ${Number(
+                  userStates[chatId]?.buyTokenNativename
+                    ? userStates[chatId]?.buyTokenNativename?.balance_formatted
+                    : 0.0
+                ).toFixed(4)}(${Number(
+                  userStates[chatId]?.buyTokenNativename
+                    ? userStates[chatId]?.buyTokenNativename?.usd_value
+                    : 0
+                ).toFixed(4)} USD)
+Token : ${res?.data?.data?.tokenSymbol}  <code>${
+                  res?.data?.data?.tokenAddress
+                }</code>
+${res?.data?.data?.tokenName} price : ${Number(
+                  res?.data?.data?.usdPriceFormatted
+                )?.toFixed(5)}$
+24hrPercentChange : ${Number(res?.data?.data["24hrPercentChange"])?.toFixed(3)}%
+network : ${userStates[chatId]?.network}
+${
+  !res?.data?.nativeToken[0]
+    ? `🔴 Insufficient balance for buy amount + gas ⇅`
+    : ""
+}
+https://dexscreener.com/${userStates[chatId]?.network}/${
+                  userStates[chatId].toToken
+                }`,
+                {
+                  parse_mode: "HTML",
+                  reply_markup: {
+                    inline_keyboard: [
+                      [
+                        {
+                          text: "⬅️ Back",
+                          callback_data: "buyButton",
+                        },
+                        {
+                          text: "🔄 Refresh",
+                          callback_data: "refreshEvmButton",
+                        },
+                      ],
+                      [
+                        {
+                          text: `✅ 0.5 ${
+                            userStates[chatId].buyTokenNativename
+                              ? userStates[chatId].buyTokenNativename?.symbol
+                              : ""
+                          }`,
+                          callback_data: "0.5EVM",
+                        },
+                        {
+                          text: `1 ${
+                            userStates[chatId].buyTokenNativename
+                              ? userStates[chatId].buyTokenNativename?.symbol
+                              : ""
+                          }`,
+                          callback_data: "1EVM",
+                        },
+                        {
+                          text: `3 ${
+                            userStates[chatId].buyTokenNativename
+                              ? userStates[chatId].buyTokenNativename?.symbol
+                              : ""
+                          }`,
+                          callback_data: "3EVM",
+                        },
+                      ],
+                      [
+                        {
+                          text: `5 ${
+                            userStates[chatId].buyTokenNativename
+                              ? userStates[chatId].buyTokenNativename?.symbol
+                              : ""
+                          }`,
+                          callback_data: "5EVM",
+                        },
+                        {
+                          text: `10 ${
+                            userStates[chatId].buyTokenNativename
+                              ? userStates[chatId].buyTokenNativename?.symbol
+                              : ""
+                          }`,
+                          callback_data: "10EVM",
+                        },
+                        {
+                          text: `${
+                            userStates[chatId].buyTokenNativename
+                              ? userStates[chatId].buyTokenNativename?.symbol
+                              : ""
+                          } ✏️`,
+                          callback_data: "customEVM",
+                        },
+                      ],
+                      [
+                        {
+                          text: `Buy`,
+                          callback_data: "evmFinalBuy",
+                        },
+                      ],
+                    ],
+                  },
+                }
+              );
+            } else {
+              clearInterval(interval);
+              await bot.deleteMessage(chatId, loaderMessage.message_id);
+              resetUserState(chatId);
+              await bot.sendMessage(
+                chatId,
+                "🔴Token you entered is not supported!!"
+              );
+            }
+          })
+          .catch(async (error) => {
+            clearInterval(interval);
+            await bot.deleteMessage(chatId, loaderMessage.message_id);
+            console.log("🚀 ~ .then ~ error:", error?.message);
+            await bot.sendMessage(
+              chatId,
+              "🔴somthing has been wrong while fetching token price!!"
+            );
+          });
+      } else {
+        resetUserState(chatId);
+        buyStartTokenSelection(chatId);
+      }
+      break;
+
+    case "refreshButtonBuySolana":
+      if (userStates[chatId]?.flag == 19999) {
+        if (userStates[chatId]?.solanaBuyMessage) {
+          await bot.deleteMessage(
+            chatId,
+            userStates[chatId]?.solanaBuyMessage?.message_id
+          );
+        }
+        const { loaderMessage, interval } = await animateLoader(chatId);
+        await axios
+          .post(`${API_URL}/getSolanaSingleTokenPrice`, {
+            address: userStates[chatId]?.toToken,
+          })
+          .then(async (res) => {
+            console.log("🚀 ~ bot.on ~ res:", res?.data?.data);
+            if (res?.data?.status) {
+              await axios
+                .post(`${API_URL}/solanaBalance`, {
+                  chatId,
+                })
+                .then(async (response) => {
+                  userStates[chatId].toBuyAddresName = res?.data?.data?.name;
+                  clearInterval(interval);
+                  await bot.deleteMessage(chatId, loaderMessage.message_id);
+                  userStates[chatId].buyPrice = 0.5;
+                  userStates[chatId].solanaBuyMessage = await bot.sendMessage(
+                    chatId,
+                    `Balance : ${Number(response?.data?.native)?.toFixed(5)}sol
+ Token : ${res?.data?.data?.name} <code>${res?.data?.data?.address}</code>
+ ${res?.data?.data?.name} price : ${Number(res?.data?.data?.price)?.toFixed(6)}$
+ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
+                    {
+                      parse_mode: "HTML",
+                      reply_markup: {
+                        inline_keyboard: [
+                          [
+                            {
+                              text: "⬅️ Back",
+                              callback_data: "buyButton",
+                            },
+                            {
+                              text: "🔄 Refresh",
+                              callback_data: "refreshButtonBuySolana",
+                            },
+                          ],
+                          [
+                            {
+                              text: "✅ 0.5 SOL",
+                              callback_data: "0.5Sol",
+                            },
+                            {
+                              text: "1 SOL",
+                              callback_data: "1Sol",
+                            },
+                            {
+                              text: "3 SOL",
+                              callback_data: "3Sol",
+                            },
+                          ],
+                          [
+                            {
+                              text: "5 SOL",
+                              callback_data: "5Sol",
+                            },
+                            {
+                              text: "10 SOL",
+                              callback_data: "10Sol",
+                            },
+                            {
+                              text: "SOL ✏️",
+                              callback_data: "customSol",
+                            },
+                          ],
+                          [
+                            {
+                              text: `Buy`,
+                              callback_data: "solanaFinalBuy",
+                            },
+                          ],
+                        ],
+                      },
+                    }
+                  );
+                })
+                .catch(async (err) => {
+                  clearInterval(interval);
+                  await bot.deleteMessage(chatId, loaderMessage.message_id);
+                  console.log("🚀 ~ .then ~ err:", err);
+                  await bot.sendMessage(
+                    chatId,
+                    "🔴 somthing has been wrong plase try again later!!"
+                  );
+                });
+            } else {
+              clearInterval(interval);
+              await bot.deleteMessage(chatId, loaderMessage.message_id);
+              resetUserState(chatId);
+              await bot.sendMessage(
+                chatId,
+                "🔴 Token you entered is not supported!!"
+              );
+            }
+          })
+          .catch(async (error) => {
+            clearInterval(interval);
+            await bot.deleteMessage(chatId, loaderMessage.message_id);
+            console.log("🚀 ~ .then ~ error:", error?.message);
+            await bot.sendMessage(
+              chatId,
+              "🔴 somthing has been wrong while fetching token price!!"
+            );
+          });
+      } else {
+        resetUserState(chatId);
+        buyStartTokenSelection(chatId);
+      }
       break;
     // -------------------------------------------------- buy ------------------------------------------------------
     case "solBuy":
