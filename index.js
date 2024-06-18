@@ -611,10 +611,10 @@ async function setting(chatId) {
   const userInfo = await getEmailAndWalletFromBackend(chatId);
   if (userInfo?.email) {
     const messageText = `🌊 personal Info! 🌊\n
-  *Your Email Address: <code>${userInfo?.email}</code>\n
-  *Your referralId: <code>${userInfo?.referralId}</code>\n
-  *Your Wallet Address (EVM): <code>${userInfo?.EVMwallet}</code>\n
-  *Your Wallet Address (Solana): <code>${userInfo?.solanaWallets}</code>`;
+  *Your Email Address: <code>${userInfo?.email}</code> (Tap to copy)\n
+  *Your referralId: <code>${userInfo?.referralId}</code> (Tap to copy)\n
+  *Your Wallet Address (EVM): <code>${userInfo?.EVMwallet}</code> (Tap to copy)\n
+  *Your Wallet Address (Solana): <code>${userInfo?.solanaWallets}</code> (Tap to copy)`;
     await bot.sendMessage(chatId, messageText, {
       parse_mode: "HTML",
       reply_markup: {
@@ -635,31 +635,34 @@ async function setting(chatId) {
 }
 // Function to start the bot session
 async function start(chatId) {
-  flag = null;
   const userInfo = await getEmailAndWalletFromBackend(chatId);
   if (userInfo?.email) {
     const messageText = `🌊 Follow WaveBotApp on Social Media! 🌊\n
-🌊 WaveBot(https://wavebot.app/)\n
-🐦 Twitter: https://x.com/WaveBotApp\n
-💬 Discord: https://discord.gg/w4tFdAA7\n
-👥 Telegram Community: https://t.me/+MX1exQQYjWkxZjBl\n
-📢 Telegram Announcements: https://t.me/WaveAnnouncements\n
-📸 Instagram: https://www.instagram.com/wavebotapp/\n
-🎵 TikTok: https://www.tiktok.com/@wavebotapp\n
-📺 YouTube: https://www.youtube.com/@WaveBotApp\n
-👾 Reddit: https://www.reddit.com/user/wavebotapp/\n
-✍️ Medium: https://medium.com/@wavebotapp\n
-💼 LinkedIn: https://www.linkedin.com/company/wave_protocol/?viewAsMember=true\n
-📘 Facebook: https://www.facebook.com/profile.php?id=61560842638941\n
-  ‧‧────────────────‧‧\n`;
-
+Join Our Telegram Group: https://t.me/WaveUsers\n
+Wave Socials : https://linktr.ee/wavebot
+  ‧‧────────────────‧‧
+*Your Wallet Address (EVM): <code>${userInfo?.EVMwallet}</code> (Tap to copy)\n
+*Your Wallet Address (Solana): <code>${userInfo?.solanaWallets}</code> (Tap to copy)`;
     await bot.sendMessage(chatId, messageText, {
       reply_markup: JSON.stringify(buyKeyboard),
+      parse_mode: "HTML",
     });
   } else {
     await loginLogOutButton(chatId);
   }
 }
+// 🌊 WaveBot(https://wavebot.app/)\n
+// 🐦 Twitter: https://x.com/WaveBotApp\n
+// 💬 Discord: https://discord.gg/w4tFdAA7\n
+// 👥 Telegram Community: https://t.me/+MX1exQQYjWkxZjBl\n
+// 📢 Telegram Announcements: https://t.me/WaveAnnouncements\n
+// 📸 Instagram: https://www.instagram.com/wavebotapp/\n
+// 🎵 TikTok: https://www.tiktok.com/@wavebotapp\n
+// 📺 YouTube: https://www.youtube.com/@WaveBotApp\n
+// 👾 Reddit: https://www.reddit.com/user/wavebotapp/\n
+// ✍️ Medium: https://medium.com/@wavebotapp\n
+// 💼 LinkedIn: https://www.linkedin.com/company/wave_protocol/?viewAsMember=true\n
+// 📘 Facebook: https://www.facebook.com/profile.php?id=61560842638941\n
 // Function to fetch Solana balance
 async function fetchSolanaBalance(chatId) {
   try {
