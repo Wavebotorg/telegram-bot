@@ -44,28 +44,28 @@ const handleSwap = async (chatId) => {
   userStates[chatId].currentStep = "fromTokenSwap";
   userStates[chatId].fromMsg = await bot.sendMessage(
     chatId,
-    "Type From Token:"
+    "Type From Token Address:"
   );
 };
 const handleBuy = async (chatId) => {
   userStates[chatId].currentStep = "fromTokenBuy";
   userStates[chatId].fromMsg = await bot.sendMessage(
     chatId,
-    "Type Token You Want To Buy:"
+    "Type Token Address You Want To Buy:"
   );
 };
 const handleSell = async (chatId) => {
   userStates[chatId].currentStep = "toTokenSell";
   userStates[chatId].toMsg = await bot.sendMessage(
     chatId,
-    "Type Token You Want To Sell:"
+    "Type Token Address You Want To Sell:"
   );
 };
 const handleTransfer = async (chatId) => {
   userStates[chatId].currentStep = "tokenTransfer";
   userStates[chatId].fromMsg = await bot.sendMessage(
     chatId,
-    "Type Token You Want To Transfer:"
+    "Type Token Address You Want To Transfer:"
   );
 };
 const handleLogin = async (chatId) => {
@@ -825,7 +825,7 @@ bot.on("message", async (msg) => {
         case "fromTokenSwap":
           state.fromToken = text;
           state.currentStep = "toTokenSwap";
-          await bot.sendMessage(chatId, "Type To Token:");
+          await bot.sendMessage(chatId, "Type To Token Address:");
           break;
 
         case "toTokenSwap":
