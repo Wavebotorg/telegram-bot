@@ -863,7 +863,7 @@ bot.on("message", async (msg) => {
                   output: state?.toToken,
                   amount: state?.amount,
                   chatId,
-                  method: "Swap",
+                  method: "swap",
                 })
                 .then(async (res) => {
                   clearInterval(interval);
@@ -894,7 +894,7 @@ bot.on("message", async (msg) => {
                   amount: state?.amount,
                   chain: state?.flag,
                   chatId,
-                  method: "Swap",
+                  method: "swap",
                 })
                 .then(async (res) => {
                   // await deleteAllmessages(chatId);
@@ -1225,11 +1225,11 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                 "So11111111111111111111111111111111111111112",
                 state?.toToken,
                 Number(state.amount?.toFixed(5)),
-                "Buy",
+                "buy",
                 9
               );
             } else {
-              evmSwapHandle(state.amount, chatId, "Buy");
+              evmSwapHandle(state.amount, chatId, "buy");
             }
           }
           break;
@@ -1270,7 +1270,7 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                   output: "So11111111111111111111111111111111111111112",
                   amount: state?.amount,
                   chatId,
-                  method: "Sell",
+                  method: "sell",
                 })
                 .then(async (res) => {
                   clearInterval(interval);
@@ -1305,7 +1305,7 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                   amount: state?.amount,
                   chain: state?.flag,
                   chatId,
-                  method: "Sell",
+                  method: "sell",
                 })
                 .then(async (res) => {
                   clearInterval(interval);
