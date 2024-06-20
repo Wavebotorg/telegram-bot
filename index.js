@@ -464,25 +464,32 @@ async function getstartBot(chatId) {
 
 // solana swap function
 async function solanaSwapHandle(chatId, input, output, amount, method, desBot) {
+  console.log("🚀 ~ solanaSwapHandle ~ amount:", amount);
+  console.log(
+    "🚀 ~ solanaSwapHandle ~ balance_formatted:",
+    userStates[chatId]?.nativeBalance
+  );
   if (
-    userStates[chatId]?.buyTokenNativename?.balance_formatted <= amount ||
-    !userStates[chatId]?.buyTokenNativename?.balance_formatted
+    userStates[chatId]?.nativeBalance <= amount ||
+    !userStates[chatId]?.nativeBalance
   ) {
     resetUserState(chatId);
     return bot.sendMessage(
       chatId,
-      "You do not have sufficient fund+gas to perform this transaction!!",
+      "🔴 You do not have sufficient fund + gas to perform this transaction!!",
       {
         reply_markup: {
           inline_keyboard: [
-            {
-              text: "⬅️ Back",
-              callback_data: "buyButton",
-            },
-            {
-              text: "⬆️ Main Menu",
-              callback_data: "refreshButton",
-            },
+            [
+              {
+                text: "⬅️ Back",
+                callback_data: "buyButton",
+              },
+              {
+                text: "⬆️ Main Menu",
+                callback_data: "refreshButton",
+              },
+            ],
           ],
 
           resize_keyboard: true,
