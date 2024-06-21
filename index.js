@@ -946,98 +946,86 @@ bot.on("message", async (msg) => {
               const { loaderMessage, interval } = await animateLoader(chatId);
               if (state?.flag == 19999) {
                 await axios
-                  .post(`${API_URL}/getSolanaSingleTokenPrice`, {
-                    address: state?.toToken,
+                  .post(`${API_URL}/dexSol`, {
+                    token: state?.toToken,
+                    chatId,
                   })
                   .then(async (res) => {
                     console.log("🚀 ~ bot.on ~ res:", res?.data?.data);
                     if (res?.data?.status) {
-                      await axios
-                        .post(`${API_URL}/solanaBalance`, {
-                          chatId,
-                        })
-                        .then(async (response) => {
-                          state.toBuyAddresName = res?.data?.data?.name;
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          state.buyPrice = 0.5;
-                          state.nativeBalance = response?.data?.native;
-                          state.solanaBuyMessage = await bot.sendMessage(
-                            chatId,
-                            `Balance : ${Number(
-                              response?.data?.native
-                            )?.toFixed(5)}sol
+                      state.toBuyAddresName = res?.data?.data?.name;
+                      clearInterval(interval);
+                      await bot.deleteMessage(chatId, loaderMessage.message_id);
+                      state.buyPrice = 0.5;
+                      state.nativeBalance =
+                        res?.data?.data?.nativeTokenDetails?.solana;
+                      state.solanaBuyMessage = await bot.sendMessage(
+                        chatId,
+                        `Balance : ${Number(
+                          res?.data?.data?.nativeTokenDetails?.solana
+                        )?.toFixed(5)}sol
 Token : ${res?.data?.data?.name} <code>${res?.data?.data?.address}</code>
 ${res?.data?.data?.name} price : ${Number(res?.data?.data?.price)?.toFixed(6)}$
+variation24h : ${Number(res?.data?.data?.variation24h)?.toFixed(3)}%
+totalSupply : ${Number(res?.data?.data?.totalSupply)?.toFixed()}
+mcap : ${
+                          res?.data?.data?.mcap
+                            ? Number(res?.data?.data?.mcap)?.toFixed()
+                            : "not available!!"
+                        }
 https://dexscreener.com/solana/${state.toToken}`,
-                            {
-                              parse_mode: "HTML",
-                              reply_markup: {
-                                inline_keyboard: [
-                                  [
-                                    {
-                                      text: "⬅️ Back",
-                                      callback_data: "buyButton",
-                                    },
-                                    {
-                                      text: "🔄 Refresh",
-                                      callback_data: "refreshButtonBuySolana",
-                                    },
-                                  ],
-                                  [
-                                    {
-                                      text: "✅ 0.5 SOL",
-                                      callback_data: "0.5Sol",
-                                    },
-                                    {
-                                      text: "1 SOL",
-                                      callback_data: "1Sol",
-                                    },
-                                    {
-                                      text: "3 SOL",
-                                      callback_data: "3Sol",
-                                    },
-                                  ],
-                                  [
-                                    {
-                                      text: "5 SOL",
-                                      callback_data: "5Sol",
-                                    },
-                                    {
-                                      text: "10 SOL",
-                                      callback_data: "10Sol",
-                                    },
-                                    {
-                                      text: "SOL ✏️",
-                                      callback_data: "customSol",
-                                    },
-                                  ],
-                                  [
-                                    {
-                                      text: `Buy`,
-                                      callback_data: "solanaFinalBuy",
-                                    },
-                                  ],
-                                ],
-                              },
-                            }
-                          );
-                        })
-                        .catch(async (err) => {
-                          clearInterval(interval);
-                          await bot.deleteMessage(
-                            chatId,
-                            loaderMessage.message_id
-                          );
-                          console.log("🚀 ~ .then ~ err:", err);
-                          await bot.sendMessage(
-                            chatId,
-                            "🔴 somthing has been wrong plase try again later!!"
-                          );
-                        });
+                        {
+                          parse_mode: "HTML",
+                          reply_markup: {
+                            inline_keyboard: [
+                              [
+                                {
+                                  text: "⬅️ Back",
+                                  callback_data: "buyButton",
+                                },
+                                {
+                                  text: "🔄 Refresh",
+                                  callback_data: "refreshButtonBuySolana",
+                                },
+                              ],
+                              [
+                                {
+                                  text: "✅ 0.5 SOL",
+                                  callback_data: "0.5Sol",
+                                },
+                                {
+                                  text: "1 SOL",
+                                  callback_data: "1Sol",
+                                },
+                                {
+                                  text: "3 SOL",
+                                  callback_data: "3Sol",
+                                },
+                              ],
+                              [
+                                {
+                                  text: "5 SOL",
+                                  callback_data: "5Sol",
+                                },
+                                {
+                                  text: "10 SOL",
+                                  callback_data: "10Sol",
+                                },
+                                {
+                                  text: "SOL ✏️",
+                                  callback_data: "customSol",
+                                },
+                              ],
+                              [
+                                {
+                                  text: `Buy`,
+                                  callback_data: "solanaFinalBuy",
+                                },
+                              ],
+                            ],
+                          },
+                        }
+                      );
                     } else {
                       clearInterval(interval);
                       await bot.deleteMessage(chatId, loaderMessage.message_id);
@@ -1059,19 +1047,23 @@ https://dexscreener.com/solana/${state.toToken}`,
                   });
               } else {
                 await axios
-                  .post(`${API_URL}/getSingleTokenPrice`, {
+                  .post(`${API_URL}/dexEVM`, {
                     chain: state.flag,
-                    address: state.toToken,
+                    token: state.toToken,
                     nativeToken: state?.fromToken,
                     chatId,
+                    network: state?.network,
                   })
                   .then(async (res) => {
                     clearInterval(interval);
                     await bot.deleteMessage(chatId, loaderMessage.message_id);
+                    console.log("🚀 ~ .then ~ res:", res?.data?.data);
                     if (res?.data?.status) {
                       state.buyPrice = 0.5;
-                      state.toBuyAddresName = res?.data?.data?.tokenSymbol;
-                      state.buyTokenNativename = res?.data?.nativeToken[0];
+                      state.toBuyAddresName = res?.data?.data?.symbol;
+                      state.buyTokenNativename =
+                        res?.data?.data?.nativeTokenDetails;
+
                       userStates[chatId].evmBuyMessage = await bot.sendMessage(
                         chatId,
                         `${
@@ -1087,19 +1079,25 @@ https://dexscreener.com/solana/${state.toToken}`,
                             ? state?.buyTokenNativename?.usd_value
                             : 0
                         ).toFixed(4)} USD)
-Token : ${res?.data?.data?.tokenSymbol}  <code>${
-                          res?.data?.data?.tokenAddress
-                        }</code>
-${res?.data?.data?.tokenName} price : ${Number(
-                          res?.data?.data?.usdPriceFormatted
-                        )?.toFixed(5)}$
-24hrPercentChange : ${Number(res?.data?.data["24hrPercentChange"])?.toFixed(3)}%
+Token : ${res?.data?.data?.symbol}  <code>${res?.data?.data?.address}</code>
+${res?.data?.data?.name} price : ${Number(res?.data?.data?.price)?.toFixed(5)}$
+24hrPercentChange : ${Number(
+                          res?.data?.data?.variation24h
+                            ? res?.data?.data?.variation24h
+                            : 0
+                        )?.toFixed(3)}%
+totalSupply : ${Number(res?.data?.data?.totalSupply)?.toFixed()}
+mcap : ${
+                          res?.data?.data?.mcap
+                            ? Number(res?.data?.data?.mcap)?.toFixed()
+                            : "not available!!"
+                        }
 network : ${state?.network}
-${
-  !res?.data?.nativeToken[0]
-    ? `🔴 Insufficient balance for buy amount + gas ⇅`
-    : ""
-}
+                    ${
+                      !res?.data?.data?.nativeTokenDetails
+                        ? `🔴 Insufficient balance for buy amount + gas ⇅`
+                        : ""
+                    }
 https://dexscreener.com/${state?.network}/${state.toToken}`,
                         {
                           parse_mode: "HTML",
@@ -1118,24 +1116,27 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                               [
                                 {
                                   text: `✅ 0.5 ${
-                                    res?.data?.nativeToken[0]
-                                      ? res?.data?.nativeToken[0]?.symbol
+                                    res?.data?.data?.nativeTokenDetails
+                                      ? res?.data?.data?.nativeTokenDetails
+                                          ?.symbol
                                       : ""
                                   }`,
                                   callback_data: "0.5EVM",
                                 },
                                 {
                                   text: `1 ${
-                                    res?.data?.nativeToken[0]
-                                      ? res?.data?.nativeToken[0]?.symbol
+                                    res?.data?.data?.nativeTokenDetails
+                                      ? res?.data?.data?.nativeTokenDetails
+                                          ?.symbol
                                       : ""
                                   }`,
                                   callback_data: "1EVM",
                                 },
                                 {
                                   text: `3 ${
-                                    res?.data?.nativeToken[0]
-                                      ? res?.data?.nativeToken[0]?.symbol
+                                    res?.data?.data?.nativeTokenDetails
+                                      ? res?.data?.data?.nativeTokenDetails
+                                          ?.symbol
                                       : ""
                                   }`,
                                   callback_data: "3EVM",
@@ -1144,24 +1145,27 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                               [
                                 {
                                   text: `5 ${
-                                    res?.data?.nativeToken[0]
-                                      ? res?.data?.nativeToken[0]?.symbol
+                                    res?.data?.data?.nativeTokenDetails
+                                      ? res?.data?.data?.nativeTokenDetails
+                                          ?.symbol
                                       : ""
                                   }`,
                                   callback_data: "5EVM",
                                 },
                                 {
                                   text: `10 ${
-                                    res?.data?.nativeToken[0]
-                                      ? res?.data?.nativeToken[0]?.symbol
+                                    res?.data?.data?.nativeTokenDetails
+                                      ? res?.data?.data?.nativeTokenDetails
+                                          ?.symbol
                                       : ""
                                   }`,
                                   callback_data: "10EVM",
                                 },
                                 {
                                   text: `${
-                                    res?.data?.nativeToken[0]
-                                      ? res?.data?.nativeToken[0]?.symbol
+                                    res?.data?.data?.nativeTokenDetails
+                                      ? res?.data?.data?.nativeTokenDetails
+                                          ?.symbol
                                       : ""
                                   } ✏️`,
                                   callback_data: "customEVM",
@@ -1198,7 +1202,7 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                   });
               }
             } catch (error) {
-              console.log("🚀 ~ bot.on ~ error:", error);
+              console.log("🚀 ~ bot.on ~ error:", error?.message);
               resetUserState(chatId);
               await bot.sendMessage(
                 chatId,
