@@ -614,6 +614,7 @@ async function evmSwapHandle(amount, chatId, method) {
 }
 
 // setting function
+
 async function setting(chatId) {
   const userInfo = await getEmailAndWalletFromBackend(chatId);
   if (userInfo?.email) {
@@ -2210,6 +2211,60 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     case "customSol":
       if (userStates[chatId]?.flag == 19999) {
+        await bot.editMessageReplyMarkup(
+          {
+            inline_keyboard: [
+              [
+                {
+                  text: "⬅️ Back",
+                  callback_data: "buyButton",
+                },
+                {
+                  text: "🔄 Refresh",
+                  callback_data: "refreshButtonBuySolana",
+                },
+              ],
+              [
+                {
+                  text: "0.5 SOL",
+                  callback_data: "0.5Sol",
+                },
+                {
+                  text: "1 SOL",
+                  callback_data: "1Sol",
+                },
+                {
+                  text: "3 SOL",
+                  callback_data: "3Sol",
+                },
+              ],
+              [
+                {
+                  text: "5 SOL",
+                  callback_data: "5Sol",
+                },
+                {
+                  text: "10 SOL",
+                  callback_data: "10Sol",
+                },
+                {
+                  text: "✅ SOL ✏️",
+                  callback_data: "customSol",
+                },
+              ],
+              [
+                {
+                  text: `Buy`,
+                  callback_data: "solanaFinalBuy",
+                },
+              ],
+            ],
+          },
+          {
+            chat_id: chatId,
+            message_id: userStates[chatId].solanaBuyMessage.message_id,
+          }
+        );
         userStates[chatId].currentStep = "amountBuy";
         await bot.sendMessage(chatId, "please enter a sol Qty");
       } else {
@@ -2666,6 +2721,84 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     case "customEVM":
       if (userStates[chatId]?.flag) {
+        await bot.editMessageReplyMarkup(
+          {
+            inline_keyboard: [
+              [
+                {
+                  text: "⬅️ Back",
+                  callback_data: "buyButton",
+                },
+                {
+                  text: "🔄 Refresh",
+                  callback_data: "refreshEvmButton",
+                },
+              ],
+              [
+                {
+                  text: `0.5 ${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  }`,
+                  callback_data: "0.5EVM",
+                },
+                {
+                  text: `1 ${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  }`,
+                  callback_data: "1EVM",
+                },
+                {
+                  text: `3 ${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  }`,
+                  callback_data: "3EVM",
+                },
+              ],
+              [
+                {
+                  text: `5 ${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  }`,
+                  callback_data: "5EVM",
+                },
+                {
+                  text: `10 ${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  }`,
+                  callback_data: "10EVM",
+                },
+                {
+                  text: `✅ ${
+                    userStates[chatId].buyTokenNativename
+                      ? userStates[chatId].buyTokenNativename?.symbol
+                      : ""
+                  } ✏️`,
+                  callback_data: "customEVM",
+                },
+              ],
+              [
+                {
+                  text: `Buy`,
+                  callback_data: "evmFinalBuy",
+                },
+              ],
+            ],
+          },
+          {
+            chat_id: chatId,
+            message_id: userStates[chatId].evmBuyMessage.message_id,
+          }
+        );
         userStates[chatId].currentStep = "amountBuy";
         await bot.sendMessage(chatId, "please enter Qty");
       } else {
