@@ -121,6 +121,7 @@ const evmWalletBalance = {
       { text: "Avalanche", callback_data: "43114b" },
       { text: "Cronos", callback_data: "25b" },
       { text: "Fantom", callback_data: "250b" },
+      { text: "Linea", callback_data: "59144b" },
     ],
   ],
 };
@@ -142,6 +143,7 @@ const walletAddressKeyboard = {
       { text: "Avalanche", callback_data: "addressEVM" },
       { text: "Cronos", callback_data: "addressEVM" },
       { text: "Fantom", callback_data: "addressEVM" },
+      { text: "Linea", callback_data: "addressEVM" },
     ],
   ],
 };
@@ -163,6 +165,7 @@ const blockchainKeyboard = {
       { text: "Avalanche", callback_data: "43114" },
       { text: "Cronos", callback_data: "25" },
       { text: "Fantom", callback_data: "250" },
+      { text: "Linea", callback_data: "59144" },
     ],
   ],
 };
@@ -184,6 +187,7 @@ const buyblockchainKeyboard = {
       { text: "Avalanche", callback_data: "43114buy" },
       { text: "Cronos", callback_data: "25buy" },
       { text: "Fantom", callback_data: "250buy" },
+      { text: "Linea", callback_data: "59144buy" },
     ],
   ],
 };
@@ -205,6 +209,7 @@ const sellblockchainKeyboard = {
       { text: "Avalanche", callback_data: "43114sell" },
       { text: "Cronos", callback_data: "25sell" },
       { text: "Fantom", callback_data: "250sell" },
+      { text: "Linea", callback_data: "59144sell" },
     ],
   ],
 };
@@ -226,6 +231,7 @@ const withrawblockchainKeyboard = {
       { text: "Avalanche", callback_data: "43114withraw" },
       { text: "Cronos", callback_data: "25withraw" },
       { text: "Fantom", callback_data: "250withraw" },
+      { text: "Linea", callback_data: "59144withraw" },
     ],
   ],
 };
@@ -851,7 +857,8 @@ bot.on("message", async (msg) => {
             text == "/invite" ||
             text == "Start" ||
             text == "/evmbalance" ||
-            text == "/solbalance"
+            text == "/solbalance" ||
+            text == "/swap"
           ) {
             resetUserState(chatId);
           } else {
@@ -939,7 +946,8 @@ bot.on("message", async (msg) => {
             text == "/invite" ||
             text == "Start" ||
             text == "/evmbalance" ||
-            text == "/solbalance"
+            text == "/solbalance" ||
+            text=="/swap"
           ) {
             resetUserState(chatId);
           } else {
@@ -1262,7 +1270,8 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
             text == "/invite" ||
             text == "Start" ||
             text == "/evmbalance" ||
-            text == "/solbalance"
+            text == "/solbalance" ||
+            text == "/swap"
           ) {
             resetUserState(chatId);
           } else {
@@ -1364,7 +1373,8 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
             text == "/invite" ||
             text == "Start" ||
             text == "/evmbalance" ||
-            text == "/solbalance"
+            text == "/solbalance" ||
+            text == "/swap"
           ) {
             resetUserState(chatId);
           } else {
@@ -1475,7 +1485,8 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
             text == "/invite" ||
             text == "Start" ||
             text == "/evmbalance" ||
-            text == "/solbalance"
+            text == "/solbalance" ||
+            text == "/swap"
           ) {
             resetUserState(chatId);
           } else {
@@ -1634,7 +1645,8 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
             text == "/invite" ||
             text == "Start" ||
             text == "/evmbalance" ||
-            text == "/solbalance"
+            text == "/solbalance" ||
+            text == "/swap"
           ) {
             resetUserState(chatId);
           } else {
@@ -3217,6 +3229,16 @@ https://dexscreener.com/solana/${userStates[chatId]?.toToken}`,
       userStates[chatId].fromToken =
         "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
       handleBuy(chatId);
+      break;
+    case "59144buy":
+      resetUserState(chatId);
+      userStates[chatId].flag = 59144;
+      userStates[chatId].network = "linea";
+      userStates[chatId].method = "buy";
+      userStates[chatId].desCode = "0xe705";
+      userStates[chatId].fromToken =
+        "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
+      handleBuy(chatId);
 
       break;
     // ------------------------------------------------ sell -----------------------------------------------------------
@@ -3306,7 +3328,14 @@ https://dexscreener.com/solana/${userStates[chatId]?.toToken}`,
       userStates[chatId].method = "sell";
       userStates[chatId].toToken = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
       handleSell(chatId);
-
+      break;
+    case "59144sell":
+      resetUserState(chatId);
+      userStates[chatId].flag = 59144;
+      userStates[chatId].network = "linea";
+      userStates[chatId].method = "sell";
+      userStates[chatId].toToken = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
+      handleSell(chatId);
       break;
     // ---------------------------------------------------------------- swap --------------------------------------------------------
     case "solana":
@@ -3388,6 +3417,13 @@ https://dexscreener.com/solana/${userStates[chatId]?.toToken}`,
       handleSwap(chatId);
 
       break;
+    case "59144":
+      resetUserState(chatId);
+      userStates[chatId].flag = 59144;
+      userStates[chatId].network = "linea";
+      userStates[chatId].method = "swap";
+      handleSwap(chatId);
+      break;
     // ------------------------------------- balance ---------------------------------------------------
     case "1b":
       resetUserState(chatId);
@@ -3431,7 +3467,10 @@ https://dexscreener.com/solana/${userStates[chatId]?.toToken}`,
     case "250b":
       resetUserState(chatId);
       fetchTokenBalances(chatId, "0xfa");
-
+      break;
+    case "59144b":
+      resetUserState(chatId);
+      fetchTokenBalances(chatId, "0xe705");
       break;
     // ========================================================= wallet address =====================================================
     case "solanaAddress":
@@ -3513,7 +3552,12 @@ https://dexscreener.com/solana/${userStates[chatId]?.toToken}`,
       userStates[chatId].flag = 250;
       userStates[chatId].method = "transfer";
       handleTransfer(chatId);
-
+      break;
+    case "59144withraw":
+      resetUserState(chatId);
+      userStates[chatId].flag = 59144;
+      userStates[chatId].method = "transfer";
+      handleTransfer(chatId);
       break;
     default:
       console.log(`Unknown button clicked meet: ${data}`);
