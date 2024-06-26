@@ -1905,11 +1905,21 @@ bot.on("callback_query", async (callbackQuery) => {
             await bot.sendMessage(
               chatId,
               `Your referals based on the levels
-level1 :- ${res?.data?.data?.level1?.length} refferals
-level2 :- ${res?.data?.data?.level2?.length} refferals
-level3 :- ${res?.data?.data?.level3?.length} refferals
-level4 :- ${res?.data?.data?.level4?.length} refferals
-level5 :- ${res?.data?.data?.level5?.length} refferals`
+level1 :- ${
+                res?.data?.data?.level1 ? res?.data?.data?.level1?.length : 0
+              } refferals
+level2 :- ${
+                res?.data?.data?.level2 ? res?.data?.data?.level2?.length : 0
+              } refferals
+level3 :- ${
+                res?.data?.data?.level3 ? res?.data?.data?.level3?.length : 0
+              } refferals
+level4 :- ${
+                res?.data?.data?.level4 ? res?.data?.data?.level4?.length : 0
+              } refferals
+level5 :- ${
+                res?.data?.data?.level5 ? res?.data?.data?.level5?.length : 0
+              } refferals`
             );
           } else {
             await bot.sendMessage(chatId, "🔴 something went wrong!!");
