@@ -121,40 +121,45 @@ const evmWalletBalance = {
       { text: "Avalanche", callback_data: "43114b" },
       { text: "Cronos", callback_data: "25b" },
       { text: "Fantom", callback_data: "250b" },
+    ],
+    [
       { text: "Linea", callback_data: "59144b" },
+      { text: "blast", callback_data: "81457b" },
     ],
   ],
 };
 // wallet addresses keyboard
 const walletAddressKeyboard = {
   inline_keyboard: [
-    [{ text: "Solona", callback_data: "solanaAddress" }],
     [
+      { text: "Solona", callback_data: "solanaAddress" },
       { text: "Ethereum", callback_data: "addressEVM" },
       { text: "Arbitrum", callback_data: "addressEVM" },
-      { text: "Optimism", callback_data: "addressEVM" },
     ],
     [
       { text: "Polygon", callback_data: "addressEVM" },
-      { text: "Base", callback_data: "addressEVM" },
       { text: "BNB Chain", callback_data: "addressEVM" },
+      { text: "Base", callback_data: "addressEVM" },
+    ],
+    [
+      { text: "Optimism", callback_data: "addressEVM" },
+      { text: "Linea", callback_data: "addressEVM" },
+      { text: "blast", callback_data: "addressEVM" },
     ],
     [
       { text: "Avalanche", callback_data: "addressEVM" },
       { text: "Cronos", callback_data: "addressEVM" },
       { text: "Fantom", callback_data: "addressEVM" },
-      { text: "Linea", callback_data: "addressEVM" },
     ],
   ],
 };
 // swap keyboard
 const blockchainKeyboard = {
   inline_keyboard: [
-    [{ text: "Solona", callback_data: "solana" }],
     [
+      { text: "Solona", callback_data: "solana" },
       { text: "Ethereum", callback_data: "1" },
       { text: "Arbitrum", callback_data: "42161" },
-      { text: "Optimism", callback_data: "10" },
     ],
     [
       { text: "Polygon", callback_data: "137" },
@@ -162,21 +167,25 @@ const blockchainKeyboard = {
       { text: "BNB Chain", callback_data: "56" },
     ],
     [
+      { text: "Optimism", callback_data: "10" },
+      { text: "Linea", callback_data: "59144" },
+      { text: "blast", callback_data: "81457" },
+    ],
+    [
       { text: "Avalanche", callback_data: "43114" },
       { text: "Cronos", callback_data: "25" },
       { text: "Fantom", callback_data: "250" },
-      { text: "Linea", callback_data: "59144" },
     ],
   ],
 };
 // buy token keyboard
 const buyblockchainKeyboard = {
   inline_keyboard: [
-    [{ text: "Solona", callback_data: "solBuy" }],
     [
+      { text: "Solona", callback_data: "solBuy" },
       { text: "Ethereum", callback_data: "1buy" },
+
       { text: "Arbitrum", callback_data: "42161buy" },
-      { text: "Optimism", callback_data: "10buy" },
     ],
     [
       { text: "Polygon", callback_data: "137buy" },
@@ -184,21 +193,24 @@ const buyblockchainKeyboard = {
       { text: "BNB Chain", callback_data: "56buy" },
     ],
     [
+      { text: "Optimism", callback_data: "10buy" },
+      { text: "Linea", callback_data: "59144buy" },
+      { text: "blast", callback_data: "81457buy" },
+    ],
+    [
       { text: "Avalanche", callback_data: "43114buy" },
       { text: "Cronos", callback_data: "25buy" },
       { text: "Fantom", callback_data: "250buy" },
-      { text: "Linea", callback_data: "59144buy" },
     ],
   ],
 };
 // sell token keyboard
 const sellblockchainKeyboard = {
   inline_keyboard: [
-    [{ text: "Solona", callback_data: "solSell" }],
     [
+      { text: "Solona", callback_data: "solSell" },
       { text: "Ethereum", callback_data: "1sell" },
       { text: "Arbitrum", callback_data: "42161sell" },
-      { text: "Optimism", callback_data: "10sell" },
     ],
     [
       { text: "Polygon", callback_data: "137sell" },
@@ -206,21 +218,24 @@ const sellblockchainKeyboard = {
       { text: "BNB Chain", callback_data: "56sell" },
     ],
     [
+      { text: "Optimism", callback_data: "10sell" },
+      { text: "Linea", callback_data: "59144sell" },
+      { text: "blast", callback_data: "81457sell" },
+    ],
+    [
       { text: "Avalanche", callback_data: "43114sell" },
       { text: "Cronos", callback_data: "25sell" },
       { text: "Fantom", callback_data: "250sell" },
-      { text: "Linea", callback_data: "59144sell" },
     ],
   ],
 };
 // withraw token keyboard
 const withrawblockchainKeyboard = {
   inline_keyboard: [
-    [{ text: "Solona", callback_data: "solwithraw" }],
     [
+      { text: "Solona", callback_data: "solwithraw" },
       { text: "Ethereum", callback_data: "1withraw" },
       { text: "Arbitrum", callback_data: "42161withraw" },
-      { text: "Optimism", callback_data: "10withraw" },
     ],
     [
       { text: "Polygon", callback_data: "137withraw" },
@@ -228,10 +243,14 @@ const withrawblockchainKeyboard = {
       { text: "BNB Chain", callback_data: "56withraw" },
     ],
     [
+      { text: "Optimism", callback_data: "10withraw" },
+      { text: "Linea", callback_data: "59144withraw" },
+      { text: "blast", callback_data: "81457withraw" },
+    ],
+    [
       { text: "Avalanche", callback_data: "43114withraw" },
       { text: "Cronos", callback_data: "25withraw" },
       { text: "Fantom", callback_data: "250withraw" },
-      { text: "Linea", callback_data: "59144withraw" },
     ],
   ],
 };
@@ -549,35 +568,35 @@ async function solanaSwapHandle(chatId, input, output, amount, method, desBot) {
 }
 // EVM swap function
 async function evmSwapHandle(amount, chatId, method) {
-  if (
-    userStates[chatId]?.buyTokenNativename?.balance_formatted <= amount ||
-    !userStates[chatId]?.buyTokenNativename?.balance_formatted
-  ) {
-    resetUserState(chatId);
-    return bot.sendMessage(
-      chatId,
-      "🔴 You do not have sufficient fund+gas to perform this transaction!!",
-      {
-        reply_markup: {
-          inline_keyboard: [
-            [
-              {
-                text: "⬅️ Back",
-                callback_data: "buyButton",
-              },
-              {
-                text: "⬆️ Main Menu",
-                callback_data: "refreshButton",
-              },
-            ],
-          ],
+  // if (
+  //   userStates[chatId]?.buyTokenNativename?.balance_formatted <= amount ||
+  //   !userStates[chatId]?.buyTokenNativename?.balance_formatted
+  // ) {
+  //   resetUserState(chatId);
+  //   return bot.sendMessage(
+  //     chatId,
+  //     "🔴 You do not have sufficient fund+gas to perform this transaction!!",
+  //     {
+  //       reply_markup: {
+  //         inline_keyboard: [
+  //           [
+  //             {
+  //               text: "⬅️ Back",
+  //               callback_data: "buyButton",
+  //             },
+  //             {
+  //               text: "⬆️ Main Menu",
+  //               callback_data: "refreshButton",
+  //             },
+  //           ],
+  //         ],
 
-          resize_keyboard: true,
-          one_time_keyboard: true,
-        },
-      }
-    );
-  } else {
+  //         resize_keyboard: true,
+  //         one_time_keyboard: true,
+  //       },
+  //     }
+  //   );
+  // } else {
     try {
       const { loaderMessage, interval } = await animateLoader(chatId);
       await axios({
@@ -617,7 +636,7 @@ async function evmSwapHandle(amount, chatId, method) {
       console.log("🚀 ~ evmSwapHandle ~ error:", error);
     }
   }
-}
+// }
 
 // setting function
 
@@ -947,7 +966,7 @@ bot.on("message", async (msg) => {
             text == "Start" ||
             text == "/evmbalance" ||
             text == "/solbalance" ||
-            text=="/swap"
+            text == "/swap"
           ) {
             resetUserState(chatId);
           } else {
@@ -1102,11 +1121,11 @@ mcap : ${
                             : "not available!!"
                         }
 network : ${state?.network}
-                    ${
-                      !res?.data?.data?.nativeTokenDetails
-                        ? `🔴 Insufficient balance for buy amount + gas ⇅`
-                        : ""
-                    }
+${
+  res?.data?.data?.nativeTokenDetails?.balance_formatted <= 0
+    ? `🔴 Insufficient balance for buy amount + gas ⇅`
+    : ""
+}
 https://dexscreener.com/${state?.network}/${state.toToken}`,
                         {
                           parse_mode: "HTML",
@@ -2854,11 +2873,10 @@ bot.on("callback_query", async (callbackQuery) => {
           );
         }
         const { loaderMessage, interval } = await animateLoader(chatId);
-        await axios;
         await axios
           .post(`${API_URL}/dexEVM`, {
-            chain: userStates[chatId]?.flag,
-            token: userStates[chatId]?.toToken,
+            chain: userStates[chatId].flag,
+            token: userStates[chatId].toToken,
             nativeToken: userStates[chatId]?.fromToken,
             chatId,
             network: userStates[chatId]?.network,
@@ -2902,11 +2920,11 @@ mcap : ${
                     : "not available!!"
                 }
 network : ${userStates[chatId]?.network}
-                    ${
-                      !res?.data?.data?.nativeTokenDetails
-                        ? `🔴 Insufficient balance for buy amount + gas ⇅`
-                        : ""
-                    }
+${
+  res?.data?.data?.nativeTokenDetails?.balance_formatted <= 0
+    ? `🔴 Insufficient balance for buy amount + gas ⇅`
+    : ""
+}
 https://dexscreener.com/${userStates[chatId]?.network}/${
                   userStates[chatId].toToken
                 }`,
@@ -3239,8 +3257,18 @@ https://dexscreener.com/solana/${userStates[chatId]?.toToken}`,
       userStates[chatId].fromToken =
         "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
       handleBuy(chatId);
-
       break;
+    case "81457buy":
+      resetUserState(chatId);
+      userStates[chatId].flag = 81457;
+      userStates[chatId].network = "blast";
+      userStates[chatId].method = "buy";
+      userStates[chatId].desCode = "blast";
+      userStates[chatId].fromToken =
+        "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
+      handleBuy(chatId);
+      break;
+
     // ------------------------------------------------ sell -----------------------------------------------------------
     case "solSell":
       resetUserState(chatId);
@@ -3337,6 +3365,15 @@ https://dexscreener.com/solana/${userStates[chatId]?.toToken}`,
       userStates[chatId].toToken = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
       handleSell(chatId);
       break;
+    case "81457sell":
+      resetUserState(chatId);
+      userStates[chatId].flag = 81457;
+      userStates[chatId].network = "blast";
+      userStates[chatId].method = "sell";
+      userStates[chatId].toToken = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
+      handleSell(chatId);
+      break;
+
     // ---------------------------------------------------------------- swap --------------------------------------------------------
     case "solana":
       resetUserState(chatId);
@@ -3424,6 +3461,13 @@ https://dexscreener.com/solana/${userStates[chatId]?.toToken}`,
       userStates[chatId].method = "swap";
       handleSwap(chatId);
       break;
+    case "81457":
+      resetUserState(chatId);
+      userStates[chatId].flag = 81457;
+      userStates[chatId].network = "blast";
+      userStates[chatId].method = "swap";
+      handleSwap(chatId);
+      break;
     // ------------------------------------- balance ---------------------------------------------------
     case "1b":
       resetUserState(chatId);
@@ -3471,6 +3515,13 @@ https://dexscreener.com/solana/${userStates[chatId]?.toToken}`,
     case "59144b":
       resetUserState(chatId);
       fetchTokenBalances(chatId, "0xe705");
+      break;
+    case "81457b":
+      resetUserState(chatId);
+      bot.sendMessage(
+        chatId,
+        `https://blastscan.io/address/${isUser?.isLogin?.wallet}`
+      );
       break;
     // ========================================================= wallet address =====================================================
     case "solanaAddress":
