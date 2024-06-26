@@ -597,45 +597,45 @@ async function evmSwapHandle(amount, chatId, method) {
   //     }
   //   );
   // } else {
-    try {
-      const { loaderMessage, interval } = await animateLoader(chatId);
-      await axios({
-        url: `${API_URL}/EVMBuy`,
-        method: "post",
-        data: {
-          tokenIn: userStates[chatId]?.fromToken,
-          tokenOut: userStates[chatId]?.toToken,
-          chainId: userStates[chatId]?.network,
-          amount,
-          chain: userStates[chatId]?.flag,
-          chatId,
-          method,
-        },
+  try {
+    const { loaderMessage, interval } = await animateLoader(chatId);
+    await axios({
+      url: `${API_URL}/EVMBuy`,
+      method: "post",
+      data: {
+        tokenIn: userStates[chatId]?.fromToken,
+        tokenOut: userStates[chatId]?.toToken,
+        chainId: userStates[chatId]?.network,
+        amount,
+        chain: userStates[chatId]?.flag,
+        chatId,
+        method,
+      },
+    })
+      .then(async (response) => {
+        resetUserState(chatId);
+        clearInterval(interval);
+        await bot.deleteMessage(chatId, loaderMessage.message_id);
+        if (response?.data?.status) {
+          await bot.sendMessage(chatId, `✅ ${response?.data?.message}`);
+          return await bot.sendMessage(chatId, response?.data?.txUrl);
+        } else {
+          await bot.sendMessage(chatId, response?.data?.message);
+        }
       })
-        .then(async (response) => {
-          resetUserState(chatId);
-          clearInterval(interval);
-          await bot.deleteMessage(chatId, loaderMessage.message_id);
-          if (response?.data?.status) {
-            await bot.sendMessage(chatId, `✅ ${response?.data?.message}`);
-            return await bot.sendMessage(chatId, response?.data?.txUrl);
-          } else {
-            await bot.sendMessage(chatId, response?.data?.message);
-          }
-        })
-        .catch(async (error) => {
-          resetUserState(chatId);
-          clearInterval(interval);
-          await bot.deleteMessage(chatId, loaderMessage.message_id);
-          await bot.sendMessage(
-            chatId,
-            `due to some reason you transaction failed!!`
-          );
-        });
-    } catch (error) {
-      console.log("🚀 ~ evmSwapHandle ~ error:", error);
-    }
+      .catch(async (error) => {
+        resetUserState(chatId);
+        clearInterval(interval);
+        await bot.deleteMessage(chatId, loaderMessage.message_id);
+        await bot.sendMessage(
+          chatId,
+          `due to some reason you transaction failed!!`
+        );
+      });
+  } catch (error) {
+    console.log("🚀 ~ evmSwapHandle ~ error:", error);
   }
+}
 // }
 
 // setting function
@@ -653,6 +653,7 @@ async function setting(chatId) {
       reply_markup: {
         inline_keyboard: [
           [
+            { text: "Your referrals 👨‍👧‍👦", callback_data: "totalReferrals" },
             {
               text: "Invite",
               callback_data: "referralQr",
@@ -1891,6 +1892,34 @@ bot.on("callback_query", async (callbackQuery) => {
       resetUserState(chatId);
       fetchSolanaBalance(chatId);
       break;
+    case "totalReferrals":
+      try {
+        await axios({
+          url: `${API_URL}/getUserReferals`,
+          method: "post",
+          data: {
+            email: isUser?.isLogin?.email,
+          },
+        }).then(async (res) => {
+          if (res?.data?.status) {
+            await bot.sendMessage(
+              chatId,
+              `Your referals based on the levels
+level1 :- ${res?.data?.data?.level1?.length} refferals
+level2 :- ${res?.data?.data?.level2?.length} refferals
+level3 :- ${res?.data?.data?.level3?.length} refferals
+level4 :- ${res?.data?.data?.level4?.length} refferals
+level5 :- ${res?.data?.data?.level5?.length} refferals`
+            );
+          } else {
+            await bot.sendMessage(chatId, "🔴 something went wrong!!");
+          }
+        });
+      } catch (error) {
+        console.log("🚀 ~ bot.on ~ error:", error);
+        await bot.sendMessage(chatId, "🔴 something went wrong!!");
+      }
+      break;
     case "balanceButton":
       resetUserState(chatId);
       await bot.sendMessage(chatId, `🌟 Choose a network 🌟`, {
@@ -2242,6 +2271,7 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     case "customSol":
       if (userStates[chatId]?.flag == 19999) {
+        userStates[chatId].buyPrice = null;
         await bot.editMessageReplyMarkup(
           {
             inline_keyboard: [
@@ -2752,6 +2782,7 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     case "customEVM":
       if (userStates[chatId]?.flag) {
+        userStates[chatId].buyPrice = null;
         await bot.editMessageReplyMarkup(
           {
             inline_keyboard: [
