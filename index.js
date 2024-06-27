@@ -685,18 +685,7 @@ Wave Socials : https://linktr.ee/wavebot
     await loginLogOutButton(chatId);
   }
 }
-// 🌊 WaveBot(https://wavebot.app/)\n
-// 🐦 Twitter: https://x.com/WaveBotApp\n
-// 💬 Discord: https://discord.gg/w4tFdAA7\n
-// 👥 Telegram Community: https://t.me/+MX1exQQYjWkxZjBl\n
-// 📢 Telegram Announcements: https://t.me/WaveAnnouncements\n
-// 📸 Instagram: https://www.instagram.com/wavebotapp/\n
-// 🎵 TikTok: https://www.tiktok.com/@wavebotapp\n
-// 📺 YouTube: https://www.youtube.com/@WaveBotApp\n
-// 👾 Reddit: https://www.reddit.com/user/wavebotapp/\n
-// ✍️ Medium: https://medium.com/@wavebotapp\n
-// 💼 LinkedIn: https://www.linkedin.com/company/wave_protocol/?viewAsMember=true\n
-// 📘 Facebook: https://www.facebook.com/profile.php?id=61560842638941\n
+
 // Function to fetch Solana balance
 async function fetchSolanaBalance(chatId) {
   try {
@@ -752,6 +741,11 @@ async function fetchTokenBalances(chatId, chainId) {
     );
   }
 }
+
+bot.on("message", (update) => {
+  console.log("🚀 ~ bot.on ~ update:", update);
+  const message = update.message;
+});
 
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
@@ -1349,9 +1343,13 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                     await bot.sendMessage(chatId, `✅ ${res?.data?.message}`);
                     return await bot.sendMessage(chatId, res?.data?.txUrl);
                   } else {
+                    console.log(
+                      "🚀 ~ .then ~ res?.data?.message:",
+                      res?.data?.message
+                    );
                     return await bot.sendMessage(
                       chatId,
-                      `somthing has been wrong in swap!!!`
+                      `somthing has been wrong while selling !!!`
                     );
                   }
                 })
@@ -1904,12 +1902,31 @@ bot.on("callback_query", async (callbackQuery) => {
           if (res?.data?.status) {
             await bot.sendMessage(
               chatId,
-              `Your referals based on the levels
-level1 :- ${res?.data?.data ? res?.data?.data?.level1?.length : 0} refferals
-level2 :- ${res?.data?.data ? res?.data?.data?.level2?.length : 0} refferals
-level3 :- ${res?.data?.data ? res?.data?.data?.level3?.length : 0} refferals
-level4 :- ${res?.data?.data ? res?.data?.data?.level4?.length : 0} refferals
-level5 :- ${res?.data?.data ? res?.data?.data?.level5?.length : 0} refferals`
+              `💰 Referal Rewards💰\n
+Referrals(Level-1) : ${
+                res?.data?.data ? res?.data?.data?.level1?.length : 0
+              }🧍\n
+Net Referral Rate: 25%
+Active Referrals: 0\n
+Total Unclaimed: <code>$0</code>
+*Eth: <code>0.000 ($0)</code>
+*SOL: <code>0.000 ($0)</code>
+*Base: <code>0.000 ($0)</code>
+*AVAX: <code>0.000 ($0)</code>
+*Blast: <code>0.000 ($0)</code>\n
+Lifetime Rewards: <code>$0</code>
+*ETH: <code>0.000 ($0)</code>
+*SOL: <code>0.000 ($0)</code>
+*Base: <code>0.000 ($0)</code>
+*AVAX: <code>0.000 ($0)</code>
+*Blast: <code>0.000 ($0)</code>\n
+📅 Weekly Stats
+Total Traded Volume Usd: $0
+Volume Left: $10,000\n
+You need to trade at least $10k USD by the
+ end of the week to get boost in your
+referral rate.`,
+              { parse_mode: "HTML" }
             );
           } else {
             await bot.sendMessage(chatId, "🔴 something went wrong!!");
