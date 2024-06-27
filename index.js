@@ -547,78 +547,80 @@ async function solanaSwapHandle(chatId, input, output, amount, method, desBot) {
             `due to some reason you transaction failed!!`
           );
         });
-    } catch (error) {}
+    } catch (error) {
+      console.log("🚀 ~ solanaSwapHandle ~ error:", error?.message);
+    }
   }
 }
 // EVM swap function
 async function evmSwapHandle(amount, chatId, method) {
-  // if (
-  //   userStates[chatId]?.buyTokenNativename?.balance_formatted <= amount ||
-  //   !userStates[chatId]?.buyTokenNativename?.balance_formatted
-  // ) {
-  //   resetUserState(chatId);
-  //   return bot.sendMessage(
-  //     chatId,
-  //     "🔴 You do not have sufficient fund+gas to perform this transaction!!",
-  //     {
-  //       reply_markup: {
-  //         inline_keyboard: [
-  //           [
-  //             {
-  //               text: "⬅️ Back",
-  //               callback_data: "buyButton",
-  //             },
-  //             {
-  //               text: "⬆️ Main Menu",
-  //               callback_data: "refreshButton",
-  //             },
-  //           ],
-  //         ],
+  if (
+    userStates[chatId]?.buyTokenNativename?.balance_formatted <= amount ||
+    !userStates[chatId]?.buyTokenNativename?.balance_formatted
+  ) {
+    resetUserState(chatId);
+    return bot.sendMessage(
+      chatId,
+      "🔴 You do not have sufficient fund+gas to perform this transaction!!",
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: "⬅️ Back",
+                callback_data: "buyButton",
+              },
+              {
+                text: "⬆️ Main Menu",
+                callback_data: "refreshButton",
+              },
+            ],
+          ],
 
-  //         resize_keyboard: true,
-  //         one_time_keyboard: true,
-  //       },
-  //     }
-  //   );
-  // } else {
-  try {
-    const { loaderMessage, interval } = await animateLoader(chatId);
-    await axios({
-      url: `${API_URL}/EVMBuy`,
-      method: "post",
-      data: {
-        tokenIn: userStates[chatId]?.fromToken,
-        tokenOut: userStates[chatId]?.toToken,
-        chainId: userStates[chatId]?.network,
-        amount,
-        chain: userStates[chatId]?.flag,
-        chatId,
-        method,
-      },
-    })
-      .then(async (response) => {
-        resetUserState(chatId);
-        clearInterval(interval);
-        await bot.deleteMessage(chatId, loaderMessage.message_id);
-        if (response?.data?.status) {
-          await bot.sendMessage(chatId, `✅ ${response?.data?.message}`);
-          return await bot.sendMessage(chatId, response?.data?.txUrl);
-        } else {
-          await bot.sendMessage(chatId, response?.data?.message);
-        }
-      })
-      .catch(async (error) => {
-        resetUserState(chatId);
-        clearInterval(interval);
-        await bot.deleteMessage(chatId, loaderMessage.message_id);
-        await bot.sendMessage(
+          resize_keyboard: true,
+          one_time_keyboard: true,
+        },
+      }
+    );
+  } else {
+    try {
+      const { loaderMessage, interval } = await animateLoader(chatId);
+      await axios({
+        url: `${API_URL}/EVMBuy`,
+        method: "post",
+        data: {
+          tokenIn: userStates[chatId]?.fromToken,
+          tokenOut: userStates[chatId]?.toToken,
+          chainId: userStates[chatId]?.network,
+          amount,
+          chain: userStates[chatId]?.flag,
           chatId,
-          `due to some reason you transaction failed!!`
-        );
-      });
-  } catch (error) {}
+          method,
+        },
+      })
+        .then(async (response) => {
+          resetUserState(chatId);
+          clearInterval(interval);
+          await bot.deleteMessage(chatId, loaderMessage.message_id);
+          if (response?.data?.status) {
+            await bot.sendMessage(chatId, `✅ ${response?.data?.message}`);
+            return await bot.sendMessage(chatId, response?.data?.txUrl);
+          } else {
+            await bot.sendMessage(chatId, response?.data?.message);
+          }
+        })
+        .catch(async (error) => {
+          resetUserState(chatId);
+          clearInterval(interval);
+          await bot.deleteMessage(chatId, loaderMessage.message_id);
+          await bot.sendMessage(
+            chatId,
+            `due to some reason you transaction failed!!`
+          );
+        });
+    } catch (error) {}
+  }
 }
-// }
 
 // setting function
 
