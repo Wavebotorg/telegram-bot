@@ -276,9 +276,7 @@ const animateLoader = async (chatId) => {
       }
     }, 500);
     return { loaderMessage, interval };
-  } catch (error) {
-    console.log("🚀 ~ animateLoader ~ error:", error);
-  }
+  } catch (error) {}
 };
 // Email Validation
 const isValidEmail = (email) => {
@@ -322,14 +320,10 @@ async function getQrCode(chatId, wallet) {
 
 // get referral QR code
 async function getreferralQrCode(chatId, referralId) {
-  console.log("🚀 ~ getreferralQrCode ~ referralId:", referralId);
-
   try {
     const res = await axios.post(`${API_URL}/getInviteQrCode`, { referralId });
 
     if (res?.data?.status) {
-      console.log("🚀 ~ getreferralQrCode ~ res?.data:", res?.data);
-
       // Fetch the image as a buffer
       const imageResponse = await axios.get(res?.data?.path, {
         responseType: "arraybuffer",
@@ -348,7 +342,6 @@ async function getreferralQrCode(chatId, referralId) {
       await bot.sendMessage(chatId, "Something went wrong!!");
     }
   } catch (err) {
-    console.log("🚀 ~ getreferralQrCode ~ err:", err.message);
     await bot.sendMessage(chatId, "Something went wrong!!");
   }
 }
@@ -476,7 +469,6 @@ async function loginLogOutButton(chatId) {
 async function getstartBot(chatId) {
   try {
     const finddata = await axios.post(`${API_URL}/startBot`, { chatId });
-    console.log("🚀 ~ getstartBot ~ finddata:", finddata?.data);
     if (finddata?.data?.status) {
       return finddata?.data;
     } else {
@@ -489,11 +481,6 @@ async function getstartBot(chatId) {
 
 // solana swap function
 async function solanaSwapHandle(chatId, input, output, amount, method, desBot) {
-  console.log("🚀 ~ solanaSwapHandle ~ amount:", amount);
-  console.log(
-    "🚀 ~ solanaSwapHandle ~ balance_formatted:",
-    userStates[chatId]?.nativeBalance
-  );
   if (
     userStates[chatId]?.nativeBalance <= amount ||
     !userStates[chatId]?.nativeBalance
@@ -552,7 +539,6 @@ async function solanaSwapHandle(chatId, input, output, amount, method, desBot) {
           }
         })
         .catch(async (err) => {
-          console.log("🚀 ~ bot.on ~ err:", err);
           resetUserState(chatId);
           clearInterval(interval);
           await bot.deleteMessage(chatId, loaderMessage.message_id);
@@ -561,9 +547,7 @@ async function solanaSwapHandle(chatId, input, output, amount, method, desBot) {
             `due to some reason you transaction failed!!`
           );
         });
-    } catch (error) {
-      console.log("🚀 ~ solanaSwapHandle ~ error:", error);
-    }
+    } catch (error) {}
   }
 }
 // EVM swap function
@@ -632,9 +616,7 @@ async function evmSwapHandle(amount, chatId, method) {
           `due to some reason you transaction failed!!`
         );
       });
-  } catch (error) {
-    console.log("🚀 ~ evmSwapHandle ~ error:", error);
-  }
+  } catch (error) {}
 }
 // }
 
@@ -741,11 +723,6 @@ async function fetchTokenBalances(chatId, chainId) {
     );
   }
 }
-
-bot.on("message", (update) => {
-  console.log("🚀 ~ bot.on ~ update:", update);
-  const message = update.message;
-});
 
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
@@ -974,7 +951,6 @@ bot.on("message", async (msg) => {
                     chatId,
                   })
                   .then(async (res) => {
-                    console.log("🚀 ~ bot.on ~ res:", res?.data?.data);
                     if (res?.data?.status) {
                       state.toBuyAddresName = res?.data?.data?.name;
                       clearInterval(interval);
@@ -1062,7 +1038,6 @@ https://dexscreener.com/solana/${state.toToken}`,
                   .catch(async (error) => {
                     clearInterval(interval);
                     await bot.deleteMessage(chatId, loaderMessage.message_id);
-                    console.log("🚀 ~ .then ~ error:", error?.message);
                     await bot.sendMessage(
                       chatId,
                       "🔴 somthing has been wrong while fetching token price!!"
@@ -1080,7 +1055,6 @@ https://dexscreener.com/solana/${state.toToken}`,
                   .then(async (res) => {
                     clearInterval(interval);
                     await bot.deleteMessage(chatId, loaderMessage.message_id);
-                    console.log("🚀 ~ .then ~ res:", res?.data?.data);
                     if (res?.data?.status) {
                       state.buyPrice = 0.5;
                       state.toBuyAddresName = res?.data?.data?.symbol;
@@ -1217,7 +1191,6 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                   .catch(async (error) => {
                     clearInterval(interval);
                     await bot.deleteMessage(chatId, loaderMessage.message_id);
-                    console.log("🚀 ~ .then ~ error:", error?.message);
                     await bot.sendMessage(
                       chatId,
                       "🔴somthing has been wrong while fetching token price!!"
@@ -1225,7 +1198,6 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                   });
               }
             } catch (error) {
-              console.log("🚀 ~ bot.on ~ error:", error?.message);
               resetUserState(chatId);
               await bot.sendMessage(
                 chatId,
@@ -1343,13 +1315,9 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                     await bot.sendMessage(chatId, `✅ ${res?.data?.message}`);
                     return await bot.sendMessage(chatId, res?.data?.txUrl);
                   } else {
-                    console.log(
-                      "🚀 ~ .then ~ res?.data?.message:",
-                      res?.data?.message
-                    );
                     return await bot.sendMessage(
                       chatId,
-                      `somthing has been wrong while selling !!!`
+                      `somthing has been wrong while selling!!!`
                     );
                   }
                 })
@@ -1414,7 +1382,6 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                   clearInterval(interval);
                   await bot.deleteMessage(chatId, loaderMessage.message_id);
                   if (res?.data?.status) {
-                    console.log("🚀 ~ .then ~ res?.data?.tx:", res?.data?.tx);
                     await bot.sendMessage(chatId, `✅ ${res?.data?.message}`);
                     await bot.sendMessage(
                       chatId,
@@ -1428,7 +1395,6 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                   resetUserState(chatId);
                   clearInterval(interval);
                   await bot.deleteMessage(chatId, loaderMessage.message_id);
-                  console.log("🚀 ~ awaitbot.once ~ error:", error);
                   await bot.sendMessage(
                     chatId,
                     "due to high transaction volume in solana you transaction has been faild!!"
@@ -1462,7 +1428,6 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                 .catch(async (error) => {
                   clearInterval(interval);
                   await bot.deleteMessage(chatId, loaderMessage.message_id);
-                  console.log("🚀 ~ bot.on ~ error:", error?.message);
                   await bot.sendMessage(
                     chatId,
                     "somthing has been wrong please try again latter!!"
@@ -1723,7 +1688,6 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                 resetUserState(chatId);
                 clearInterval(interval);
                 await bot.deleteMessage(chatId, loaderMessage.message_id);
-                console.log("🚀 ~ .then ~ error:", error);
                 await bot.sendMessage(
                   chatId,
                   "❌ An error occurred while register in please try again",
@@ -1838,7 +1802,6 @@ bot.on("callback_query", async (callbackQuery) => {
   const chatId = callbackQuery.message.chat.id;
   const data = callbackQuery.data;
   const isUser = await getstartBot(chatId);
-  console.log("🚀 ~ bot.on ~ isUser:", isUser);
   if (!isUser?.status) {
     return await bot.sendMessage(chatId, "please login!!", {
       reply_markup: {
@@ -1903,6 +1866,7 @@ bot.on("callback_query", async (callbackQuery) => {
             await bot.sendMessage(
               chatId,
               `💰 Referal Rewards💰\n
+🔗 https://t.me/onchain_wavebot?start=${isUser?.isLogin?.referralId}\n
 Referrals(Level-1) : ${
                 res?.data?.data ? res?.data?.data?.level1?.length : 0
               }🧍\n
@@ -1933,7 +1897,6 @@ referral rate.`,
           }
         });
       } catch (error) {
-        console.log("🚀 ~ bot.on ~ error:", error);
         await bot.sendMessage(chatId, "🔴 something went wrong!!");
       }
       break;
@@ -2932,7 +2895,6 @@ referral rate.`,
           .then(async (res) => {
             clearInterval(interval);
             await bot.deleteMessage(chatId, loaderMessage.message_id);
-            console.log("🚀 ~ .then ~ res:", res?.data?.data);
             if (res?.data?.status) {
               userStates[chatId].buyPrice = 0.5;
               userStates[chatId].toBuyAddresName = res?.data?.data?.symbol;
@@ -3065,7 +3027,6 @@ https://dexscreener.com/${userStates[chatId]?.network}/${
           .catch(async (error) => {
             clearInterval(interval);
             await bot.deleteMessage(chatId, loaderMessage.message_id);
-            console.log("🚀 ~ .then ~ error:", error?.message);
             await bot.sendMessage(
               chatId,
               "🔴somthing has been wrong while fetching token price!!"
@@ -3093,7 +3054,6 @@ https://dexscreener.com/${userStates[chatId]?.network}/${
             chatId,
           })
           .then(async (res) => {
-            console.log("🚀 ~ bot.on ~ res:", res?.data?.data);
             if (res?.data?.status) {
               userStates[chatId].toBuyAddresName = res?.data?.data?.name;
               clearInterval(interval);
@@ -3181,7 +3141,6 @@ https://dexscreener.com/solana/${userStates[chatId]?.toToken}`,
           .catch(async (error) => {
             clearInterval(interval);
             await bot.deleteMessage(chatId, loaderMessage.message_id);
-            console.log("🚀 ~ .then ~ error:", error?.message);
             await bot.sendMessage(
               chatId,
               "🔴 somthing has been wrong while fetching token price!!"
