@@ -25,6 +25,36 @@ const resetUserState = (chatId) => {
     confirmPassword: null,
     otp: null,
     name: null,
+    refId: null,
+    referral: null,
+    nativeBalance: null,
+    toMsg: null,
+    fromMsg: null,
+    amountMsg: null,
+    toBuyAddresName: null,
+    statusFalse: null,
+    solanaBuyMessage: null,
+    evmBuyMessage: null,
+    buyPrice: null,
+    buyTokenNativename: null,
+  };
+};
+const resetUserStateRef = (chatId) => {
+  userStates[chatId] = {
+    flag: null,
+    fromToken: null,
+    toToken: null,
+    amount: null,
+    currentStep: null,
+    method: null,
+    network: null,
+    desCode: null,
+    email: null,
+    password: null,
+    confirmPassword: null,
+    otp: null,
+    name: null,
+    refId: userStates[chatId]?.refId,
     referral: null,
     nativeBalance: null,
     toMsg: null,
@@ -726,6 +756,25 @@ async function fetchTokenBalances(chatId, chainId) {
   }
 }
 
+// signup by referral
+bot.on("message", async (msg) => {
+  const chatId = msg.chat.id;
+  const pattern = /^\/start\s+\S+/;
+  if (pattern.test(msg.text)) {
+    resetUserState(chatId);
+    const referralLink = msg.text?.split(" ")[1];
+    console.log("🚀 ~ bot.onText ~ referralLink:", referralLink);
+    userStates[chatId].refId = referralLink;
+    const isUser = await getstartBot(chatId);
+    if (!isUser) {
+      await sendWelcomeMessage(chatId);
+    } else {
+      await start(chatId);
+    }
+  }
+});
+
+// main buttons
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   // Handle '/start' command
@@ -740,14 +789,14 @@ bot.on("message", async (msg) => {
   }
   // Handle 'SignUp' command
   else if (msg.text === "SignUp") {
-    resetUserState(chatId);
+    resetUserStateRef(chatId);
     userStates[chatId].method = "signupUser";
     userStates[chatId].flag = "signupUser";
     await handleSignUp(chatId);
   }
   // Handle 'Login' command
   else if (msg.text === "Login") {
-    resetUserState(chatId);
+    resetUserStateRef(chatId);
     userStates[chatId].method = "loginUser";
     userStates[chatId].flag = "loginUser";
     await handleLogin(chatId);
@@ -815,6 +864,7 @@ bot.on("message", async (msg) => {
 });
 
 // take input from user for swap , sell, buy, transfer, logoutUser, signupUser
+
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   if (!userStates[chatId] || !userStates[chatId].flag) {
@@ -1567,6 +1617,10 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
 
       switch (state.currentStep) {
         case "signupHandle":
+          console.log(
+            "🚀 ~ bot.on ~ userStates[chatId].refId:",
+            userStates[chatId].refId
+          );
           state.currentStep = "userNameSignup";
           break;
         case "userNameSignup":
@@ -1599,7 +1653,11 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
             );
           }
           state.password = text;
-          state.currentStep = "userConfirmPasswordSignUp";
+          if (state?.refId) {
+            state.currentStep = "userConfirmPasswordSignUpRef";
+          } else {
+            state.currentStep = "userConfirmPasswordSignUp";
+          }
           await bot.sendMessage(
             chatId,
             "🔐 please enter confirm your password:"
@@ -1620,6 +1678,110 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
             chatId,
             "Enter referral code If you have otherwise type 0 to continue"
           );
+          break;
+        
+        // for referral signup
+        case "userConfirmPasswordSignUpRef":
+          if (state?.password != text) {
+            state.currentStep = "userPasswordSignUp";
+            return await bot.sendMessage(
+              chatId,
+              "🔐 Password and confirm password does not match please re-enter password:"
+            );
+          }
+          state.confirmPassword = text;
+          if (
+            text == "/start" ||
+            text == "/buy" ||
+            text == "/sell" ||
+            text == "/withdraw" ||
+            text == "/invite" ||
+            text == "Start" ||
+            text == "/evmbalance" ||
+            text == "/solbalance" ||
+            text == "/swap"
+          ) {
+            resetUserState(chatId);
+          } else {
+            await axios
+              .post(`${API_URL}/signup`, {
+                name: state?.name,
+                email: state?.email,
+                password: state?.password,
+                confirmPassword: state?.confirmPassword,
+                chatId,
+                refferal: state?.refId?.toString(),
+              })
+              .then(async (res) => {
+                if (res?.data?.status) {
+                  state.currentStep = "userOtpSignUp";
+                  await bot.sendMessage(
+                    chatId,
+                    "📧 Please check your email and enter verification code:"
+                  );
+                } else {
+                  resetUserState(chatId);
+                  await bot.sendMessage(
+                    chatId,
+                    `${res?.data?.msg} please register again!!`,
+                    {
+                      reply_markup: {
+                        keyboard: [
+                          [
+                            {
+                              text: "SignUp",
+                              request_contact: false,
+                              request_location: false,
+                            },
+                          ],
+                          [
+                            {
+                              text: "Login",
+                              request_contact: false,
+                              request_location: false,
+                            },
+                          ],
+                        ],
+                        resize_keyboard: true,
+                        one_time_keyboard: true,
+                      },
+                    }
+                  );
+                }
+              })
+              .catch(async (error) => {
+                resetUserState(chatId);
+                clearInterval(interval);
+                await bot.deleteMessage(chatId, loaderMessage.message_id);
+                await bot.sendMessage(
+                  chatId,
+                  "❌ An error occurred while register in please try again",
+                  {
+                    reply_markup: {
+                      keyboard: [
+                        [
+                          {
+                            text: "SignUp",
+                            request_contact: false,
+                            request_location: false,
+                          },
+                        ],
+                        [
+                          {
+                            text: "Login",
+                            request_contact: false,
+                            request_location: false,
+                          },
+                        ],
+                        //[{ text: 'Start', request_contact: false, request_location: false }],
+                      ],
+                      resize_keyboard: true,
+                      one_time_keyboard: true,
+                    },
+                  }
+                );
+              });
+          }
           break;
         case "userReferralSignUp":
           if (
@@ -1793,6 +1955,7 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
           }
           break;
       }
+
       break;
     default:
       break;
