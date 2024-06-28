@@ -564,7 +564,7 @@ async function solanaSwapHandle(chatId, input, output, amount, method, desBot) {
           } else {
             await bot.sendMessage(
               chatId,
-              response.data.message || "❌ buy failed. Please try again."
+              `🔴 ${response.data.message}` || "🔴 buy failed. Please try again later."
             );
           }
         })
@@ -574,11 +574,15 @@ async function solanaSwapHandle(chatId, input, output, amount, method, desBot) {
           await bot.deleteMessage(chatId, loaderMessage.message_id);
           await bot.sendMessage(
             chatId,
-            `due to some reason you transaction failed!!`
+            `🔴due to some reason you transaction failed please try again later!!`
           );
         });
     } catch (error) {
       console.log("🚀 ~ solanaSwapHandle ~ error:", error?.message);
+      await bot.sendMessage(
+        chatId,
+        `🔴due to some reason you transaction failed please try again later!!`
+      );
     }
   }
 }
@@ -636,7 +640,7 @@ async function evmSwapHandle(amount, chatId, method) {
             await bot.sendMessage(chatId, `✅ ${response?.data?.message}`);
             return await bot.sendMessage(chatId, response?.data?.txUrl);
           } else {
-            await bot.sendMessage(chatId, response?.data?.message);
+            await bot.sendMessage(chatId, `🔴 ${response?.data?.message}`);
           }
         })
         .catch(async (error) => {
@@ -645,7 +649,7 @@ async function evmSwapHandle(amount, chatId, method) {
           await bot.deleteMessage(chatId, loaderMessage.message_id);
           await bot.sendMessage(
             chatId,
-            `due to some reason you transaction failed!!`
+            `🔴 due to some reason you transaction failed!!`
           );
         });
     } catch (error) {}
