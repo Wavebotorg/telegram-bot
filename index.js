@@ -2031,7 +2031,7 @@ bot.on("callback_query", async (callbackQuery) => {
             await bot.sendMessage(
               chatId,
               `💰 Referal Rewards💰\n
-🔗 https://t.me/onchain_wavebot?start=${isUser?.isLogin?.referralId}\n
+🔗<code>https://t.me/onchain_wavebot?start=${isUser?.isLogin?.referralId}</code>\n
 Referrals(Level-1) : ${
                 res?.data?.data ? res?.data?.data?.level1?.length : 0
               }🧍\n
