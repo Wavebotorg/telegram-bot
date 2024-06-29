@@ -22,6 +22,8 @@ const resetUserState = (chatId) => {
     desCode: null,
     email: null,
     password: null,
+    sellTokensList: userStates[chatId]?.sellTokensList,
+    allSellTokens: null,
     confirmPassword: null,
     otp: null,
     name: null,
@@ -34,9 +36,13 @@ const resetUserState = (chatId) => {
     toBuyAddresName: null,
     statusFalse: null,
     solanaBuyMessage: null,
+    evmSellMessage: userStates[chatId]?.evmSellMessage,
     evmBuyMessage: null,
     buyPrice: null,
+    sellPrice: null,
+    selectedSellToken: null,
     buyTokenNativename: null,
+    customAmountSellEvm: null,
   };
 };
 const resetUserStateRef = (chatId) => {
@@ -46,8 +52,10 @@ const resetUserStateRef = (chatId) => {
     toToken: null,
     amount: null,
     currentStep: null,
+    allSellTokens: null,
     method: null,
     network: null,
+    sellTokensList: userStates[chatId]?.sellTokensList,
     desCode: null,
     email: null,
     password: null,
@@ -63,9 +71,13 @@ const resetUserStateRef = (chatId) => {
     toBuyAddresName: null,
     statusFalse: null,
     solanaBuyMessage: null,
+    evmSellMessage: userStates[chatId]?.evmSellMessage,
     evmBuyMessage: null,
     buyPrice: null,
+    selectedSellToken: null,
+    sellPrice: null,
     buyTokenNativename: null,
+    customAmountSellEvm: null,
   };
 };
 
@@ -85,7 +97,7 @@ const handleBuy = async (chatId) => {
   );
 };
 const handleSell = async (chatId) => {
-  userStates[chatId].currentStep = "toTokenSell";
+  userStates[chatId].currentStep = "toTokenSellSingle";
   userStates[chatId].toMsg = await bot.sendMessage(
     chatId,
     "Type Token Address You Want To Sell:"
@@ -106,6 +118,30 @@ const handleSignUp = async (chatId) => {
   userStates[chatId].currentStep = "signupHandle";
   await bot.sendMessage(chatId, "🔐Please enter your name:");
 };
+
+const handleToSell = async (chatId, chainId) => {
+  try {
+    if (userStates[chatId]?.evmSellMessage) {
+      await bot.deleteMessage(
+        chatId,
+        userStates[chatId]?.evmSellMessage?.message_id
+      );
+      userStates[chatId].evmSellMessage = null;
+    }
+    if (userStates[chatId]?.sellTokensList) {
+      await bot.deleteMessage(
+        chatId,
+        userStates[chatId]?.sellTokensList?.message_id
+      );
+      userStates[chatId].sellTokensList = null;
+    }
+    await fetchWalletTokenBalances(chatId, chainId);
+  } catch (error) {
+    console.log("🚀 ~ handleToSell ~ error:", error?.message);
+  }
+};
+
+const handleToSellSolana = async (chatId) => {};
 
 // main keyboard
 const buyKeyboard = {
@@ -579,7 +615,6 @@ async function solanaSwapHandle(chatId, input, output, amount, method, desBot) {
           );
         });
     } catch (error) {
-      console.log("🚀 ~ solanaSwapHandle ~ error:", error?.message);
       await bot.sendMessage(
         chatId,
         `🔴due to some reason you transaction failed please try again later!!`
@@ -654,6 +689,68 @@ async function evmSwapHandle(amount, chatId, method) {
           );
         });
     } catch (error) {}
+  }
+}
+
+// EVM sell function
+async function evmSellHandle(amount, chatId) {
+  if (
+    userStates[chatId]?.selectedSellToken?.balance_formatted <= amount ||
+    !userStates[chatId]?.selectedSellToken?.balance_formatted
+  ) {
+    resetUserState(chatId);
+    return bot.sendMessage(
+      chatId,
+      "🔴 You do not have sufficient fund+gas to perform this transaction!!",
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: "⬅️ Back",
+                callback_data: "sellButton",
+              },
+              {
+                text: "⬆️ Main Menu",
+                callback_data: "refreshButton",
+              },
+            ],
+          ],
+
+          resize_keyboard: true,
+          one_time_keyboard: true,
+        },
+      }
+    );
+  } else {
+    const { loaderMessage, interval } = await animateLoader(chatId);
+    await axios
+      .post(`${API_URL}/EVMswap`, {
+        tokenIn: userStates[chatId]?.selectedSellToken?.token_address,
+        tokenOut: userStates[chatId]?.toToken,
+        chainId: userStates[chatId]?.network,
+        amount: amount,
+        chain: userStates[chatId]?.flag,
+        chatId,
+        method: "sell",
+      })
+      .then(async (res) => {
+        clearInterval(interval);
+        await bot.deleteMessage(chatId, loaderMessage.message_id);
+        resetUserState(chatId);
+        if (res?.data?.status) {
+          await bot.sendMessage(chatId, `✅ ${res?.data?.message}`);
+          return await bot.sendMessage(chatId, res?.data?.txUrl);
+        } else {
+          return await bot.sendMessage(chatId, `🔴 ${res?.data?.message}`);
+        }
+      })
+      .catch(async (err) => {
+        resetUserState(chatId);
+        clearInterval(interval);
+        await bot.deleteMessage(chatId, loaderMessage.message_id);
+        return await bot.sendMessage(chatId, `🔴 ${err?.message}`);
+      });
   }
 }
 
@@ -737,7 +834,8 @@ async function fetchSolanaBalance(chatId) {
     );
   }
 }
-// Function to fetch token balances
+
+// Function to fetch wallet tokens balances
 async function fetchTokenBalances(chatId, chainId) {
   try {
     const response = await axios.post(`${API_URL}/fetchbalance`, {
@@ -761,6 +859,150 @@ async function fetchTokenBalances(chatId, chainId) {
   }
 }
 
+// Function to fetch wallet balances
+async function fetchWalletTokenBalances(chatId, chainId) {
+  const { loaderMessage, interval } = await animateLoader(chatId);
+  try {
+    const response = await axios.post(`${API_URL}/fetchbalance`, {
+      chatId: chatId,
+      chainId: chainId,
+    });
+    clearInterval(interval);
+    await bot.deleteMessage(chatId, loaderMessage?.message_id);
+
+    const balances = response?.data?.data;
+    const tokens = balances?.filter((item) => item?.usd_price != null);
+    userStates[chatId].allSellTokens = tokens;
+
+    let message = "Your Tokens:\n\n";
+    if (tokens) {
+      tokens?.forEach((balance) => {
+        message += `Token Name: <code>${balance?.symbol}</code>\n`;
+        message += `Balance: <code>${Number(balance?.balance_formatted).toFixed(
+          4
+        )}</code>(${Number(balance?.usd_value).toFixed(5)}$)\n\n`;
+      });
+    }
+    const buttons = tokens.map((item) => ({
+      text: item.symbol,
+      callback_data: `${item.symbol}Sell`,
+    }));
+
+    const keyboard = [];
+
+    // add dynamic buttons in the keyboard
+    for (let i = 1; i < buttons.length; i += 4) {
+      keyboard.push(buttons.slice(i, i + 4));
+    }
+
+    // add static buttons
+    keyboard.push([
+      { text: "⬅️ Back", callback_data: "sellButton" },
+      { text: "🔄 Refresh", callback_data: "refreshSellButton" },
+    ]);
+
+    userStates[chatId].sellTokensList = await bot.sendMessage(chatId, message, {
+      reply_markup: {
+        inline_keyboard: keyboard,
+      },
+      parse_mode: "HTML",
+    });
+  } catch (error) {
+    clearInterval(interval);
+    await bot.deleteMessage(chatId, loaderMessage.message_id);
+    console.error("Error fetching balance:", error.message);
+    await bot.sendMessage(
+      chatId,
+      "🔴 Something went wrong, please try again after some time!!"
+    );
+  }
+}
+
+// Function to handle dynamic sell token button
+async function handleDynamicSellToken(chatId, token) {
+  try {
+    if (userStates[chatId]?.sellTokensList) {
+      await bot.deleteMessage(
+        chatId,
+        userStates[chatId]?.sellTokensList?.message_id
+      );
+      userStates[chatId].sellTokensList = null;
+    }
+    const tokenDetails = await userStates[chatId]?.allSellTokens?.filter(
+      (item) => item.symbol == token
+    );
+    if (tokenDetails) {
+      userStates[chatId].selectedSellToken = tokenDetails[0];
+      userStates[chatId].evmSellMessage = await bot.sendMessage(
+        chatId,
+        `Token : ${tokenDetails[0]?.symbol} <code>${
+          tokenDetails[0]?.token_address
+        }</code>
+${tokenDetails[0]?.symbol} Balance : <code>${Number(
+          tokenDetails[0]?.balance_formatted
+        )?.toFixed(5)}</code>(${Number(tokenDetails[0]?.usd_value).toFixed(3)})
+${tokenDetails[0]?.symbol} price : <code>${Number(
+          tokenDetails[0]?.usd_price
+        )?.toFixed(6)}</code>$
+variation24h : <code>${Number(
+          tokenDetails[0]?.usd_price_24hr_percent_change
+        )?.toFixed(3)}</code>%
+network: <code>${userStates[chatId]?.network}</code>
+https://dexscreener.com/${userStates[chatId]?.network}/${
+          tokenDetails[0]?.token_address
+        }`,
+        {
+          parse_mode: "HTML",
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: `✅ Sell 10% ${tokenDetails[0]?.symbol}`,
+                  callback_data: "10EvmSellPer",
+                },
+                {
+                  text: `Sell 25% ${tokenDetails[0]?.symbol}`,
+                  callback_data: "25EvmSellPer",
+                },
+                {
+                  text: `Sell 50% ${tokenDetails[0]?.symbol}`,
+                  callback_data: "50EvmSellPer",
+                },
+              ],
+              [
+                {
+                  text: `Sell 70% ${tokenDetails[0]?.symbol}`,
+                  callback_data: "70EvmSellPer",
+                },
+                {
+                  text: `Sell 100% ${tokenDetails[0]?.symbol}`,
+                  callback_data: "100EvmSellPer",
+                },
+                {
+                  text: `Sell X amount of${tokenDetails[0]?.symbol} ✏️`,
+                  callback_data: "customEvmSellPer",
+                },
+              ],
+              [
+                {
+                  text: `Sell`,
+                  callback_data: "finalSellEvm",
+                },
+              ],
+            ],
+          },
+        }
+      );
+    }
+  } catch (error) {
+    console.log("🚀 ~ handleDynamicSellToken ~ error:", error?.message);
+    await bot.sendMessage(
+      chatId,
+      "🔴 Something went wrong, please try again after some time!!"
+    );
+  }
+}
+
 // signup by referral
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
@@ -768,7 +1010,6 @@ bot.on("message", async (msg) => {
   if (pattern.test(msg.text)) {
     resetUserState(chatId);
     const referralLink = msg.text?.split(" ")[1];
-    console.log("🚀 ~ bot.onText ~ referralLink:", referralLink);
     userStates[chatId].refId = referralLink;
     const isUser = await getstartBot(chatId);
     if (!isUser) {
@@ -869,6 +1110,7 @@ bot.on("message", async (msg) => {
 });
 
 // take input from user for swap , sell, buy, transfer, logoutUser, signupUser
+
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   if (!userStates[chatId] || !userStates[chatId].flag) {
@@ -1522,7 +1764,9 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
           } else {
             if (userStates[chatId]?.flag) {
               userStates[chatId].buyPrice =
-                (userStates[chatId]?.buyTokenNativename?.balance_formatted * text) / 100;
+                (userStates[chatId]?.buyTokenNativename?.balance_formatted *
+                  text) /
+                100;
               console.log(
                 "--------------------------->",
                 userStates[chatId].buyPrice
@@ -1895,35 +2139,6 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
             }
           }
           break;
-        case "amountBuy":
-          if (
-            text == "/start" ||
-            text == "/buy" ||
-            text == "/sell" ||
-            text == "/withdraw" ||
-            text == "/invite" ||
-            text == "Start" ||
-            text == "/evmbalance" ||
-            text == "/solbalance" ||
-            text == "/swap"
-          ) {
-            resetUserState(chatId);
-          } else {
-            state.amount = Number(text);
-            if (state.flag == 19999) {
-              await solanaSwapHandle(
-                chatId,
-                "So11111111111111111111111111111111111111112",
-                state?.toToken,
-                Number(state.amount?.toFixed(5)),
-                "buy",
-                9
-              );
-            } else {
-              evmSwapHandle(state.amount, chatId, "buy");
-            }
-          }
-          break;
       }
       break;
 
@@ -1933,12 +2148,63 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
       }
 
       switch (state.currentStep) {
-        case "toTokenSell":
+        case "toTokenSellSingle":
           state.fromToken = text;
           state.currentStep = "amountSell";
           await bot.sendMessage(chatId, "Please enter amount:");
           break;
-
+        case "toTokenSell":
+          state.sellPrice = Number(text).toFixed(4);
+          await bot.deleteMessage(
+            chatId,
+            state?.customAmountSellEvm?.message_id
+          );
+          await bot.deleteMessage(chatId, msg.message_id);
+          await bot.editMessageReplyMarkup(
+            {
+              inline_keyboard: [
+                [
+                  {
+                    text: `Sell 10% ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                    callback_data: "10EvmSellPer",
+                  },
+                  {
+                    text: `Sell 25% ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                    callback_data: "25EvmSellPer",
+                  },
+                  {
+                    text: `Sell 50% ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                    callback_data: "50EvmSellPer",
+                  },
+                ],
+                [
+                  {
+                    text: `Sell 70% ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                    callback_data: "70EvmSellPer",
+                  },
+                  {
+                    text: `Sell 100% ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                    callback_data: "100EvmSellPer",
+                  },
+                  {
+                    text: `✅ ${state?.sellPrice} ${userStates[chatId]?.selectedSellToken?.symbol} ✏️`,
+                    callback_data: "customEvmSellPer",
+                  },
+                ],
+                [
+                  {
+                    text: `Sell`,
+                    callback_data: "finalSellEvm",
+                  },
+                ],
+              ],
+            },
+            {
+              chat_id: chatId,
+              message_id: userStates[chatId].evmSellMessage.message_id,
+            }
+          );
+          break;
         case "amountSell":
           if (
             text == "/start" ||
@@ -2009,7 +2275,7 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                   } else {
                     return await bot.sendMessage(
                       chatId,
-                      `somthing has been wrong while selling!!!`
+                      `🔴 somthing has been wrong while selling!!!`
                     );
                   }
                 })
@@ -2257,10 +2523,6 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
 
       switch (state.currentStep) {
         case "signupHandle":
-          console.log(
-            "🚀 ~ bot.on ~ userStates[chatId].refId:",
-            userStates[chatId].refId
-          );
           state.currentStep = "userNameSignup";
           break;
         case "userNameSignup":
@@ -2603,6 +2865,7 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
 });
 
 // all keyborad button handler
+
 bot.on("callback_query", async (callbackQuery) => {
   const chatId = callbackQuery.message.chat.id;
   const data = callbackQuery.data;
@@ -2632,11 +2895,16 @@ bot.on("callback_query", async (callbackQuery) => {
       },
     });
   }
-  // await deleteAllmessages(chatId);
   // Ensure there is a state object for the user
   if (!userStates[chatId]) {
     resetUserState(chatId);
   }
+
+  //  handle sell dynamic buttons
+  if (data?.slice(-4) == "Sell") {
+    return await handleDynamicSellToken(chatId, data?.slice(0, -4));
+  }
+
   switch (data) {
     case "menuButton":
       resetUserState(chatId);
@@ -3445,7 +3713,7 @@ referral rate.`,
                   callback_data: "10SolPer",
                 },
                 {
-                  text: `✅ ${ userStates[chatId].buyPrice } SOL`,
+                  text: `✅ ${userStates[chatId].buyPrice} SOL`,
                   callback_data: "25SolPer",
                 },
                 {
@@ -5596,7 +5864,365 @@ referral rate.`,
     case "sellButton":
       resetUserState(chatId);
       sellStartTokenSelection(chatId);
+      break;
+    case "10EvmSellPer":
+      if (userStates[chatId]?.flag) {
+        userStates[chatId].sellPrice = (
+          (userStates[chatId]?.selectedSellToken?.balance_formatted * 10) /
+          100
+        ).toFixed(5);
+        console.log(
+          "--------------------------->",
+          userStates[chatId].sellPrice
+        );
+        await bot.editMessageReplyMarkup(
+          {
+            inline_keyboard: [
+              [
+                {
+                  text: `✅ ${userStates[chatId]?.sellPrice} ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                  callback_data: "10EvmSellPer",
+                },
+                {
+                  text: `Sell 25% ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                  callback_data: "25EvmSellPer",
+                },
+                {
+                  text: `Sell 50% ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                  callback_data: "50EvmSellPer",
+                },
+              ],
+              [
+                {
+                  text: `Sell 70% ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                  callback_data: "70EvmSellPer",
+                },
+                {
+                  text: `Sell 100% ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                  callback_data: "100EvmSellPer",
+                },
+                {
+                  text: `Sell X amount of${userStates[chatId]?.selectedSellToken?.symbol} ✏️`,
+                  callback_data: "customEvmSellPer",
+                },
+              ],
+              [
+                {
+                  text: `Sell`,
+                  callback_data: "finalSellEvm",
+                },
+              ],
+            ],
+          },
+          {
+            chat_id: chatId,
+            message_id: userStates[chatId].evmSellMessage.message_id,
+          }
+        );
+      } else {
+        resetUserState(chatId);
+        sellStartTokenSelection(chatId);
+      }
+      break;
+    case "25EvmSellPer":
+      if (userStates[chatId]?.flag) {
+        userStates[chatId].sellPrice = (
+          (userStates[chatId]?.selectedSellToken?.balance_formatted * 25) /
+          100
+        ).toFixed(5);
+        console.log(
+          "--------------------------->",
+          userStates[chatId].sellPrice
+        );
+        await bot.editMessageReplyMarkup(
+          {
+            inline_keyboard: [
+              [
+                {
+                  text: `Sell 10% ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                  callback_data: "10EvmSellPer",
+                },
+                {
+                  text: `✅ ${userStates[chatId]?.sellPrice} ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                  callback_data: "25EvmSellPer",
+                },
+                {
+                  text: `Sell 50% ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                  callback_data: "50EvmSellPer",
+                },
+              ],
+              [
+                {
+                  text: `Sell 70% ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                  callback_data: "70EvmSellPer",
+                },
+                {
+                  text: `Sell 100% ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                  callback_data: "100EvmSellPer",
+                },
+                {
+                  text: `Sell X amount of${userStates[chatId]?.selectedSellToken?.symbol} ✏️`,
+                  callback_data: "customEvmSellPer",
+                },
+              ],
+              [
+                {
+                  text: `Sell`,
+                  callback_data: "finalSellEvm",
+                },
+              ],
+            ],
+          },
+          {
+            chat_id: chatId,
+            message_id: userStates[chatId].evmSellMessage.message_id,
+          }
+        );
+      } else {
+        resetUserState(chatId);
+        sellStartTokenSelection(chatId);
+      }
+      break;
+    case "50EvmSellPer":
+      if (userStates[chatId]?.flag) {
+        userStates[chatId].sellPrice = (
+          (userStates[chatId]?.selectedSellToken?.balance_formatted * 50) /
+          100
+        ).toFixed(5);
+        console.log(
+          "--------------------------->",
+          userStates[chatId].sellPrice
+        );
+        await bot.editMessageReplyMarkup(
+          {
+            inline_keyboard: [
+              [
+                {
+                  text: `Sell 10% ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                  callback_data: "10EvmSellPer",
+                },
+                {
+                  text: `Sell 25% ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                  callback_data: "25EvmSellPer",
+                },
+                {
+                  text: `✅ ${userStates[chatId]?.sellPrice} ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                  callback_data: "50EvmSellPer",
+                },
+              ],
+              [
+                {
+                  text: `Sell 70% ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                  callback_data: "70EvmSellPer",
+                },
+                {
+                  text: `Sell 100% ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                  callback_data: "100EvmSellPer",
+                },
+                {
+                  text: `Sell X amount of${userStates[chatId]?.selectedSellToken?.symbol} ✏️`,
+                  callback_data: "customEvmSellPer",
+                },
+              ],
+              [
+                {
+                  text: `Sell`,
+                  callback_data: "finalSellEvm",
+                },
+              ],
+            ],
+          },
+          {
+            chat_id: chatId,
+            message_id: userStates[chatId].evmSellMessage.message_id,
+          }
+        );
+      } else {
+        resetUserState(chatId);
+        sellStartTokenSelection(chatId);
+      }
+      break;
+    case "70EvmSellPer":
+      if (userStates[chatId]?.flag) {
+        userStates[chatId].sellPrice = (
+          (userStates[chatId]?.selectedSellToken?.balance_formatted * 70) /
+          100
+        ).toFixed(5);
+        console.log(
+          "--------------------------->",
+          userStates[chatId].sellPrice
+        );
+        await bot.editMessageReplyMarkup(
+          {
+            inline_keyboard: [
+              [
+                {
+                  text: `Sell 10% ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                  callback_data: "10EvmSellPer",
+                },
+                {
+                  text: `Sell 25% ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                  callback_data: "25EvmSellPer",
+                },
+                {
+                  text: `Sell 50% ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                  callback_data: "50EvmSellPer",
+                },
+              ],
+              [
+                {
+                  text: `✅ ${userStates[chatId]?.sellPrice} ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                  callback_data: "70EvmSellPer",
+                },
+                {
+                  text: `Sell 100% ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                  callback_data: "100EvmSellPer",
+                },
+                {
+                  text: `Sell X amount of${userStates[chatId]?.selectedSellToken?.symbol} ✏️`,
+                  callback_data: "customEvmSellPer",
+                },
+              ],
+              [
+                {
+                  text: `Sell`,
+                  callback_data: "finalSellEvm",
+                },
+              ],
+            ],
+          },
+          {
+            chat_id: chatId,
+            message_id: userStates[chatId].evmSellMessage.message_id,
+          }
+        );
+      } else {
+        resetUserState(chatId);
+        sellStartTokenSelection(chatId);
+      }
+      break;
+    case "100EvmSellPer":
+      if (userStates[chatId]?.flag) {
+        userStates[chatId].sellPrice = Number(
+          userStates[chatId]?.selectedSellToken?.balance_formatted
+        ).toFixed(5);
+        console.log(
+          "--------------------------->",
+          userStates[chatId].sellPrice
+        );
+        await bot.editMessageReplyMarkup(
+          {
+            inline_keyboard: [
+              [
+                {
+                  text: `Sell 10% ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                  callback_data: "10EvmSellPer",
+                },
+                {
+                  text: `Sell 25% ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                  callback_data: "25EvmSellPer",
+                },
+                {
+                  text: `Sell 50% ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                  callback_data: "50EvmSellPer",
+                },
+              ],
+              [
+                {
+                  text: `Sell 70% ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                  callback_data: "70EvmSellPer",
+                },
+                {
+                  text: `✅ ${userStates[chatId]?.sellPrice} ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                  callback_data: "100EvmSellPer",
+                },
+                {
+                  text: `Sell X amount of${userStates[chatId]?.selectedSellToken?.symbol} ✏️`,
+                  callback_data: "customEvmSellPer",
+                },
+              ],
+              [
+                {
+                  text: `Sell`,
+                  callback_data: "finalSellEvm",
+                },
+              ],
+            ],
+          },
+          {
+            chat_id: chatId,
+            message_id: userStates[chatId].evmSellMessage.message_id,
+          }
+        );
+      } else {
+        resetUserState(chatId);
+        sellStartTokenSelection(chatId);
+      }
+      break;
+    case "customEvmSellPer":
+      if (userStates[chatId]?.flag) {
+        await bot.editMessageReplyMarkup(
+          {
+            inline_keyboard: [
+              [
+                {
+                  text: `Sell 10% ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                  callback_data: "10EvmSellPer",
+                },
+                {
+                  text: `Sell 25% ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                  callback_data: "25EvmSellPer",
+                },
+                {
+                  text: `Sell 50% ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                  callback_data: "50EvmSellPer",
+                },
+              ],
+              [
+                {
+                  text: `Sell 70% ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                  callback_data: "70EvmSellPer",
+                },
+                {
+                  text: `Sell 100% ${userStates[chatId]?.selectedSellToken?.symbol}`,
+                  callback_data: "100EvmSellPer",
+                },
+                {
+                  text: `✅ Sell X ${userStates[chatId]?.selectedSellToken?.symbol} ✏️`,
+                  callback_data: "customEvmSellPer",
+                },
+              ],
+              [
+                {
+                  text: `Sell`,
+                  callback_data: "finalSellEvm",
+                },
+              ],
+            ],
+          },
+          {
+            chat_id: chatId,
+            message_id: userStates[chatId].evmSellMessage.message_id,
+          }
+        );
+        userStates[chatId].currentStep = "toTokenSell";
+        userStates[chatId].customAmountSellEvm = await bot.sendMessage(
+          chatId,
+          "Enter Qty that you want to sell:-"
+        );
+      } else {
+        resetUserState(chatId);
+        sellStartTokenSelection(chatId);
+      }
+      break;
 
+    case "finalSellEvm":
+      if (userStates[chatId]?.flag && userStates[chatId]?.sellPrice) {
+        evmSellHandle(userStates[chatId]?.sellPrice, chatId);
+      } else {
+        resetUserState(chatId);
+        sellStartTokenSelection(chatId);
+      }
       break;
     case "withrawButton":
       resetUserState(chatId);
@@ -6098,7 +6724,7 @@ https://dexscreener.com/solana/${userStates[chatId]?.toToken}`,
       resetUserState(chatId);
       userStates[chatId].flag = 19999;
       userStates[chatId].method = "sell";
-      handleSell(chatId);
+      handleToSellSolana(chatId);
 
       break;
     case "1sell":
@@ -6107,7 +6733,7 @@ https://dexscreener.com/solana/${userStates[chatId]?.toToken}`,
       userStates[chatId].network = "ethereum";
       userStates[chatId].method = "sell";
       userStates[chatId].toToken = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
-      handleSell(chatId);
+      handleToSell(chatId, "0x1");
 
       break;
     case "42161sell":
@@ -6116,7 +6742,7 @@ https://dexscreener.com/solana/${userStates[chatId]?.toToken}`,
       userStates[chatId].network = "arbitrum";
       userStates[chatId].method = "sell";
       userStates[chatId].toToken = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
-      handleSell(chatId);
+      handleToSell(chatId, "0xa4b1");
 
       break;
     case "10sell":
@@ -6125,7 +6751,7 @@ https://dexscreener.com/solana/${userStates[chatId]?.toToken}`,
       userStates[chatId].network = "optimism";
       userStates[chatId].method = "sell";
       userStates[chatId].toToken = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
-      handleSell(chatId);
+      handleToSell(chatId, "0xa");
 
       break;
     case "137sell":
@@ -6134,7 +6760,7 @@ https://dexscreener.com/solana/${userStates[chatId]?.toToken}`,
       userStates[chatId].network = "polygon";
       userStates[chatId].method = "sell";
       userStates[chatId].toToken = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
-      handleSell(chatId);
+      handleToSell(chatId, "0x89");
 
       break;
     case "8453sell":
@@ -6143,7 +6769,7 @@ https://dexscreener.com/solana/${userStates[chatId]?.toToken}`,
       userStates[chatId].network = "base";
       userStates[chatId].method = "sell";
       userStates[chatId].toToken = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
-      handleSell(chatId);
+      handleToSell(chatId, "0x2105");
 
       break;
     case "56sell":
@@ -6152,7 +6778,7 @@ https://dexscreener.com/solana/${userStates[chatId]?.toToken}`,
       userStates[chatId].network = "bsc";
       userStates[chatId].method = "sell";
       userStates[chatId].toToken = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
-      handleSell(chatId);
+      handleToSell(chatId, "0x38");
 
       break;
     case "43114sell":
@@ -6161,7 +6787,7 @@ https://dexscreener.com/solana/${userStates[chatId]?.toToken}`,
       userStates[chatId].method = "sell";
       userStates[chatId].network = "avalanche";
       userStates[chatId].toToken = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
-      handleSell(chatId);
+      handleToSell(chatId, "0xa86a");
 
       break;
     case "25sell":
@@ -6170,7 +6796,7 @@ https://dexscreener.com/solana/${userStates[chatId]?.toToken}`,
       userStates[chatId].network = "cronos";
       userStates[chatId].method = "sell";
       userStates[chatId].toToken = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
-      handleSell(chatId);
+      handleToSell(chatId, "0xa4b1");
 
       break;
     case "250sell":
@@ -6179,7 +6805,7 @@ https://dexscreener.com/solana/${userStates[chatId]?.toToken}`,
       userStates[chatId].network = "fantom";
       userStates[chatId].method = "sell";
       userStates[chatId].toToken = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
-      handleSell(chatId);
+      handleToSell(chatId, "0xfa");
       break;
     case "59144sell":
       resetUserState(chatId);
@@ -6187,7 +6813,7 @@ https://dexscreener.com/solana/${userStates[chatId]?.toToken}`,
       userStates[chatId].network = "linea";
       userStates[chatId].method = "sell";
       userStates[chatId].toToken = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
-      handleSell(chatId);
+      handleToSell(chatId, "0xe705");
       break;
     case "81457sell":
       resetUserState(chatId);
