@@ -14,6 +14,7 @@ const resetUserState = (chatId) => {
   userStates[chatId] = {
     flag: null,
     fromToken: null,
+    passwordAction: null,
     toToken: null,
     amount: null,
     currentStep: null,
@@ -53,6 +54,7 @@ const resetUserStateRef = (chatId) => {
     flag: null,
     fromToken: null,
     toToken: null,
+    passwordAction: null,
     amount: null,
     currentStep: null,
     allSellTokens: null,
@@ -124,6 +126,31 @@ const handleSignUp = async (chatId) => {
   userStates[chatId].currentStep = "signupHandle";
   await bot.sendMessage(chatId, "🔐Please enter your name:");
 };
+
+const handleResetPassword = async (chatId, action, email) => {
+  console.log("🚀 ~ handleResetPassword ~ action:", action);
+  console.log("🚀 ~ handleResetPassword ~ chatId:", chatId);
+  console.log("🚀 ~ handleResetPassword ~ email:", email);
+  await axios({
+    url: `${API_URL}/sendOtp`,
+    method: "post",
+    data: {
+      email: action == "forgot" ? email : null,
+      chatId: action == "reset" ? chatId : null,
+    },
+  }).then(async (res) => {
+    if (res?.data?.status) {
+      userStates[chatId].currentStep = "getOtp";
+      await bot.sendMessage(chatId, "Please enter otp!!");
+    } else {
+      await bot.sendMessage(
+        chatId,
+        "🔴 something went wrong please try again later!!"
+      );
+    }
+  });
+};
+
 const handleToSell = async (chatId, chainId) => {
   try {
     if (userStates[chatId]?.evmSellMessage) {
@@ -590,6 +617,13 @@ async function sendWelcomeMessage(chatId) {
     : [
         [{ text: "SignUp", request_contact: false, request_location: false }],
         [{ text: "Login", request_contact: false, request_location: false }],
+        [
+          {
+            text: "ForgotPassword",
+            request_contact: false,
+            request_location: false,
+          },
+        ],
       ];
   await bot.sendMessage(chatId, `please Login!!🤖💬`, {
     reply_markup: {
@@ -606,6 +640,13 @@ async function loginLogOutButton(chatId) {
       keyboard: [
         [{ text: "SignUp", request_contact: false, request_location: false }],
         [{ text: "Login", request_contact: false, request_location: false }],
+        [
+          {
+            text: "ForgotPassword",
+            request_contact: false,
+            request_location: false,
+          },
+        ],
       ],
       resize_keyboard: true,
       one_time_keyboard: true,
@@ -935,6 +976,7 @@ async function setting(chatId) {
               callback_data: "referralQr",
             },
             { text: "❗️ Help", callback_data: "helpButton" },
+            { text: "resetPassword", callback_data: "resetPassword" },
           ],
         ],
       },
@@ -1206,8 +1248,12 @@ ${res?.data?.data?.name} balance : <code>${Number(
               tokenDetails[0]?.amount
             ).toFixed(5)}</code>(${balanceInUSD}$)
 Token : ${res?.data?.data?.name} <code>${res?.data?.data?.address}</code>
-${res?.data?.data?.name} price : <code>${Number(res?.data?.data?.price)?.toFixed(6)}$</code>
-variation24h : <code>${Number(res?.data?.data?.variation24h)?.toFixed(3)}%</code>
+${res?.data?.data?.name} price : <code>${Number(
+              res?.data?.data?.price
+            )?.toFixed(6)}$</code>
+variation24h : <code>${Number(res?.data?.data?.variation24h)?.toFixed(
+              3
+            )}%</code>
 totalSupply : <code>${Number(res?.data?.data?.totalSupply)?.toFixed()}</code>
 mcap : ${
               res?.data?.data?.mcap
@@ -1322,6 +1368,15 @@ bot.on("message", async (msg) => {
     userStates[chatId].method = "loginUser";
     userStates[chatId].flag = "loginUser";
     await handleLogin(chatId);
+  }
+  // Handle 'ForgotPassword' command
+  else if (msg.text === "ForgotPassword") {
+    resetUserState(chatId);
+    userStates[chatId].currentStep = "forgotEmail";
+    userStates[chatId].passwordAction = "forgot";
+    userStates[chatId].method = "resetPasswordHandle";
+    userStates[chatId].flag = "resetPasswordHandle";
+    await bot.sendMessage(chatId, "Enter your email address: ");
   }
   // Handle 'Start' command
   else if (msg.text === "Start") {
@@ -2798,6 +2853,13 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                               request_location: false,
                             },
                           ],
+                          [
+                            {
+                              text: "ForgotPassword",
+                              request_contact: false,
+                              request_location: false,
+                            },
+                          ],
                         ],
                         resize_keyboard: true,
                         one_time_keyboard: true,
@@ -2827,6 +2889,13 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                         [
                           {
                             text: "Login",
+                            request_contact: false,
+                            request_location: false,
+                          },
+                        ],
+                        [
+                          {
+                            text: "ForgotPassword",
                             request_contact: false,
                             request_location: false,
                           },
@@ -2970,6 +3039,13 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                               request_location: false,
                             },
                           ],
+                          [
+                            {
+                              text: "ForgotPassword",
+                              request_contact: false,
+                              request_location: false,
+                            },
+                          ],
                         ],
                         resize_keyboard: true,
                         one_time_keyboard: true,
@@ -2998,6 +3074,13 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                         [
                           {
                             text: "Login",
+                            request_contact: false,
+                            request_location: false,
+                          },
+                        ],
+                        [
+                          {
+                            text: "ForgotPassword",
                             request_contact: false,
                             request_location: false,
                           },
@@ -3069,6 +3152,13 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                               request_location: false,
                             },
                           ],
+                          [
+                            {
+                              text: "ForgotPassword",
+                              request_contact: false,
+                              request_location: false,
+                            },
+                          ],
                         ],
                         resize_keyboard: true,
                         one_time_keyboard: true,
@@ -3097,6 +3187,13 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                         [
                           {
                             text: "Login",
+                            request_contact: false,
+                            request_location: false,
+                          },
+                        ],
+                        [
+                          {
+                            text: "ForgotPassword",
                             request_contact: false,
                             request_location: false,
                           },
@@ -3173,6 +3270,13 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                             request_location: false,
                           },
                         ],
+                        [
+                          {
+                            text: "ForgotPassword",
+                            request_contact: false,
+                            request_location: false,
+                          },
+                        ],
                         //[{ text: 'Start', request_contact: false, request_location: false }],
                       ],
                       resize_keyboard: true,
@@ -3185,6 +3289,149 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
           break;
       }
 
+      break;
+    case "resetPasswordHandle":
+      switch (state.currentStep) {
+        case "getOtp":
+          state.otp = text;
+
+          await axios({
+            url: `${API_URL}/verifyUser`,
+            method: "post",
+            data: {
+              chatId:
+                userStates[chatId].passwordAction == "reset" ? chatId : null,
+              email:
+                userStates[chatId].passwordAction == "forgot"
+                  ? userStates[chatId]?.forgotEmail
+                  : null,
+              otp: text,
+            },
+          })
+            .then(async (res) => {
+              if (res.data.status) {
+                state.currentStep = "resetNewPassword";
+                await bot.sendMessage(chatId, "Enter your new password:");
+              } else {
+                await bot.sendMessage(chatId, "❌ Something went wrong");
+              }
+            })
+            .catch(async (e) => {
+              console.log("🚀 ~ bot.on ~ e:", e?.message)
+              await bot.sendMessage(chatId, "❌ Something went wrong");
+            });
+          break;
+        case "resetNewPassword":
+          if (!isValidPassword(text)) {
+            await bot.sendMessage(
+              chatId,
+              "❌ Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character."
+            );
+            state.currentStep = "resetNewPassword";
+            return await bot.sendMessage(
+              chatId,
+              "🔐please re-enter your password:"
+            );
+          }
+          state.currentStep = "resetCurrentPassword";
+          state.resetNewPassword = text;
+          await bot.sendMessage(chatId, "Enter your confirm password:");
+
+          break;
+        case "forgotEmail":
+          state.currentStep = "forgotEmailHandle";
+          break;
+        case "forgotEmailHandle":
+          if (!isValidEmail(text)) {
+            state.currentStep = "forgotEmailHandle";
+            return await bot.sendMessage(
+              chatId,
+              "🔐invalid email please re-enter your email:"
+            );
+          }
+          state.forgotEmail = text;
+          handleResetPassword(chatId, "forgot", text);
+          break;
+        case "resetCurrentPassword":
+          if (!isValidPassword(text)) {
+            state.currentStep = "resetCurrentPassword";
+            await bot.sendMessage(chatId, "");
+          }
+          state.resetConfirmPassword = text;
+          if (state.resetNewPassword !== text) {
+            state.currentStep = "resetNewPassword";
+            return await bot.sendMessage(
+              chatId,
+              "password and confirmPassword does not match. Please Re-enter your password"
+            );
+          }
+          const { loaderMessage, interval } = await animateLoader(chatId);
+          await axios({
+            url: `${API_URL}/resetPassword`,
+            method: "post",
+            data: {
+              chatId:
+                userStates[chatId].passwordAction == "reset" ? chatId : null,
+              email:
+                userStates[chatId].passwordAction == "forgot"
+                  ? userStates[chatId]?.forgotEmail
+                  : null,
+              password: state?.resetNewPassword,
+              confirmPassword: text,
+            },
+          })
+            .then(async (res) => {
+              clearInterval(interval);
+              await bot.deleteMessage(chatId, loaderMessage.message_id);
+              if (res.data.status) {
+                if (state.passwordAction == "forgot") {
+                  await bot.sendMessage(chatId, "Reset Password Successfully", {
+                    reply_markup: {
+                      keyboard: [
+                        [
+                          {
+                            text: "SignUp",
+                            request_contact: false,
+                            request_location: false,
+                          },
+                        ],
+                        [
+                          {
+                            text: "Login",
+                            request_contact: false,
+                            request_location: false,
+                          },
+                        ],
+                        [
+                          {
+                            text: "ForgotPassword",
+                            request_contact: false,
+                            request_location: false,
+                          },
+                        ],
+                        //[{ text: 'Start', request_contact: false, request_location: false }],
+                      ],
+                      resize_keyboard: true,
+                      one_time_keyboard: true,
+                    },
+                  });
+                } else {
+                  await bot.sendMessage(chatId, "✅ Reset Password Successfully");
+                }
+                resetUserState(chatId);
+              } else {
+                await bot.sendMessage(chatId, "❌ Something went wrong");
+              }
+            })
+            .catch(async (e) => {
+              clearInterval(interval);
+              await bot.deleteMessage(chatId, loaderMessage.message_id);
+              console.log("🚀 ~ bot.on ~ e:", e?.message);
+              await bot.sendMessage(chatId, "❌ Something went wrong");
+            });
+      }
+      break;
+    default:
       break;
   }
 });
@@ -3209,6 +3456,13 @@ bot.on("callback_query", async (callbackQuery) => {
           [
             {
               text: "Login",
+              request_contact: false,
+              request_location: false,
+            },
+          ],
+          [
+            {
+              text: "ForgotPassword",
               request_contact: false,
               request_location: false,
             },
@@ -3242,6 +3496,13 @@ bot.on("callback_query", async (callbackQuery) => {
     case "SwaptokenButton":
       resetUserState(chatId);
       await startSwapProcess(chatId);
+      break;
+    case "resetPassword":
+      userStates[chatId].passwordAction = "reset";
+      userStates[chatId].method = "resetPasswordHandle";
+      userStates[chatId].flag = "resetPasswordHandle";
+      await handleResetPassword(chatId, "reset");
+
       break;
     case "settingButton":
       resetUserState(chatId);
@@ -3326,6 +3587,13 @@ referral rate.`,
               [
                 {
                   text: "Login",
+                  request_contact: false,
+                  request_location: false,
+                },
+              ],
+              [
+                {
+                  text: "ForgotPassword",
                   request_contact: false,
                   request_location: false,
                 },
