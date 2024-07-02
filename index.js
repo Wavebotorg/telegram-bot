@@ -124,27 +124,6 @@ const handleSignUp = async (chatId) => {
   userStates[chatId].currentStep = "signupHandle";
   await bot.sendMessage(chatId, "🔐Please enter your name:");
 };
-
-const handleResetPassword = async (chatId) => {
-  await axios({
-    url: `${API_URL}/sendOtp`,
-    method: "post",
-    data: {
-      chatId,
-    },
-  }).then(async (res) => {
-    if (res?.data?.status) {
-      userStates[chatId].currentStep = "getOtp";
-      await bot.sendMessage(chatId, "Please enter otp!!");
-    } else {
-      await bot.sendMessage(
-        chatId,
-        "🔴 something went wrong please try again later!!"
-      );
-    }
-  });
-};
-
 const handleToSell = async (chatId, chainId) => {
   try {
     if (userStates[chatId]?.evmSellMessage) {
@@ -952,7 +931,6 @@ async function setting(chatId) {
               callback_data: "referralQr",
             },
             { text: "❗️ Help", callback_data: "helpButton" },
-            { text: "resetPassword", callback_data: "resetPassword" },
           ],
         ],
       },
@@ -3171,16 +3149,6 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
       }
 
       break;
-    case "resetPasswordHandle":
-      switch (state.currentStep) {
-        case "getOtp":
-          state.otp = text;
-          await bot.sendMessage(chatId, text);
-          break;
-      }
-      break;
-    default:
-      break;
   }
 });
 
@@ -3237,12 +3205,6 @@ bot.on("callback_query", async (callbackQuery) => {
     case "SwaptokenButton":
       resetUserState(chatId);
       await startSwapProcess(chatId);
-      break;
-    case "resetPassword":
-      userStates[chatId].method = "resetPasswordHandle";
-      userStates[chatId].flag = "resetPasswordHandle";
-      await handleResetPassword(chatId);
-
       break;
     case "settingButton":
       resetUserState(chatId);
