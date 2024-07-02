@@ -147,6 +147,7 @@ const handleToSell = async (chatId, chainId) => {
 };
 
 const handleToSellSolana = async (chatId) => {
+  const { loaderMessage, interval } = await animateLoader(chatId);
   try {
     if (userStates[chatId]?.evmSellMessage) {
       await bot.deleteMessage(
@@ -166,7 +167,8 @@ const handleToSellSolana = async (chatId) => {
       chatId: chatId,
     });
     const balances = response?.data;
-    ``;
+    clearInterval(interval);
+    await bot.deleteMessage(chatId, loaderMessage.message_id);
     let message = "Your Solana tokens:\n\n";
     if (balances) {
       userStates[chatId].allSellSolanaToken = balances?.data;
@@ -210,7 +212,9 @@ const handleToSellSolana = async (chatId) => {
       );
     }
   } catch (error) {
-    console.error("Error fetching balance:", error);
+    clearInterval(interval);
+    await bot.deleteMessage(chatId, loaderMessage.message_id);
+    console.error("Error fetching balance:", error?.message);
     await bot.sendMessage(
       chatId,
       "An error occurred while fetching your balance."
@@ -1164,6 +1168,7 @@ https://dexscreener.com/${userStates[chatId]?.network}/${
 
 async function handleDynamicSellSolana(chatId, token) {
   console.log("🚀 ~ handleDynamicSellSolana ~ token:", token);
+  const { loaderMessage, interval } = await animateLoader(chatId);
   try {
     if (userStates[chatId]?.sellTokensList) {
       await bot.deleteMessage(
@@ -1187,16 +1192,23 @@ async function handleDynamicSellSolana(chatId, token) {
           chatId,
         })
         .then(async (res) => {
+          clearInterval(interval);
+          await bot.deleteMessage(chatId, loaderMessage.message_id);
+          const balanceInUSD = Number(
+            tokenDetails[0]?.amount * res?.data?.data?.price
+          ).toFixed(5);
           userStates[chatId].evmSellMessage = await bot.sendMessage(
             chatId,
-            `Balance : ${Number(
+            `Balance : <code>${Number(
               res?.data?.data?.nativeTokenDetails?.solana
-            )?.toFixed(5)}sol
-${res?.data?.data?.name} balance : ${Number(tokenDetails[0]?.amount).toFixed(5)}
+            )?.toFixed(5)}</code> sol
+${res?.data?.data?.name} balance : <code>${Number(
+              tokenDetails[0]?.amount
+            ).toFixed(5)}</code>(${balanceInUSD}$)
 Token : ${res?.data?.data?.name} <code>${res?.data?.data?.address}</code>
-${res?.data?.data?.name} price : ${Number(res?.data?.data?.price)?.toFixed(6)}$
-variation24h : ${Number(res?.data?.data?.variation24h)?.toFixed(3)}%
-totalSupply : ${Number(res?.data?.data?.totalSupply)?.toFixed()}
+${res?.data?.data?.name} price : <code>${Number(res?.data?.data?.price)?.toFixed(6)}$</code>
+variation24h : <code>${Number(res?.data?.data?.variation24h)?.toFixed(3)}%</code>
+totalSupply : <code>${Number(res?.data?.data?.totalSupply)?.toFixed()}</code>
 mcap : ${
               res?.data?.data?.mcap
                 ? Number(res?.data?.data?.mcap)?.toFixed()
@@ -1245,9 +1257,20 @@ https://dexscreener.com/solana/${res?.data?.data?.address}`,
               },
             }
           );
+        })
+        .catch(async (err) => {
+          console.log("🚀 ~ .then ~ err:", err?.message);
+          clearInterval(interval);
+          await bot.deleteMessage(chatId, loaderMessage.message_id);
+          await bot.sendMessage(
+            chatId,
+            "🔴 somthing wen wrong please try again later!!"
+          );
         });
     }
   } catch (error) {
+    clearInterval(interval);
+    await bot.deleteMessage(chatId, loaderMessage.message_id);
     console.log("🚀 ~ handleDynamicSellToken ~ error:", error?.message);
     await bot.sendMessage(
       chatId,
@@ -2453,7 +2476,7 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
             },
             {
               chat_id: chatId,
-              message_id: userStates[chatId].evmSellMessage.message_id,
+              message_id: userStates[chatId]?.evmSellMessage?.message_id,
             }
           );
           break;
