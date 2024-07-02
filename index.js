@@ -188,7 +188,7 @@ const handleToSellSolana = async (chatId) => {
       const keyboard = [];
 
       // add dynamic buttons in the keyboard
-      for (let i = 1; i < buttons.length; i += 4) {
+      for (let i = 0; i < buttons.length; i += 4) {
         keyboard.push(buttons.slice(i, i + 4));
       }
 
@@ -1181,57 +1181,71 @@ async function handleDynamicSellSolana(chatId, token) {
       userStates[chatId].sellPrice = Number(
         (tokenDetails[0]?.amount * 10) / 100
       ).toFixed(5);
-      userStates[chatId].evmSellMessage = await bot.sendMessage(
-        chatId,
-        `Token : ${tokenDetails[0]?.symbol} <code>${
-          tokenDetails[0]?.mint
-        }</code>
-${tokenDetails[0]?.symbol} Balance : <code>${Number(
-          tokenDetails[0]?.amount
-        )?.toFixed(5)}</code>
-https://dexscreener.com/solana/${tokenDetails[0]?.mint}`,
-        {
-          parse_mode: "HTML",
-          reply_markup: {
-            inline_keyboard: [
-              [
-                {
-                  text: `✅ Sell 10% ${tokenDetails[0]?.symbol}`,
-                  callback_data: "10EvmSellSolanaPer",
-                },
-                {
-                  text: `Sell 25% ${tokenDetails[0]?.symbol}`,
-                  callback_data: "25EvmSellSolanaPer",
-                },
-                {
-                  text: `Sell 50% ${tokenDetails[0]?.symbol}`,
-                  callback_data: "50EvmSellSolanaPer",
-                },
-              ],
-              [
-                {
-                  text: `Sell 70% ${tokenDetails[0]?.symbol}`,
-                  callback_data: "70EvmSellSolanaPer",
-                },
-                {
-                  text: `Sell 100% ${tokenDetails[0]?.symbol}`,
-                  callback_data: "100EvmSellSolanaPer",
-                },
-                {
-                  text: `Sell X amount of${tokenDetails[0]?.symbol} ✏️`,
-                  callback_data: "customEvmSellSolanaPer",
-                },
-              ],
-              [
-                {
-                  text: `Sell`,
-                  callback_data: "sellSolanafinal",
-                },
-              ],
-            ],
-          },
-        }
-      );
+      await axios
+        .post(`${API_URL}/dexSol`, {
+          token: tokenDetails[0]?.mint,
+          chatId,
+        })
+        .then(async (res) => {
+          userStates[chatId].evmSellMessage = await bot.sendMessage(
+            chatId,
+            `Balance : ${Number(
+              res?.data?.data?.nativeTokenDetails?.solana
+            )?.toFixed(5)}sol
+${res?.data?.data?.name} balance : ${Number(tokenDetails[0]?.amount).toFixed(5)}
+Token : ${res?.data?.data?.name} <code>${res?.data?.data?.address}</code>
+${res?.data?.data?.name} price : ${Number(res?.data?.data?.price)?.toFixed(6)}$
+variation24h : ${Number(res?.data?.data?.variation24h)?.toFixed(3)}%
+totalSupply : ${Number(res?.data?.data?.totalSupply)?.toFixed()}
+mcap : ${
+              res?.data?.data?.mcap
+                ? Number(res?.data?.data?.mcap)?.toFixed()
+                : "not available!!"
+            }
+https://dexscreener.com/solana/${res?.data?.data?.address}`,
+            {
+              parse_mode: "HTML",
+              reply_markup: {
+                inline_keyboard: [
+                  [
+                    {
+                      text: `✅ Sell 10% ${tokenDetails[0]?.symbol}`,
+                      callback_data: "10EvmSellSolanaPer",
+                    },
+                    {
+                      text: `Sell 25% ${tokenDetails[0]?.symbol}`,
+                      callback_data: "25EvmSellSolanaPer",
+                    },
+                    {
+                      text: `Sell 50% ${tokenDetails[0]?.symbol}`,
+                      callback_data: "50EvmSellSolanaPer",
+                    },
+                  ],
+                  [
+                    {
+                      text: `Sell 70% ${tokenDetails[0]?.symbol}`,
+                      callback_data: "70EvmSellSolanaPer",
+                    },
+                    {
+                      text: `Sell 100% ${tokenDetails[0]?.symbol}`,
+                      callback_data: "100EvmSellSolanaPer",
+                    },
+                    {
+                      text: `Sell X amount of${tokenDetails[0]?.symbol} ✏️`,
+                      callback_data: "customEvmSellSolanaPer",
+                    },
+                  ],
+                  [
+                    {
+                      text: `Sell`,
+                      callback_data: "sellSolanafinal",
+                    },
+                  ],
+                ],
+              },
+            }
+          );
+        });
     }
   } catch (error) {
     console.log("🚀 ~ handleDynamicSellToken ~ error:", error?.message);
