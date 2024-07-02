@@ -141,7 +141,7 @@ const handleResetPassword = async (chatId, action, email) => {
   }).then(async (res) => {
     if (res?.data?.status) {
       userStates[chatId].currentStep = "getOtp";
-      await bot.sendMessage(chatId, "Please enter otp!!");
+      await bot.sendMessage(chatId, "Check you mail and enter the OTP!!");
     } else {
       await bot.sendMessage(
         chatId,
@@ -1588,18 +1588,22 @@ bot.on("message", async (msg) => {
                         res?.data?.data?.nativeTokenDetails?.solana;
                       state.solanaBuyMessage = await bot.sendMessage(
                         chatId,
-                        `Balance : ${Number(
+                        `Balance : <code>${Number(
                           res?.data?.data?.nativeTokenDetails?.solana
-                        )?.toFixed(5)}sol
+                        )?.toFixed(5)}</code>sol
 Token : ${res?.data?.data?.name} <code>${res?.data?.data?.address}</code>
-${res?.data?.data?.name} price : ${Number(res?.data?.data?.price)?.toFixed(6)}$
-variation24h : ${Number(res?.data?.data?.variation24h)?.toFixed(3)}%
-totalSupply : ${Number(res?.data?.data?.totalSupply)?.toFixed()}
-mcap : ${
+${res?.data?.data?.name} price : <code>${Number(
+                          res?.data?.data?.price
+                        )?.toFixed(6)}$</code>
+variation24h : <code>${Number(res?.data?.data?.variation24h)?.toFixed(
+                          3
+                        )}%</code>
+totalSupply : <code>${Number(res?.data?.data?.totalSupply)?.toFixed()}</code>
+mcap : <code>${
                           res?.data?.data?.mcap
                             ? Number(res?.data?.data?.mcap)?.toFixed()
                             : "not available!!"
-                        }
+                        }</code>
 https://dexscreener.com/solana/${state.toToken}`,
                         {
                           parse_mode: "HTML",
@@ -1723,29 +1727,31 @@ https://dexscreener.com/solana/${state.toToken}`,
                           state?.buyTokenNativename
                             ? state?.buyTokenNativename?.symbol
                             : ""
-                        } Balance: ${Number(
+                        } Balance: <code>${Number(
                           state?.buyTokenNativename
                             ? state?.buyTokenNativename?.balance_formatted
                             : 0.0
-                        ).toFixed(5)}(${Number(
+                        ).toFixed(5)}</code>(<code>${Number(
                           state?.buyTokenNativename
                             ? state?.buyTokenNativename?.usd_value
                             : 0
-                        ).toFixed(4)} USD)
+                        ).toFixed(4)}</code> USD)
 Token : ${res?.data?.data?.symbol}  <code>${res?.data?.data?.address}</code>
-${res?.data?.data?.name} price : ${Number(res?.data?.data?.price)?.toFixed(5)}$
-24hrPercentChange : ${Number(
+${res?.data?.data?.name} price : <code>${Number(
+                          res?.data?.data?.price
+                        )?.toFixed(5)}$</code>
+24hrPercentChange : <code>${Number(
                           res?.data?.data?.variation24h
                             ? res?.data?.data?.variation24h
                             : 0
-                        )?.toFixed(3)}%
-totalSupply : ${Number(res?.data?.data?.totalSupply)?.toFixed()}
-mcap : ${
+                        )?.toFixed(3)}%</code>
+totalSupply : <code>${Number(res?.data?.data?.totalSupply)?.toFixed()}</code>
+mcap : <code>${
                           res?.data?.data?.mcap
                             ? Number(res?.data?.data?.mcap)?.toFixed()
                             : "not available!!"
-                        }
-network : ${state?.network}
+                        }</code>
+network : <code>${state?.network}</code>
 ${
   res?.data?.data?.nativeTokenDetails?.balance_formatted <= 0
     ? `🔴 Insufficient balance for buy amount + gas ⇅`
@@ -3313,11 +3319,15 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                 state.currentStep = "resetNewPassword";
                 await bot.sendMessage(chatId, "Enter your new password:");
               } else {
-                await bot.sendMessage(chatId, "❌ Something went wrong");
+                state.currentStep = "getOtp";
+                await bot.sendMessage(
+                  chatId,
+                  "❌ Wrong otp please re-enter the OTP!!"
+                );
               }
             })
             .catch(async (e) => {
-              console.log("🚀 ~ bot.on ~ e:", e?.message)
+              console.log("🚀 ~ bot.on ~ e:", e?.message);
               await bot.sendMessage(chatId, "❌ Something went wrong");
             });
           break;
@@ -3416,7 +3426,10 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                     },
                   });
                 } else {
-                  await bot.sendMessage(chatId, "✅ Reset Password Successfully");
+                  await bot.sendMessage(
+                    chatId,
+                    "✅ Reset Password Successfully"
+                  );
                 }
                 resetUserState(chatId);
               } else {
