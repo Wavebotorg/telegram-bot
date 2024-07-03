@@ -4754,7 +4754,7 @@ referral rate.`,
           "So11111111111111111111111111111111111111112",
           userStates[chatId]?.toToken,
           userStates[chatId]?.buyPrice,
-          "Buy",
+          "buy",
           9
         );
       } else {
