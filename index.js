@@ -673,7 +673,7 @@ async function getstartBot(chatId) {
 // solana swap function
 async function solanaSwapHandle(chatId, input, output, amount, method, desBot) {
   if (
-    userStates[chatId]?.nativeBalance <= amount ||
+    userStates[chatId]?.nativeBalance < amount ||
     !userStates[chatId]?.nativeBalance
   ) {
     resetUserState(chatId);
@@ -750,7 +750,7 @@ async function solanaSwapHandle(chatId, input, output, amount, method, desBot) {
 // EVM swap function
 async function evmSwapHandle(amount, chatId, method) {
   if (
-    userStates[chatId]?.buyTokenNativename?.balance_formatted <= amount ||
+    userStates[chatId]?.buyTokenNativename?.balance_formatted < amount ||
     !userStates[chatId]?.buyTokenNativename?.balance_formatted
   ) {
     resetUserState(chatId);
@@ -821,7 +821,7 @@ async function evmSwapHandle(amount, chatId, method) {
 
 async function evmSellHandle(amount, chatId) {
   if (
-    userStates[chatId]?.selectedSellToken?.balance_formatted <= amount ||
+    userStates[chatId]?.selectedSellToken?.balance_formatted < amount ||
     !userStates[chatId]?.selectedSellToken?.balance_formatted
   ) {
     resetUserState(chatId);
@@ -887,8 +887,8 @@ async function solanaSellHandle(chatId) {
   );
   console.log("amount that you entered", userStates[chatId]?.sellPrice);
   if (
-    Number(userStates[chatId]?.selectedSellSolanaToken?.amount).toFixed(5) <
-    Number(userStates[chatId]?.sellPrice).toFixed(5)
+    Number(userStates[chatId]?.selectedSellSolanaToken?.amount) <
+    Number(userStates[chatId]?.sellPrice)
   ) {
     resetUserState(chatId);
     return bot.sendMessage(
@@ -1140,7 +1140,7 @@ async function handleDynamicSellToken(chatId, token) {
       userStates[chatId].selectedSellToken = tokenDetails[0];
       userStates[chatId].sellPrice = Number(
         (tokenDetails[0]?.amount * 10) / 100
-      ).toFixed(5);
+      );
       userStates[chatId].evmSellMessage = await bot.sendMessage(
         chatId,
         `🏷 Name : ${tokenDetails[0]?.symbol} 
@@ -1164,7 +1164,9 @@ https://dexscreener.com/${userStates[chatId]?.network}/${
             inline_keyboard: [
               [
                 {
-                  text: `✅ Sell 10% ${tokenDetails[0]?.symbol}`,
+                  text: `✅ ${Number(userStates[chatId].sellPrice).toFixed(
+                    5
+                  )} ${tokenDetails[0]?.symbol}`,
                   callback_data: "10EvmSellPer",
                 },
                 {
@@ -1229,7 +1231,7 @@ async function handleDynamicSellSolana(chatId, token) {
       userStates[chatId].selectedSellSolanaToken = tokenDetails[0];
       userStates[chatId].sellPrice = Number(
         (tokenDetails[0]?.amount * 10) / 100
-      ).toFixed(5);
+      );
       await axios
         .post(`${API_URL}/dexSol`, {
           token: tokenDetails[0]?.mint,
@@ -1270,7 +1272,9 @@ https://dexscreener.com/solana/${res?.data?.data?.address}`,
                 inline_keyboard: [
                   [
                     {
-                      text: `✅ Sell 10% ${tokenDetails[0]?.symbol}`,
+                      text: `✅ ${Number(userStates[chatId].sellPrice).toFixed(
+                        5
+                      )} ${tokenDetails[0]?.symbol}`,
                       callback_data: "10EvmSellSolanaPer",
                     },
                     {
@@ -2496,7 +2500,7 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
           await bot.sendMessage(chatId, "Please enter amount:");
           break;
         case "toTokenSell":
-          state.sellPrice = Number(text).toFixed(4);
+          state.sellPrice = text;
           await bot.deleteMessage(
             chatId,
             state?.customAmountSellEvm?.message_id
@@ -2529,7 +2533,9 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                     callback_data: "100EvmSellPer",
                   },
                   {
-                    text: `✅ ${state?.sellPrice} ${userStates[chatId]?.selectedSellToken?.symbol} ✏️`,
+                    text: `✅ ${Number(userStates[chatId]?.sellPrice).toFixed(
+                      5
+                    )} ${userStates[chatId]?.selectedSellToken?.symbol}`,
                     callback_data: "customEvmSellPer",
                   },
                 ],
@@ -2548,7 +2554,7 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
           );
           break;
         case "toTokenSellSolana":
-          state.sellPrice = Number(text).toFixed(4);
+          state.sellPrice = Number(text);
           await bot.deleteMessage(
             chatId,
             state?.customAmountSellEvm?.message_id
@@ -2581,7 +2587,9 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                     callback_data: "100EvmSellSolanaPer",
                   },
                   {
-                    text: `✅ ${userStates[chatId]?.sellPrice} ${userStates[chatId]?.selectedSellSolanaToken?.symbol}`,
+                    text: `✅ ${Number(userStates[chatId].sellPrice).toFixed(
+                      5
+                    )} ${userStates[chatId]?.selectedSellSolanaToken?.symbol}`,
                     callback_data: "customEvmSellPer",
                   },
                 ],
@@ -4176,10 +4184,8 @@ referral rate.`,
       break;
     case "10SolPer":
       if (userStates[chatId]?.flag == 19999) {
-        userStates[chatId].buyPrice = (
-          (userStates[chatId]?.nativeBalance * 10) /
-          100
-        ).toFixed(5);
+        userStates[chatId].buyPrice =
+          (userStates[chatId]?.nativeBalance * 10) / 100;
         console.log(
           "--------------------------->",
           userStates[chatId].buyPrice
@@ -4228,7 +4234,9 @@ referral rate.`,
               ],
               [
                 {
-                  text: `✅ ${userStates[chatId].buyPrice} SOL`,
+                  text: `✅ ${Number(userStates[chatId].buyPrice).toFixed(
+                    5
+                  )} SOL`,
                   callback_data: "10SolPer",
                 },
                 {
@@ -4274,10 +4282,8 @@ referral rate.`,
       break;
     case "25SolPer":
       if (userStates[chatId]?.flag == 19999) {
-        userStates[chatId].buyPrice = (
-          (userStates[chatId]?.nativeBalance * 25) /
-          100
-        ).toFixed(5);
+        userStates[chatId].buyPrice =
+          (userStates[chatId]?.nativeBalance * 25) / 100;
         console.log(
           "--------------------------->",
           userStates[chatId].buyPrice
@@ -4329,7 +4335,9 @@ referral rate.`,
                   callback_data: "10SolPer",
                 },
                 {
-                  text: `✅ ${userStates[chatId].buyPrice} SOL`,
+                  text: `✅ ${Number(userStates[chatId].buyPrice).toFixed(
+                    5
+                  )} SOL`,
                   callback_data: "25SolPer",
                 },
                 {
@@ -4371,10 +4379,8 @@ referral rate.`,
       break;
     case "50SolPer":
       if (userStates[chatId]?.flag == 19999) {
-        userStates[chatId].buyPrice = (
-          (userStates[chatId]?.nativeBalance * 50) /
-          100
-        ).toFixed(5);
+        userStates[chatId].buyPrice =
+          (userStates[chatId]?.nativeBalance * 50) / 100;
         console.log(
           "--------------------------->",
           userStates[chatId].buyPrice
@@ -4430,7 +4436,9 @@ referral rate.`,
                   callback_data: "25SolPer",
                 },
                 {
-                  text: `✅ ${userStates[chatId].buyPrice} SOL`,
+                  text: `✅ ${Number(userStates[chatId].buyPrice).toFixed(
+                    5
+                  )} SOL`,
                   callback_data: "50SolPer",
                 },
               ],
@@ -4468,10 +4476,8 @@ referral rate.`,
       break;
     case "70SolPer":
       if (userStates[chatId]?.flag == 19999) {
-        userStates[chatId].buyPrice = (
-          (userStates[chatId]?.nativeBalance * 70) /
-          100
-        ).toFixed(5);
+        userStates[chatId].buyPrice =
+          (userStates[chatId]?.nativeBalance * 70) / 100;
         console.log(
           "--------------------------->",
           userStates[chatId].buyPrice
@@ -4533,7 +4539,9 @@ referral rate.`,
               ],
               [
                 {
-                  text: `✅ ${userStates[chatId].buyPrice} SOL`,
+                  text: `✅ ${Number(userStates[chatId].buyPrice).toFixed(
+                    5
+                  )} SOL`,
                   callback_data: "70SolPer",
                 },
                 {
@@ -4565,9 +4573,7 @@ referral rate.`,
       break;
     case "100SolPer":
       if (userStates[chatId]?.flag == 19999) {
-        userStates[chatId].buyPrice = Number(
-          userStates[chatId]?.nativeBalance
-        ).toFixed(5);
+        userStates[chatId].buyPrice = Number(userStates[chatId]?.nativeBalance);
         console.log(
           "--------------------------->",
           userStates[chatId].buyPrice
@@ -4633,7 +4639,9 @@ referral rate.`,
                   callback_data: "70SolPer",
                 },
                 {
-                  text: `✅ ${userStates[chatId].buyPrice} SOL`,
+                  text: `✅ ${Number(userStates[chatId].buyPrice).toFixed(
+                    5
+                  )} SOL`,
                   callback_data: "100SolPer",
                 },
                 {
@@ -5604,10 +5612,9 @@ referral rate.`,
       break;
     case "10EVMPer":
       if (userStates[chatId]?.flag) {
-        userStates[chatId].buyPrice = (
+        userStates[chatId].buyPrice =
           (userStates[chatId]?.buyTokenNativename?.balance_formatted * 10) /
-          100
-        ).toFixed(5);
+          100;
         console.log(
           "--------------------------->",
           userStates[chatId].buyPrice
@@ -5679,7 +5686,7 @@ referral rate.`,
               ],
               [
                 {
-                  text: `✅ ${userStates[chatId].buyPrice} ${
+                  text: `✅ ${Number(userStates[chatId].buyPrice).toFixed(5)} ${
                     userStates[chatId].buyTokenNativename
                       ? userStates[chatId].buyTokenNativename?.symbol
                       : ""
@@ -5749,10 +5756,9 @@ referral rate.`,
       break;
     case "25EVMPer":
       if (userStates[chatId]?.flag) {
-        userStates[chatId].buyPrice = (
+        userStates[chatId].buyPrice =
           (userStates[chatId]?.buyTokenNativename?.balance_formatted * 25) /
-          100
-        ).toFixed(5);
+          100;
         console.log(
           "--------------------------->",
           userStates[chatId].buyPrice
@@ -5832,7 +5838,7 @@ referral rate.`,
                   callback_data: "10EVMPer",
                 },
                 {
-                  text: `✅ ${userStates[chatId].buyPrice} ${
+                  text: `✅ ${Number(userStates[chatId].buyPrice).toFixed(5)} ${
                     userStates[chatId].buyTokenNativename
                       ? userStates[chatId].buyTokenNativename?.symbol
                       : ""
@@ -5894,10 +5900,9 @@ referral rate.`,
       break;
     case "50EVMPer":
       if (userStates[chatId]?.flag) {
-        userStates[chatId].buyPrice = (
+        userStates[chatId].buyPrice =
           (userStates[chatId]?.buyTokenNativename?.balance_formatted * 50) /
-          100
-        ).toFixed(5);
+          100;
         console.log(
           "--------------------------->",
           userStates[chatId].buyPrice
@@ -5985,7 +5990,7 @@ referral rate.`,
                   callback_data: "25EVMPer",
                 },
                 {
-                  text: `✅ ${userStates[chatId].buyPrice} ${
+                  text: `✅ ${Number(userStates[chatId].buyPrice).toFixed(5)} ${
                     userStates[chatId].buyTokenNativename
                       ? userStates[chatId].buyTokenNativename?.symbol
                       : ""
@@ -6039,10 +6044,9 @@ referral rate.`,
       break;
     case "70EVMPer":
       if (userStates[chatId]?.flag) {
-        userStates[chatId].buyPrice = (
+        userStates[chatId].buyPrice =
           (userStates[chatId]?.buyTokenNativename?.balance_formatted * 70) /
-          100
-        ).toFixed(5);
+          100;
         console.log(
           "--------------------------->",
           userStates[chatId].buyPrice
@@ -6140,7 +6144,7 @@ referral rate.`,
               ],
               [
                 {
-                  text: `✅ ${userStates[chatId].buyPrice} ${
+                  text: `✅ ${Number(userStates[chatId].buyPrice).toFixed(5)} ${
                     userStates[chatId].buyTokenNativename
                       ? userStates[chatId].buyTokenNativename?.symbol
                       : ""
@@ -6184,10 +6188,9 @@ referral rate.`,
       break;
     case "100EVMPer":
       if (userStates[chatId]?.flag) {
-        userStates[chatId].buyPrice = (
+        userStates[chatId].buyPrice =
           (userStates[chatId]?.buyTokenNativename?.balance_formatted * 100) /
-          100
-        ).toFixed(5);
+          100;
         console.log(
           "--------------------------->",
           userStates[chatId].buyPrice
@@ -6293,7 +6296,7 @@ referral rate.`,
                   callback_data: "70EVMPer",
                 },
                 {
-                  text: `✅ ${userStates[chatId].buyPrice} ${
+                  text: `✅ ${Number(userStates[chatId].buyPrice).toFixed(5)} ${
                     userStates[chatId].buyTokenNativename
                       ? userStates[chatId].buyTokenNativename?.symbol
                       : ""
@@ -6483,10 +6486,8 @@ referral rate.`,
       break;
     case "10EvmSellSolanaPer":
       if (userStates[chatId]?.flag) {
-        userStates[chatId].sellPrice = (
-          (userStates[chatId]?.selectedSellSolanaToken?.amount * 10) /
-          100
-        ).toFixed(5);
+        userStates[chatId].sellPrice =
+          (userStates[chatId]?.selectedSellSolanaToken?.amount * 10) / 100;
         console.log(
           "--------------------------->",
           userStates[chatId].sellPrice
@@ -6496,7 +6497,9 @@ referral rate.`,
             inline_keyboard: [
               [
                 {
-                  text: `✅ ${userStates[chatId].sellPrice} ${userStates[chatId]?.selectedSellSolanaToken?.symbol}`,
+                  text: `✅ ${Number(userStates[chatId].sellPrice).toFixed(
+                    5
+                  )} ${userStates[chatId]?.selectedSellSolanaToken?.symbol}`,
                   callback_data: "10EvmSellSolanaPer",
                 },
                 {
@@ -6542,10 +6545,8 @@ referral rate.`,
       break;
     case "25EvmSellSolanaPer":
       if (userStates[chatId]?.flag) {
-        userStates[chatId].sellPrice = (
-          (userStates[chatId]?.selectedSellSolanaToken?.amount * 25) /
-          100
-        ).toFixed(5);
+        userStates[chatId].sellPrice =
+          (userStates[chatId]?.selectedSellSolanaToken?.amount * 25) / 100;
         console.log(
           "--------------------------->",
           userStates[chatId].sellPrice
@@ -6559,7 +6560,9 @@ referral rate.`,
                   callback_data: "10EvmSellSolanaPer",
                 },
                 {
-                  text: `✅ ${userStates[chatId].sellPrice} ${userStates[chatId]?.selectedSellSolanaToken?.symbol}`,
+                  text: `✅ ${Number(userStates[chatId].sellPrice).toFixed(
+                    5
+                  )} ${userStates[chatId]?.selectedSellSolanaToken?.symbol}`,
                   callback_data: "25EvmSellSolanaPer",
                 },
                 {
@@ -6601,10 +6604,8 @@ referral rate.`,
       break;
     case "50EvmSellSolanaPer":
       if (userStates[chatId]?.flag) {
-        userStates[chatId].sellPrice = (
-          (userStates[chatId]?.selectedSellSolanaToken?.amount * 50) /
-          100
-        ).toFixed(5);
+        userStates[chatId].sellPrice =
+          (userStates[chatId]?.selectedSellSolanaToken?.amount * 50) / 100;
         console.log(
           "--------------------------->",
           userStates[chatId].sellPrice
@@ -6622,7 +6623,9 @@ referral rate.`,
                   callback_data: "25EvmSellSolanaPer",
                 },
                 {
-                  text: `✅ ${userStates[chatId].sellPrice} ${userStates[chatId]?.selectedSellSolanaToken?.symbol}`,
+                  text: `✅ ${Number(userStates[chatId].sellPrice).toFixed(
+                    5
+                  )} ${userStates[chatId]?.selectedSellSolanaToken?.symbol}`,
                   callback_data: "50EvmSellSolanaPer",
                 },
               ],
@@ -6660,10 +6663,8 @@ referral rate.`,
       break;
     case "70EvmSellSolanaPer":
       if (userStates[chatId]?.flag) {
-        userStates[chatId].sellPrice = (
-          (userStates[chatId]?.selectedSellSolanaToken?.amount * 70) /
-          100
-        ).toFixed(5);
+        userStates[chatId].sellPrice =
+          (userStates[chatId]?.selectedSellSolanaToken?.amount * 70) / 100;
         console.log(
           "--------------------------->",
           userStates[chatId].sellPrice
@@ -6687,7 +6688,9 @@ referral rate.`,
               ],
               [
                 {
-                  text: `✅ ${userStates[chatId].sellPrice} ${userStates[chatId]?.selectedSellSolanaToken?.symbol}`,
+                  text: `✅ ${Number(userStates[chatId].sellPrice).toFixed(
+                    5
+                  )} ${userStates[chatId]?.selectedSellSolanaToken?.symbol}`,
                   callback_data: "70EvmSellSolanaPer",
                 },
                 {
@@ -6721,7 +6724,7 @@ referral rate.`,
       if (userStates[chatId]?.flag) {
         userStates[chatId].sellPrice = Number(
           userStates[chatId]?.selectedSellSolanaToken?.amount
-        ).toFixed(5);
+        );
         console.log(
           "--------------------------->",
           userStates[chatId].sellPrice
@@ -6749,7 +6752,9 @@ referral rate.`,
                   callback_data: "70EvmSellSolanaPer",
                 },
                 {
-                  text: `✅ ${userStates[chatId].sellPrice} ${userStates[chatId]?.selectedSellSolanaToken?.symbol}`,
+                  text: `✅ ${Number(userStates[chatId].sellPrice).toFixed(
+                    5
+                  )} ${userStates[chatId]?.selectedSellSolanaToken?.symbol}`,
                   callback_data: "100EvmSellSolanaPer",
                 },
                 {
