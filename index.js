@@ -25,6 +25,7 @@ const resetUserState = (chatId) => {
     password: null,
     sellTokensList: userStates[chatId]?.sellTokensList,
     sellSolanaTokensList: userStates[chatId]?.sellSolanaTokensList,
+    positionList: userStates[chatId]?.positionList,
     selectedSellSolanaToken: null,
     allSellTokens: null,
     confirmPassword: null,
@@ -62,6 +63,7 @@ const resetUserStateRef = (chatId) => {
     network: null,
     sellTokensList: userStates[chatId]?.sellTokensList,
     sellSolanaTokensList: userStates[chatId]?.sellSolanaTokensList,
+    positionList: userStates[chatId]?.positionList,
     selectedSellSolanaToken: null,
     desCode: null,
     email: null,
@@ -328,6 +330,32 @@ const walletAddressKeyboard = {
     ],
   ],
 };
+
+// positions keyboard
+const positionsKeyboard = {
+  inline_keyboard: [
+    [
+      { text: "Solona", callback_data: "PositionSolana" },
+      { text: "Ethereum", callback_data: "1Position" },
+      { text: "Arbitrum", callback_data: "42161Position" },
+    ],
+    [
+      { text: "Polygon", callback_data: "137Position" },
+      { text: "BNB Chain", callback_data: "56Position" },
+      { text: "Base", callback_data: "8453Position" },
+    ],
+    [
+      { text: "Optimism", callback_data: "10Position" },
+      { text: "Linea", callback_data: "59144Position" },
+      { text: "blast", callback_data: "PositionBlast" },
+    ],
+    [
+      { text: "Avalanche", callback_data: "43114Position" },
+      { text: "Cronos", callback_data: "25Position" },
+      { text: "Fantom", callback_data: "250Position" },
+    ],
+  ],
+};
 // swap keyboard
 const blockchainKeyboard = {
   inline_keyboard: [
@@ -586,6 +614,20 @@ from the options below:`,
     }
   );
 };
+
+// position keyboard
+const positionsChainSelection = async (chatId) => {
+  userStates[chatId].methodTransactions = await bot.sendMessage(
+    chatId,
+    `🌟 Choose a blockchain 🌟
+Great! Let's get started. Please select your preferred blockchain 
+from the options below:`,
+    {
+      reply_markup: JSON.stringify(positionsKeyboard),
+    }
+  );
+};
+
 // withraw token Token
 const withrawStartTokenSelection = async (chatId) => {
   userStates[chatId].methodTransactions = await bot.sendMessage(
@@ -1325,6 +1367,53 @@ https://dexscreener.com/solana/${res?.data?.data?.address}`,
     clearInterval(interval);
     await bot.deleteMessage(chatId, loaderMessage.message_id);
     console.log("🚀 ~ handleDynamicSellToken ~ error:", error?.message);
+    await bot.sendMessage(
+      chatId,
+      "🔴 Something went wrong, please try again after some time!!"
+    );
+  }
+}
+
+// positions function
+async function handlePositions(chatId, chainId) {
+  console.log("🚀 ~ handlePositions ~ chainId:", chainId)
+  if (userStates[chatId]?.positionList) {
+    await bot.deleteMessage(
+      chatId,
+      userStates[chatId]?.positionList?.message_id
+    );
+    userStates[chatId].positionList = null;
+  }
+  const { loaderMessage, interval } = await animateLoader(chatId);
+  try {
+    const response = await axios.post(`${API_URL}/fetchbalance`, {
+      chatId: chatId,
+      chainId: chainId,
+    });
+    clearInterval(interval);
+    await bot.deleteMessage(chatId, loaderMessage?.message_id);
+
+    const balances = response?.data?.data;
+    console.log("🚀 ~ handlePositions ~ balances:", balances)
+    const tokens = balances?.filter((item) => item?.usd_price != null);
+    userStates[chatId].allSellTokens = tokens;
+
+    let message = "Your Tokens:\n\n";
+    if (tokens) {
+      tokens?.forEach((balance) => {
+        message += `Token Name: <code>${balance?.symbol}</code>\n`;
+        message += `Balance: <code>${Number(balance?.balance_formatted).toFixed(
+          4
+        )}</code>(${Number(balance?.usd_value).toFixed(5)}$)\n\n`;
+      });
+    }
+    userStates[chatId].positionList = await bot.sendMessage(chatId, message, {
+      parse_mode: "HTML",
+    });
+  } catch (error) {
+    clearInterval(interval);
+    await bot.deleteMessage(chatId, loaderMessage.message_id);
+    console.error("Error fetching balance:", error.message);
     await bot.sendMessage(
       chatId,
       "🔴 Something went wrong, please try again after some time!!"
@@ -3514,7 +3603,10 @@ bot.on("callback_query", async (callbackQuery) => {
   if (data?.slice(-10) == "SellSolana") {
     return await handleDynamicSellSolana(chatId, data?.slice(0, -10));
   }
-
+  // handle position
+  if (data?.slice(-8) == "Position") {
+    await handlePositions(chatId, Number(data?.slice(0, -8)));
+  }
   switch (data) {
     case "menuButton":
       resetUserState(chatId);
@@ -3529,7 +3621,10 @@ bot.on("callback_query", async (callbackQuery) => {
       userStates[chatId].method = "resetPasswordHandle";
       userStates[chatId].flag = "resetPasswordHandle";
       await handleResetPassword(chatId, "reset");
-
+      break;
+    case "positionButton":
+      resetUserState(chatId);
+      await positionsChainSelection(chatId);
       break;
     case "settingButton":
       resetUserState(chatId);
