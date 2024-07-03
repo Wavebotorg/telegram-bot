@@ -256,12 +256,12 @@ const buyKeyboard = {
     [
       { text: "📈 Buy", callback_data: "buyButton" },
       { text: "📉 Sell", callback_data: "sellButton" },
-      { text: "📋 Limit Orders", callback_data: "limitButton" },
+      { text: "💵 Withdraw", callback_data: "withrawButton" },
     ],
     [
       { text: "📊 Position", callback_data: "positionButton" },
-      { text: "referrals 👨‍👧‍👦", callback_data: "totalReferrals" },
-      { text: "💵 Withdraw", callback_data: "withrawButton" },
+      { text: "🔁 New Pairs", callback_data: "newPairsButton" },
+      { text: "📋 Limit Orders", callback_data: "limitButton" },
     ],
     [
       { text: "💰 Balance EVM", callback_data: "balanceButton" },
@@ -269,7 +269,10 @@ const buyKeyboard = {
       { text: "🏦 Wallet Address", callback_data: "walletAddresses" },
     ],
     [
+      { text: "referrals 👨‍👧‍👦", callback_data: "totalReferrals" },
       { text: "⚙️ Setting", callback_data: "settingButton" },
+    ],
+    [
       { text: "🔄 Refresh", callback_data: "refreshButton" },
       { text: "🚪 Logout", callback_data: "logoutButton" },
     ],
@@ -884,8 +887,8 @@ async function solanaSellHandle(chatId) {
   );
   console.log("amount that you entered", userStates[chatId]?.sellPrice);
   if (
-    Number(userStates[chatId]?.selectedSellSolanaToken?.amount) <
-    Number(userStates[chatId]?.sellPrice)
+    Number(userStates[chatId]?.selectedSellSolanaToken?.amount).toFixed(5) <
+    Number(userStates[chatId]?.sellPrice).toFixed(5)
   ) {
     resetUserState(chatId);
     return bot.sendMessage(
@@ -1140,19 +1143,18 @@ async function handleDynamicSellToken(chatId, token) {
       ).toFixed(5);
       userStates[chatId].evmSellMessage = await bot.sendMessage(
         chatId,
-        `Token : ${tokenDetails[0]?.symbol} <code>${
-          tokenDetails[0]?.token_address
-        }</code>
-${tokenDetails[0]?.symbol} Balance : <code>${Number(
+        `🏷 Name : ${tokenDetails[0]?.symbol} 
+📭 Address : <code>${tokenDetails[0]?.token_address}</code>
+💰 ${tokenDetails[0]?.symbol} Balance : <code>${Number(
           tokenDetails[0]?.balance_formatted
         )?.toFixed(5)}</code>(${Number(tokenDetails[0]?.usd_value).toFixed(3)})
-${tokenDetails[0]?.symbol} price : <code>${Number(
+💵 ${tokenDetails[0]?.symbol} price : <code>${Number(
           tokenDetails[0]?.usd_price
         )?.toFixed(6)}</code>$
-variation24h : <code>${Number(
+📊 variation24h : <code>${Number(
           tokenDetails[0]?.usd_price_24hr_percent_change
         )?.toFixed(3)}</code>%
-network: <code>${userStates[chatId]?.network}</code>
+🔗 Chain: <code>${userStates[chatId]?.network}</code>
 https://dexscreener.com/${userStates[chatId]?.network}/${
           tokenDetails[0]?.token_address
         }`,
@@ -1241,25 +1243,26 @@ async function handleDynamicSellSolana(chatId, token) {
           ).toFixed(5);
           userStates[chatId].evmSellMessage = await bot.sendMessage(
             chatId,
-            `Balance : <code>${Number(
+            `💰 Balance : <code>${Number(
               res?.data?.data?.nativeTokenDetails?.solana
             )?.toFixed(5)}</code> sol
-${res?.data?.data?.name} balance : <code>${Number(
+🗃 ${res?.data?.data?.name} balance : <code>${Number(
               tokenDetails[0]?.amount
             ).toFixed(5)}</code>(${balanceInUSD}$)
-Token : ${res?.data?.data?.name} <code>${res?.data?.data?.address}</code>
-${res?.data?.data?.name} price : <code>${Number(
+🏷 Name : ${res?.data?.data?.name} <code>${res?.data?.data?.address}</code>
+💵 ${res?.data?.data?.name} price : <code>${Number(
               res?.data?.data?.price
             )?.toFixed(6)}$</code>
-variation24h : <code>${Number(res?.data?.data?.variation24h)?.toFixed(
+📊 variation24h : <code>${Number(res?.data?.data?.variation24h)?.toFixed(
               3
             )}%</code>
-totalSupply : <code>${Number(res?.data?.data?.totalSupply)?.toFixed()}</code>
-mcap : ${
+🛒 totalSupply : <code>${Number(res?.data?.data?.totalSupply)?.toFixed()}</code>
+🗃  mcap : ${
               res?.data?.data?.mcap
                 ? Number(res?.data?.data?.mcap)?.toFixed()
                 : "not available!!"
             }
+🔗 Chain : "Solana"
 https://dexscreener.com/solana/${res?.data?.data?.address}`,
             {
               parse_mode: "HTML",
@@ -1588,22 +1591,24 @@ bot.on("message", async (msg) => {
                         res?.data?.data?.nativeTokenDetails?.solana;
                       state.solanaBuyMessage = await bot.sendMessage(
                         chatId,
-                        `Balance : <code>${Number(
+                        `💰 Balance : <code>${Number(
                           res?.data?.data?.nativeTokenDetails?.solana
                         )?.toFixed(5)}</code>sol
-Token : ${res?.data?.data?.name} <code>${res?.data?.data?.address}</code>
-${res?.data?.data?.name} price : <code>${Number(
+🏷  Name : ${res?.data?.data?.name} 
+📭 <code>${res?.data?.data?.address}</code>
+💵 ${res?.data?.data?.name} price : <code>${Number(
                           res?.data?.data?.price
                         )?.toFixed(6)}$</code>
-variation24h : <code>${Number(res?.data?.data?.variation24h)?.toFixed(
+📊 variation24h : <code>${Number(res?.data?.data?.variation24h)?.toFixed(
                           3
                         )}%</code>
-totalSupply : <code>${Number(res?.data?.data?.totalSupply)?.toFixed()}</code>
-mcap : <code>${
+🛒 totalSupply : <code>${Number(res?.data?.data?.totalSupply)?.toFixed()}</code>
+🗃 mcap : <code>${
                           res?.data?.data?.mcap
                             ? Number(res?.data?.data?.mcap)?.toFixed()
                             : "not available!!"
                         }</code>
+🔗 Chain : "Solana"
 https://dexscreener.com/solana/${state.toToken}`,
                         {
                           parse_mode: "HTML",
@@ -1723,7 +1728,7 @@ https://dexscreener.com/solana/${state.toToken}`,
 
                       userStates[chatId].evmBuyMessage = await bot.sendMessage(
                         chatId,
-                        `${
+                        `💰 ${
                           state?.buyTokenNativename
                             ? state?.buyTokenNativename?.symbol
                             : ""
@@ -1736,22 +1741,23 @@ https://dexscreener.com/solana/${state.toToken}`,
                             ? state?.buyTokenNativename?.usd_value
                             : 0
                         ).toFixed(4)}</code> USD)
-Token : ${res?.data?.data?.symbol}  <code>${res?.data?.data?.address}</code>
-${res?.data?.data?.name} price : <code>${Number(
+🏷  Name : ${res?.data?.data?.symbol}  
+📭 Address: <code>${res?.data?.data?.address}</code>
+💵 ${res?.data?.data?.name} price : <code>${Number(
                           res?.data?.data?.price
                         )?.toFixed(5)}$</code>
-24hrPercentChange : <code>${Number(
+📊 24hrPercentChange : <code>${Number(
                           res?.data?.data?.variation24h
                             ? res?.data?.data?.variation24h
                             : 0
                         )?.toFixed(3)}%</code>
-totalSupply : <code>${Number(res?.data?.data?.totalSupply)?.toFixed()}</code>
-mcap : <code>${
+🛒 totalSupply : <code>${Number(res?.data?.data?.totalSupply)?.toFixed()}</code>
+🗃 mcap : <code>${
                           res?.data?.data?.mcap
                             ? Number(res?.data?.data?.mcap)?.toFixed()
                             : "not available!!"
                         }</code>
-network : <code>${state?.network}</code>
+🔗 Chain : <code>${state?.network}</code>
 ${
   res?.data?.data?.nativeTokenDetails?.balance_formatted <= 0
     ? `🔴 Insufficient balance for buy amount + gas ⇅`
