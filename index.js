@@ -336,23 +336,23 @@ const positionsKeyboard = {
   inline_keyboard: [
     [
       { text: "Solona", callback_data: "PositionSolana" },
-      { text: "Ethereum", callback_data: "1Position" },
-      { text: "Arbitrum", callback_data: "42161Position" },
+      { text: "Ethereum", callback_data: "1+Ethereum+Position" },
+      { text: "Arbitrum", callback_data: "42161+Arbitrum+Position" },
     ],
     [
-      { text: "Polygon", callback_data: "137Position" },
-      { text: "BNB Chain", callback_data: "56Position" },
-      { text: "Base", callback_data: "8453Position" },
+      { text: "Polygon", callback_data: "137+Polygon+Position" },
+      { text: "BNB Chain", callback_data: "56+Bsc+Position" },
+      { text: "Base", callback_data: "8453+Base+Position" },
     ],
     [
-      { text: "Optimism", callback_data: "10Position" },
-      { text: "Linea", callback_data: "59144Position" },
+      { text: "Optimism", callback_data: "10+Optimism+Position" },
+      { text: "Linea", callback_data: "59144+Linea+Position" },
       { text: "blast", callback_data: "PositionBlast" },
     ],
     [
-      { text: "Avalanche", callback_data: "43114Position" },
-      { text: "Cronos", callback_data: "25Position" },
-      { text: "Fantom", callback_data: "250Position" },
+      { text: "Avalanche", callback_data: "43114+Avalanche+Position" },
+      { text: "Cronos", callback_data: "25+Cronos+Position" },
+      { text: "Fantom", callback_data: "250+Fantom+Position" },
     ],
   ],
 };
@@ -1121,13 +1121,13 @@ async function fetchWalletTokenBalances(chatId, chainId) {
     const tokens = balances?.filter((item) => item?.usd_price != null);
     userStates[chatId].allSellTokens = tokens;
 
-    let message = "Your Tokens:\n\n";
+    let message = "✨ Your Tokens:\n\n";
     if (tokens) {
       tokens?.forEach((balance) => {
-        message += `Token Name: <code>${balance?.symbol}</code>\n`;
-        message += `Balance: <code>${Number(balance?.balance_formatted).toFixed(
-          4
-        )}</code>(${Number(balance?.usd_value).toFixed(5)}$)\n\n`;
+        message += `🏷 Token Name: <code>${balance?.symbol}</code>\n`;
+        message += `💰 Balance: <code>${Number(
+          balance?.balance_formatted
+        ).toFixed(4)}</code>(${Number(balance?.usd_value).toFixed(5)}$)\n\n`;
       });
     }
     const buttons = tokens.map((item) => ({
@@ -1181,11 +1181,11 @@ async function handleDynamicSellToken(chatId, token) {
     if (tokenDetails) {
       userStates[chatId].selectedSellToken = tokenDetails[0];
       userStates[chatId].sellPrice = Number(
-        (tokenDetails[0]?.amount * 10) / 100
+        (tokenDetails[0]?.usd_value * 10) / 100
       );
       userStates[chatId].evmSellMessage = await bot.sendMessage(
         chatId,
-        `🏷 Name : ${tokenDetails[0]?.symbol} 
+        `🏷 Name : ${tokenDetails[0]?.symbol}
 📭 Address : <code>${tokenDetails[0]?.token_address}</code>
 💰 ${tokenDetails[0]?.symbol} Balance : <code>${Number(
           tokenDetails[0]?.balance_formatted
@@ -1375,8 +1375,8 @@ https://dexscreener.com/solana/${res?.data?.data?.address}`,
 }
 
 // positions function
-async function handlePositions(chatId, chainId) {
-  console.log("🚀 ~ handlePositions ~ chainId:", chainId)
+async function handlePositions(chatId, chainId, network) {
+  console.log("🚀 ~ handlePositions ~ chainId:", chainId);
   if (userStates[chatId]?.positionList) {
     await bot.deleteMessage(
       chatId,
@@ -1394,17 +1394,38 @@ async function handlePositions(chatId, chainId) {
     await bot.deleteMessage(chatId, loaderMessage?.message_id);
 
     const balances = response?.data?.data;
-    console.log("🚀 ~ handlePositions ~ balances:", balances)
     const tokens = balances?.filter((item) => item?.usd_price != null);
-    userStates[chatId].allSellTokens = tokens;
+    userStates[chatId].allPositionTokens = tokens;
 
-    let message = "Your Tokens:\n\n";
+    let message = "✨ Your Tokens:\n\n";
+    message += `🔗 Chain: ${network}\n\n`;
     if (tokens) {
       tokens?.forEach((balance) => {
-        message += `Token Name: <code>${balance?.symbol}</code>\n`;
-        message += `Balance: <code>${Number(balance?.balance_formatted).toFixed(
-          4
-        )}</code>(${Number(balance?.usd_value).toFixed(5)}$)\n\n`;
+        message += `🏷 Token Name: <code>${balance?.symbol}</code>\n`;
+        message += `💰 Balance: <code>${Number(
+          balance?.balance_formatted
+        ).toFixed(4)}</code>(${Number(balance?.usd_value).toFixed(5)}$)\n`;
+        message += `💵 Price: <code>${Number(balance?.usd_price).toFixed(
+          5
+        )}</code>\n`;
+        message += `${
+          balance?.usd_price_24hr_percent_change >= 0 ? "📉" : "📈"
+        } usd_price_24hr_percent_change: <code>${Number(
+          balance?.usd_price_24hr_percent_change
+        ).toFixed(4)}</code>\n`;
+        message += `${
+          balance?.usd_price_24hr_usd_change >= 0 ? "📉" : "📈"
+        } usd_price_24hr_usd_change: <code>${Number(
+          balance?.usd_price_24hr_usd_change
+        ).toFixed(4)}</code>\n`;
+        message += `${
+          balance?.usd_value_24hr_usd_change >= 0 ? "📉" : "📈"
+        } usd_value_24hr_usd_change: <code>${Number(
+          balance?.usd_value_24hr_usd_change
+        ).toFixed(4)}</code>\n`;
+        message += `📊 portfolio_percentage: <code>${Number(
+          balance?.portfolio_percentage
+        ).toFixed(4)}%</code>\n\n`;
       });
     }
     userStates[chatId].positionList = await bot.sendMessage(chatId, message, {
@@ -1537,6 +1558,7 @@ bot.on("message", async (msg) => {
 });
 
 // take input from user for swap , sell, buy, transfer, logoutUser, signupUser
+
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   if (!userStates[chatId] || !userStates[chatId].flag) {
@@ -3605,7 +3627,8 @@ bot.on("callback_query", async (callbackQuery) => {
   }
   // handle position
   if (data?.slice(-8) == "Position") {
-    await handlePositions(chatId, Number(data?.slice(0, -8)));
+    const positionData = data?.split("+");
+    await handlePositions(chatId, Number(positionData[0]), positionData[1]);
   }
   switch (data) {
     case "menuButton":
