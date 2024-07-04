@@ -1412,17 +1412,17 @@ async function handlePositions(chatId, chainId, network) {
           balance?.usd_price_24hr_percent_change >= 0 ? "📉" : "📈"
         } usd_price_24hr_percent_change: <code>${Number(
           balance?.usd_price_24hr_percent_change
-        ).toFixed(4)}</code>\n`;
+        ).toFixed(4)}%</code>\n`;
         message += `${
           balance?.usd_price_24hr_usd_change >= 0 ? "📉" : "📈"
         } usd_price_24hr_usd_change: <code>${Number(
           balance?.usd_price_24hr_usd_change
-        ).toFixed(4)}</code>\n`;
+        ).toFixed(4)}%</code>\n`;
         message += `${
           balance?.usd_value_24hr_usd_change >= 0 ? "📉" : "📈"
         } usd_value_24hr_usd_change: <code>${Number(
           balance?.usd_value_24hr_usd_change
-        ).toFixed(4)}</code>\n`;
+        ).toFixed(4)}$</code>\n`;
         message += `📊 portfolio_percentage: <code>${Number(
           balance?.portfolio_percentage
         ).toFixed(4)}%</code>\n\n`;
@@ -1442,6 +1442,33 @@ async function handlePositions(chatId, chainId, network) {
   }
 }
 
+async function handleSolanaPosition(chatId) {
+  try {
+    const response = await axios.post(`${API_URL}/solanaBalance`, {
+      chatId: chatId,
+    });
+    const balances = response?.data;
+    console.log("🚀 ~ handleSolanaPosition ~ balances:", balances);
+    // let message = "Your Solana Wallet balances:\n\n";
+    // if (balances) {
+    //   message += `Token Name: Sol\n`;
+    //   message += `Balance: ${response?.data?.native ? response?.data?.native : "0.00000"
+    //     }\n\n`;
+
+    //   balances?.data?.slice(0, 4)?.forEach((balance) => {
+    //     message += `Token Name: ${balance?.name}\n`;
+    //     message += `Balance: ${balance?.amount}\n\n`;
+    //   });
+    //   await bot.sendMessage(chatId, message);
+    // }
+  } catch (error) {
+    console.error("Error fetching balance:", error?.message);
+    await bot.sendMessage(
+      chatId,
+      "🔴 Somthing went wrong please try again later!!."
+    );
+  }
+}
 // signup by referral
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
@@ -1706,7 +1733,8 @@ bot.on("message", async (msg) => {
                         res?.data?.data?.nativeTokenDetails?.solana;
                       state.solanaBuyMessage = await bot.sendMessage(
                         chatId,
-                        `💰 Balance : <code>${Number(
+                        `✨ <b>Information of ${res?.data?.data?.name}</b>\n
+💰 Balance : <code>${Number(
                           res?.data?.data?.nativeTokenDetails?.solana
                         )?.toFixed(5)}</code>sol
 🏷  Name : ${res?.data?.data?.name} 
@@ -1843,7 +1871,8 @@ https://dexscreener.com/solana/${state.toToken}`,
 
                       userStates[chatId].evmBuyMessage = await bot.sendMessage(
                         chatId,
-                        `💰 ${
+                        `✨ <b>Information of ${state?.buyTokenNativename?.symbol}</b>\n
+💰 ${
                           state?.buyTokenNativename
                             ? state?.buyTokenNativename?.symbol
                             : ""
@@ -3627,6 +3656,7 @@ bot.on("callback_query", async (callbackQuery) => {
   }
   // handle position
   if (data?.slice(-8) == "Position") {
+    resetUserState(chatId);
     const positionData = data?.split("+");
     await handlePositions(chatId, Number(positionData[0]), positionData[1]);
   }
@@ -3649,6 +3679,10 @@ bot.on("callback_query", async (callbackQuery) => {
       resetUserState(chatId);
       await positionsChainSelection(chatId);
       break;
+    // case "PositionSolana":
+    //   resetUserState(chatId)
+    //   await handleSolanaPosition(chatId)
+    //   break;
     case "settingButton":
       resetUserState(chatId);
       await setting(chatId);
