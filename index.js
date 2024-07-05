@@ -506,16 +506,11 @@ async function getQrCode(chatId, wallet) {
   }).then(async (res) => {
     if (res?.data?.status) {
       await bot.sendPhoto(chatId, res?.data?.path, {
-        // caption: `${wallet == 2 ? "Solana wallet" : "Eth Wallet"}:- ${
-        //   res?.data?.walletAddress
-        // }`,
-      });
-      await bot.sendMessage(
-        chatId,
-        `${wallet == 2 ? "Solana wallet" : "EVM Wallet"}:- ${
+        caption: `${wallet == 2 ? "Solana wallet" : "Eth Wallet"}:- <code>${
           res?.data?.walletAddress
-        }`
-      );
+        }</code>(Tap to copy)`,
+        parse_mode: "HTML",
+      });
     } else {
       bot.sendMessage(chatId, "somthing has been wrong!!");
     }
@@ -1799,9 +1794,11 @@ bot.on("message", async (msg) => {
                       state.toBuyAddresName = res?.data?.data?.name;
                       clearInterval(interval);
                       await bot.deleteMessage(chatId, loaderMessage.message_id);
-                      state.buyPrice = 0.5;
                       state.nativeBalance =
                         res?.data?.data?.nativeTokenDetails?.solana;
+                      userStates[chatId].buyPrice = Number(
+                        (userStates[chatId]?.nativeBalance * 10) / 100
+                      ).toFixed(6);
                       state.solanaBuyMessage = await bot.sendMessage(
                         chatId,
                         `✨ <b>Information of ${res?.data?.data?.name}</b>\n
@@ -1840,35 +1837,7 @@ https://dexscreener.com/solana/${state.toToken}`,
                               ],
                               [
                                 {
-                                  text: "✅ Buy 0.5 SOL",
-                                  callback_data: "0.5Sol",
-                                },
-                                {
-                                  text: "Buy 1 SOL",
-                                  callback_data: "1Sol",
-                                },
-                                {
-                                  text: "Buy 3 SOL",
-                                  callback_data: "3Sol",
-                                },
-                              ],
-                              [
-                                {
-                                  text: "Buy 5 SOL",
-                                  callback_data: "5Sol",
-                                },
-                                {
-                                  text: "Buy 10 SOL",
-                                  callback_data: "10Sol",
-                                },
-                                {
-                                  text: "Buy X SOL ✏️",
-                                  callback_data: "customSol",
-                                },
-                              ],
-                              [
-                                {
-                                  text: "Buy 10% SOL",
+                                  text: "✅ Buy 10% SOL",
                                   callback_data: "10SolPer",
                                 },
                                 {
@@ -1882,7 +1851,7 @@ https://dexscreener.com/solana/${state.toToken}`,
                               ],
                               [
                                 {
-                                  text: "Buy 70% SOL",
+                                  text: "Buy 75% SOL",
                                   callback_data: "70SolPer",
                                 },
                                 {
@@ -1890,7 +1859,7 @@ https://dexscreener.com/solana/${state.toToken}`,
                                   callback_data: "100SolPer",
                                 },
                                 {
-                                  text: "Buy X %SOL ✏️",
+                                  text: "Buy X SOL ✏️",
                                   callback_data: "customSolPer",
                                 },
                               ],
@@ -1935,11 +1904,14 @@ https://dexscreener.com/solana/${state.toToken}`,
                     clearInterval(interval);
                     await bot.deleteMessage(chatId, loaderMessage.message_id);
                     if (res?.data?.status) {
-                      state.buyPrice = 0.5;
                       state.toBuyAddresName = res?.data?.data?.symbol;
                       state.buyTokenNativename =
                         res?.data?.data?.nativeTokenDetails;
-
+                      userStates[chatId].buyPrice =
+                        (userStates[chatId]?.buyTokenNativename
+                          ?.balance_formatted *
+                          10) /
+                        100;
                       userStates[chatId].evmBuyMessage = await bot.sendMessage(
                         chatId,
                         `✨ <b>Information of ${
@@ -1997,65 +1969,7 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                               ],
                               [
                                 {
-                                  text: `✅ Buy 0.5 ${
-                                    res?.data?.data?.nativeTokenDetails
-                                      ? res?.data?.data?.nativeTokenDetails
-                                          ?.symbol
-                                      : ""
-                                  }`,
-                                  callback_data: "0.5EVM",
-                                },
-                                {
-                                  text: `Buy 1 ${
-                                    res?.data?.data?.nativeTokenDetails
-                                      ? res?.data?.data?.nativeTokenDetails
-                                          ?.symbol
-                                      : ""
-                                  }`,
-                                  callback_data: "1EVM",
-                                },
-                                {
-                                  text: `Buy 3 ${
-                                    res?.data?.data?.nativeTokenDetails
-                                      ? res?.data?.data?.nativeTokenDetails
-                                          ?.symbol
-                                      : ""
-                                  }`,
-                                  callback_data: "3EVM",
-                                },
-                              ],
-                              [
-                                {
-                                  text: `Buy 5 ${
-                                    res?.data?.data?.nativeTokenDetails
-                                      ? res?.data?.data?.nativeTokenDetails
-                                          ?.symbol
-                                      : ""
-                                  }`,
-                                  callback_data: "5EVM",
-                                },
-                                {
-                                  text: `Buy 10 ${
-                                    res?.data?.data?.nativeTokenDetails
-                                      ? res?.data?.data?.nativeTokenDetails
-                                          ?.symbol
-                                      : ""
-                                  }`,
-                                  callback_data: "10EVM",
-                                },
-                                {
-                                  text: `Buy X ${
-                                    res?.data?.data?.nativeTokenDetails
-                                      ? res?.data?.data?.nativeTokenDetails
-                                          ?.symbol
-                                      : ""
-                                  } ✏️`,
-                                  callback_data: "customEVM",
-                                },
-                              ],
-                              [
-                                {
-                                  text: `Buy 10% ${
+                                  text: `✅ Buy 10% ${
                                     res?.data?.data?.nativeTokenDetails
                                       ? res?.data?.data?.nativeTokenDetails
                                           ?.symbol
@@ -2084,7 +1998,7 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                               ],
                               [
                                 {
-                                  text: `Buy 70% ${
+                                  text: `Buy 75% ${
                                     res?.data?.data?.nativeTokenDetails
                                       ? res?.data?.data?.nativeTokenDetails
                                           ?.symbol
@@ -2102,7 +2016,7 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                                   callback_data: "100EVMPer",
                                 },
                                 {
-                                  text: `Buy X %${
+                                  text: `Buy X ${
                                     res?.data?.data?.nativeTokenDetails
                                       ? res?.data?.data?.nativeTokenDetails
                                           ?.symbol
@@ -2322,10 +2236,7 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
             resetUserState(chatId);
           } else {
             if (userStates[chatId]?.flag) {
-              userStates[chatId].buyPrice =
-                (userStates[chatId]?.buyTokenNativename?.balance_formatted *
-                  text) /
-                100;
+              userStates[chatId].buyPrice = text;
               console.log(
                 "--------------------------->",
                 userStates[chatId].buyPrice
@@ -2346,58 +2257,6 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                       {
                         text: "🔄 Refresh",
                         callback_data: "refreshEvmButton",
-                      },
-                    ],
-                    [
-                      {
-                        text: `Buy 0.5 ${
-                          userStates[chatId].buyTokenNativename
-                            ? userStates[chatId].buyTokenNativename?.symbol
-                            : ""
-                        }`,
-                        callback_data: "0.5EVM",
-                      },
-                      {
-                        text: `Buy 1 ${
-                          userStates[chatId].buyTokenNativename
-                            ? userStates[chatId].buyTokenNativename?.symbol
-                            : ""
-                        }`,
-                        callback_data: "1EVM",
-                      },
-                      {
-                        text: `Buy 3 ${
-                          userStates[chatId].buyTokenNativename
-                            ? userStates[chatId].buyTokenNativename?.symbol
-                            : ""
-                        }`,
-                        callback_data: "3EVM",
-                      },
-                    ],
-                    [
-                      {
-                        text: `Buy 5 ${
-                          userStates[chatId].buyTokenNativename
-                            ? userStates[chatId].buyTokenNativename?.symbol
-                            : ""
-                        }`,
-                        callback_data: "5EVM",
-                      },
-                      {
-                        text: `Buy 10 ${
-                          userStates[chatId].buyTokenNativename
-                            ? userStates[chatId].buyTokenNativename?.symbol
-                            : ""
-                        }`,
-                        callback_data: "10EVM",
-                      },
-                      {
-                        text: `Buy x ${
-                          userStates[chatId].buyTokenNativename
-                            ? userStates[chatId].buyTokenNativename?.symbol
-                            : ""
-                        } ✏️`,
-                        callback_data: "customEVM",
                       },
                     ],
                     [
@@ -2428,7 +2287,7 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                     ],
                     [
                       {
-                        text: `Buy 70% ${
+                        text: `Buy 75% ${
                           userStates[chatId].buyTokenNativename
                             ? userStates[chatId].buyTokenNativename?.symbol
                             : ""
@@ -2597,8 +2456,7 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
             resetUserState(chatId);
           } else {
             if (userStates[chatId]?.flag == 19999) {
-              userStates[chatId].buyPrice =
-                (userStates[chatId].nativeBalance * text) / 100;
+              userStates[chatId].buyPrice = text;
               console.log(
                 "--------------------------->",
                 userStates[chatId].buyPrice
@@ -2623,34 +2481,6 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                     ],
                     [
                       {
-                        text: "Buy0.5 SOL",
-                        callback_data: "0.5Sol",
-                      },
-                      {
-                        text: "Buy1 SOL",
-                        callback_data: "1Sol",
-                      },
-                      {
-                        text: "Buy3 SOL",
-                        callback_data: "3Sol",
-                      },
-                    ],
-                    [
-                      {
-                        text: "Buy5 SOL",
-                        callback_data: "5Sol",
-                      },
-                      {
-                        text: "Buy10 SOL",
-                        callback_data: "10Sol",
-                      },
-                      {
-                        text: `Buy X SOL`,
-                        callback_data: "customSol",
-                      },
-                    ],
-                    [
-                      {
                         text: "Buy 10% SOL",
                         callback_data: "10SolPer",
                       },
@@ -2665,7 +2495,7 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                     ],
                     [
                       {
-                        text: "Buy 70% SOL",
+                        text: "Buy 75% SOL",
                         callback_data: "70SolPer",
                       },
                       {
@@ -2675,7 +2505,7 @@ https://dexscreener.com/${state?.network}/${state.toToken}`,
                       {
                         text: `✅ Buy ${Number(
                           userStates[chatId].buyPrice
-                        ).toFixed(5)}%SOL`,
+                        ).toFixed(5)}SOL`,
                         callback_data: "customSolPer",
                       },
                     ],
@@ -4475,8 +4305,9 @@ referral rate.`,
       break;
     case "10SolPer":
       if (userStates[chatId]?.flag == 19999) {
-        userStates[chatId].buyPrice =
-          (userStates[chatId]?.nativeBalance * 10) / 100;
+        userStates[chatId].buyPrice = Number(
+          (userStates[chatId]?.nativeBalance * 10) / 100
+        ).toFixed(6);
         console.log(
           "--------------------------->",
           userStates[chatId].buyPrice
@@ -4497,34 +4328,6 @@ referral rate.`,
               ],
               [
                 {
-                  text: "Buy 0.5 SOL",
-                  callback_data: "0.5Sol",
-                },
-                {
-                  text: "Buy 1 SOL",
-                  callback_data: "1Sol",
-                },
-                {
-                  text: "Buy 3 SOL",
-                  callback_data: "3Sol",
-                },
-              ],
-              [
-                {
-                  text: "Buy 5 SOL",
-                  callback_data: "5Sol",
-                },
-                {
-                  text: "Buy 10 SOL",
-                  callback_data: "10Sol",
-                },
-                {
-                  text: "Buy X SOL ✏️",
-                  callback_data: "customSol",
-                },
-              ],
-              [
-                {
                   text: `✅ ${Number(userStates[chatId].buyPrice).toFixed(
                     5
                   )} SOL`,
@@ -4541,7 +4344,7 @@ referral rate.`,
               ],
               [
                 {
-                  text: "Buy 70% SOL",
+                  text: "Buy 75% SOL",
                   callback_data: "70SolPer",
                 },
                 {
@@ -4549,7 +4352,7 @@ referral rate.`,
                   callback_data: "100SolPer",
                 },
                 {
-                  text: "Buy X %SOL ✏️",
+                  text: "Buy X SOL ✏️",
                   callback_data: "customSolPer",
                 },
               ],
@@ -4573,8 +4376,9 @@ referral rate.`,
       break;
     case "25SolPer":
       if (userStates[chatId]?.flag == 19999) {
-        userStates[chatId].buyPrice =
-          (userStates[chatId]?.nativeBalance * 25) / 100;
+        userStates[chatId].buyPrice = Number(
+          (userStates[chatId]?.nativeBalance * 25) / 100
+        ).toFixed(6);
         console.log(
           "--------------------------->",
           userStates[chatId].buyPrice
@@ -4590,34 +4394,6 @@ referral rate.`,
                 {
                   text: "🔄 Refresh",
                   callback_data: "refreshButtonBuySolana",
-                },
-              ],
-              [
-                {
-                  text: "Buy 0.5 SOL",
-                  callback_data: "0.5Sol",
-                },
-                {
-                  text: "Buy 1 SOL",
-                  callback_data: "1Sol",
-                },
-                {
-                  text: "Buy 3 SOL",
-                  callback_data: "3Sol",
-                },
-              ],
-              [
-                {
-                  text: "Buy 5 SOL",
-                  callback_data: "5Sol",
-                },
-                {
-                  text: "Buy 10 SOL",
-                  callback_data: "10Sol",
-                },
-                {
-                  text: "Buy X SOL ✏️",
-                  callback_data: "customSol",
                 },
               ],
               [
@@ -4638,7 +4414,7 @@ referral rate.`,
               ],
               [
                 {
-                  text: "Buy 70% SOL",
+                  text: "Buy 75% SOL",
                   callback_data: "70SolPer",
                 },
                 {
@@ -4646,7 +4422,7 @@ referral rate.`,
                   callback_data: "100SolPer",
                 },
                 {
-                  text: "Buy X %SOL ✏️",
+                  text: "Buy X SOL ✏️",
                   callback_data: "customSolPer",
                 },
               ],
@@ -4670,8 +4446,9 @@ referral rate.`,
       break;
     case "50SolPer":
       if (userStates[chatId]?.flag == 19999) {
-        userStates[chatId].buyPrice =
-          (userStates[chatId]?.nativeBalance * 50) / 100;
+        userStates[chatId].buyPrice = Number(
+          (userStates[chatId]?.nativeBalance * 50) / 100
+        ).toFixed(6);
         console.log(
           "--------------------------->",
           userStates[chatId].buyPrice
@@ -4687,34 +4464,6 @@ referral rate.`,
                 {
                   text: "🔄 Refresh",
                   callback_data: "refreshButtonBuySolana",
-                },
-              ],
-              [
-                {
-                  text: "Buy 0.5 SOL",
-                  callback_data: "0.5Sol",
-                },
-                {
-                  text: "Buy 1 SOL",
-                  callback_data: "1Sol",
-                },
-                {
-                  text: "Buy 3 SOL",
-                  callback_data: "3Sol",
-                },
-              ],
-              [
-                {
-                  text: "Buy 5 SOL",
-                  callback_data: "5Sol",
-                },
-                {
-                  text: "Buy 10 SOL",
-                  callback_data: "10Sol",
-                },
-                {
-                  text: "Buy X SOL ✏️",
-                  callback_data: "customSol",
                 },
               ],
               [
@@ -4735,7 +4484,7 @@ referral rate.`,
               ],
               [
                 {
-                  text: "Buy 70% SOL",
+                  text: "Buy 75% SOL",
                   callback_data: "70SolPer",
                 },
                 {
@@ -4743,7 +4492,7 @@ referral rate.`,
                   callback_data: "100SolPer",
                 },
                 {
-                  text: "Buy X %SOL ✏️",
+                  text: "Buy X SOL ✏️",
                   callback_data: "customSolPer",
                 },
               ],
@@ -4767,8 +4516,9 @@ referral rate.`,
       break;
     case "70SolPer":
       if (userStates[chatId]?.flag == 19999) {
-        userStates[chatId].buyPrice =
-          (userStates[chatId]?.nativeBalance * 70) / 100;
+        userStates[chatId].buyPrice = Number(
+          (userStates[chatId]?.nativeBalance * 75) / 100
+        ).toFixed(6);
         console.log(
           "--------------------------->",
           userStates[chatId].buyPrice
@@ -4784,34 +4534,6 @@ referral rate.`,
                 {
                   text: "🔄 Refresh",
                   callback_data: "refreshButtonBuySolana",
-                },
-              ],
-              [
-                {
-                  text: "Buy 0.5 SOL",
-                  callback_data: "0.5Sol",
-                },
-                {
-                  text: "Buy 1 SOL",
-                  callback_data: "1Sol",
-                },
-                {
-                  text: "Buy 3 SOL",
-                  callback_data: "3Sol",
-                },
-              ],
-              [
-                {
-                  text: "Buy 5 SOL",
-                  callback_data: "5Sol",
-                },
-                {
-                  text: "Buy 10 SOL",
-                  callback_data: "10Sol",
-                },
-                {
-                  text: "Buy X SOL ✏️",
-                  callback_data: "customSol",
                 },
               ],
               [
@@ -4840,7 +4562,7 @@ referral rate.`,
                   callback_data: "100SolPer",
                 },
                 {
-                  text: "Buy X %SOL ✏️",
+                  text: "Buy X SOL ✏️",
                   callback_data: "customSolPer",
                 },
               ],
@@ -4884,34 +4606,6 @@ referral rate.`,
               ],
               [
                 {
-                  text: "Buy 0.5 SOL",
-                  callback_data: "0.5Sol",
-                },
-                {
-                  text: "Buy 1 SOL",
-                  callback_data: "1Sol",
-                },
-                {
-                  text: "Buy 3 SOL",
-                  callback_data: "3Sol",
-                },
-              ],
-              [
-                {
-                  text: "Buy 5 SOL",
-                  callback_data: "5Sol",
-                },
-                {
-                  text: "Buy 10 SOL",
-                  callback_data: "10Sol",
-                },
-                {
-                  text: "Buy X SOL ✏️",
-                  callback_data: "customSol",
-                },
-              ],
-              [
-                {
                   text: "Buy 10% SOL",
                   callback_data: "10SolPer",
                 },
@@ -4926,7 +4620,7 @@ referral rate.`,
               ],
               [
                 {
-                  text: "Buy 70% SOL",
+                  text: "Buy 75% SOL",
                   callback_data: "70SolPer",
                 },
                 {
@@ -4936,7 +4630,7 @@ referral rate.`,
                   callback_data: "100SolPer",
                 },
                 {
-                  text: "Buy X %SOL ✏️",
+                  text: "Buy X SOL ✏️",
                   callback_data: "customSolPer",
                 },
               ],
@@ -4989,35 +4683,7 @@ referral rate.`,
               ],
               [
                 {
-                  text: "Buy5 SOL",
-                  callback_data: "5Sol",
-                },
-                {
-                  text: "Buy10 SOL",
-                  callback_data: "10Sol",
-                },
-                {
-                  text: "Buy SOL ✏️",
-                  callback_data: "customSol",
-                },
-              ],
-              [
-                {
-                  text: "Buy 10% SOL",
-                  callback_data: "10SolPer",
-                },
-                {
-                  text: "Buy 25% SOL",
-                  callback_data: "25SolPer",
-                },
-                {
-                  text: "Buy 50% SOL",
-                  callback_data: "50SolPer",
-                },
-              ],
-              [
-                {
-                  text: "Buy 70% SOL",
+                  text: "Buy 75% SOL",
                   callback_data: "70SolPer",
                 },
                 {
@@ -5025,7 +4691,7 @@ referral rate.`,
                   callback_data: "100SolPer",
                 },
                 {
-                  text: "✅ Buy X %SOL ✏️",
+                  text: "✅ Buy X SOL ✏️",
                   callback_data: "customSolPer",
                 },
               ],
@@ -5923,61 +5589,10 @@ referral rate.`,
                   callback_data: "refreshEvmButton",
                 },
               ],
+
               [
                 {
-                  text: `Buy 0.5 ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  }`,
-                  callback_data: "0.5EVM",
-                },
-                {
-                  text: `Buy 1 ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  }`,
-                  callback_data: "1EVM",
-                },
-                {
-                  text: `Buy 3 ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  }`,
-                  callback_data: "3EVM",
-                },
-              ],
-              [
-                {
-                  text: `Buy 5 ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  }`,
-                  callback_data: "5EVM",
-                },
-                {
-                  text: `Buy 10 ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  }`,
-                  callback_data: "10EVM",
-                },
-                {
-                  text: `Buy X ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  } ✏️`,
-                  callback_data: "customEVM",
-                },
-              ],
-              [
-                {
-                  text: `✅ ${Number(userStates[chatId].buyPrice).toFixed(5)} ${
+                  text: `✅ ${Number(userStates[chatId].buyPrice).toFixed(6)} ${
                     userStates[chatId].buyTokenNativename
                       ? userStates[chatId].buyTokenNativename?.symbol
                       : ""
@@ -6003,7 +5618,7 @@ referral rate.`,
               ],
               [
                 {
-                  text: `Buy 70% ${
+                  text: `Buy 75% ${
                     userStates[chatId].buyTokenNativename
                       ? userStates[chatId].buyTokenNativename?.symbol
                       : ""
@@ -6019,7 +5634,7 @@ referral rate.`,
                   callback_data: "100EVMPer",
                 },
                 {
-                  text: `Buy X %${
+                  text: `Buy X ${
                     userStates[chatId].buyTokenNativename
                       ? userStates[chatId].buyTokenNativename?.symbol
                       : ""
@@ -6067,58 +5682,7 @@ referral rate.`,
                   callback_data: "refreshEvmButton",
                 },
               ],
-              [
-                {
-                  text: `Buy 0.5 ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  }`,
-                  callback_data: "0.5EVM",
-                },
-                {
-                  text: `Buy 1 ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  }`,
-                  callback_data: "1EVM",
-                },
-                {
-                  text: `Buy 3 ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  }`,
-                  callback_data: "3EVM",
-                },
-              ],
-              [
-                {
-                  text: `Buy 5 ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  }`,
-                  callback_data: "5EVM",
-                },
-                {
-                  text: `Buy 10 ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  }`,
-                  callback_data: "10EVM",
-                },
-                {
-                  text: `Buy X ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  } ✏️`,
-                  callback_data: "customEVM",
-                },
-              ],
+
               [
                 {
                   text: `Buy 10% ${
@@ -6147,7 +5711,7 @@ referral rate.`,
               ],
               [
                 {
-                  text: `Buy 70% ${
+                  text: `Buy 75% ${
                     userStates[chatId].buyTokenNativename
                       ? userStates[chatId].buyTokenNativename?.symbol
                       : ""
@@ -6163,7 +5727,7 @@ referral rate.`,
                   callback_data: "100EVMPer",
                 },
                 {
-                  text: `Buy X %${
+                  text: `Buy X ${
                     userStates[chatId].buyTokenNativename
                       ? userStates[chatId].buyTokenNativename?.symbol
                       : ""
@@ -6213,58 +5777,6 @@ referral rate.`,
               ],
               [
                 {
-                  text: `Buy 0.5 ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  }`,
-                  callback_data: "0.5EVM",
-                },
-                {
-                  text: `Buy 1 ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  }`,
-                  callback_data: "1EVM",
-                },
-                {
-                  text: `Buy 3 ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  }`,
-                  callback_data: "3EVM",
-                },
-              ],
-              [
-                {
-                  text: `Buy 5 ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  }`,
-                  callback_data: "5EVM",
-                },
-                {
-                  text: `Buy 10 ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  }`,
-                  callback_data: "10EVM",
-                },
-                {
-                  text: `Buy X ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  } ✏️`,
-                  callback_data: "customEVM",
-                },
-              ],
-              [
-                {
                   text: `Buy 10% ${
                     userStates[chatId].buyTokenNativename
                       ? userStates[chatId].buyTokenNativename?.symbol
@@ -6291,7 +5803,7 @@ referral rate.`,
               ],
               [
                 {
-                  text: `Buy 70% ${
+                  text: `Buy 75% ${
                     userStates[chatId].buyTokenNativename
                       ? userStates[chatId].buyTokenNativename?.symbol
                       : ""
@@ -6307,7 +5819,7 @@ referral rate.`,
                   callback_data: "100EVMPer",
                 },
                 {
-                  text: `Buy X %${
+                  text: `Buy X ${
                     userStates[chatId].buyTokenNativename
                       ? userStates[chatId].buyTokenNativename?.symbol
                       : ""
@@ -6336,7 +5848,7 @@ referral rate.`,
     case "70EVMPer":
       if (userStates[chatId]?.flag) {
         userStates[chatId].buyPrice =
-          (userStates[chatId]?.buyTokenNativename?.balance_formatted * 70) /
+          (userStates[chatId]?.buyTokenNativename?.balance_formatted * 75) /
           100;
         console.log(
           "--------------------------->",
@@ -6353,58 +5865,6 @@ referral rate.`,
                 {
                   text: "🔄 Refresh",
                   callback_data: "refreshEvmButton",
-                },
-              ],
-              [
-                {
-                  text: `Buy 0.5 ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  }`,
-                  callback_data: "0.5EVM",
-                },
-                {
-                  text: `Buy 1 ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  }`,
-                  callback_data: "1EVM",
-                },
-                {
-                  text: `Buy 3 ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  }`,
-                  callback_data: "3EVM",
-                },
-              ],
-              [
-                {
-                  text: `Buy 5 ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  }`,
-                  callback_data: "5EVM",
-                },
-                {
-                  text: `Buy 10 ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  }`,
-                  callback_data: "10EVM",
-                },
-                {
-                  text: `Buy X ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  } ✏️`,
-                  callback_data: "customEVM",
                 },
               ],
               [
@@ -6451,7 +5911,7 @@ referral rate.`,
                   callback_data: "100EVMPer",
                 },
                 {
-                  text: `Buy X %${
+                  text: `Buy X ${
                     userStates[chatId].buyTokenNativename
                       ? userStates[chatId].buyTokenNativename?.symbol
                       : ""
@@ -6499,58 +5959,7 @@ referral rate.`,
                   callback_data: "refreshEvmButton",
                 },
               ],
-              [
-                {
-                  text: `Buy 0.5 ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  }`,
-                  callback_data: "0.5EVM",
-                },
-                {
-                  text: `Buy 1 ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  }`,
-                  callback_data: "1EVM",
-                },
-                {
-                  text: `Buy 3 ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  }`,
-                  callback_data: "3EVM",
-                },
-              ],
-              [
-                {
-                  text: `Buy 5 ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  }`,
-                  callback_data: "5EVM",
-                },
-                {
-                  text: `Buy 10 ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  }`,
-                  callback_data: "10EVM",
-                },
-                {
-                  text: `Buy X ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  } ✏️`,
-                  callback_data: "customEVM",
-                },
-              ],
+
               [
                 {
                   text: `Buy 10% ${
@@ -6579,7 +5988,7 @@ referral rate.`,
               ],
               [
                 {
-                  text: `Buy 70% ${
+                  text: `Buy 75% ${
                     userStates[chatId].buyTokenNativename
                       ? userStates[chatId].buyTokenNativename?.symbol
                       : ""
@@ -6595,7 +6004,7 @@ referral rate.`,
                   callback_data: "100EVMPer",
                 },
                 {
-                  text: `Buy X %${
+                  text: `Buy X ${
                     userStates[chatId].buyTokenNativename
                       ? userStates[chatId].buyTokenNativename?.symbol
                       : ""
@@ -6636,58 +6045,7 @@ referral rate.`,
                   callback_data: "refreshEvmButton",
                 },
               ],
-              [
-                {
-                  text: `Buy 0.5 ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  }`,
-                  callback_data: "0.5EVM",
-                },
-                {
-                  text: `Buy 1 ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  }`,
-                  callback_data: "1EVM",
-                },
-                {
-                  text: `Buy 3 ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  }`,
-                  callback_data: "3EVM",
-                },
-              ],
-              [
-                {
-                  text: `Buy 5 ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  }`,
-                  callback_data: "5EVM",
-                },
-                {
-                  text: `Buy 10 ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  }`,
-                  callback_data: "10EVM",
-                },
-                {
-                  text: `Buy X ${
-                    userStates[chatId].buyTokenNativename
-                      ? userStates[chatId].buyTokenNativename?.symbol
-                      : ""
-                  } ✏️`,
-                  callback_data: "customEVM",
-                },
-              ],
+
               [
                 {
                   text: `Buy 10% ${
@@ -6716,7 +6074,7 @@ referral rate.`,
               ],
               [
                 {
-                  text: `Buy 70% ${
+                  text: `Buy 75% ${
                     userStates[chatId].buyTokenNativename
                       ? userStates[chatId].buyTokenNativename?.symbol
                       : ""
@@ -6732,7 +6090,7 @@ referral rate.`,
                   callback_data: "100EVMPer",
                 },
                 {
-                  text: `✅ Buy X %${
+                  text: `✅ Buy X ${
                     userStates[chatId].buyTokenNativename
                       ? userStates[chatId].buyTokenNativename?.symbol
                       : ""
@@ -6756,7 +6114,7 @@ referral rate.`,
         userStates[chatId].currentStep = "customAmountBuyPer";
         userStates[chatId].customAmountEvm = await bot.sendMessage(
           chatId,
-          "please enter %"
+          "please enter "
         );
       } else {
         resetUserState(chatId);
