@@ -4711,7 +4711,7 @@ referral rate.`,
         userStates[chatId].currentStep = "customAmountBuySolPer";
         userStates[chatId].customAmountBuySol = await bot.sendMessage(
           chatId,
-          "please enter a % or sol"
+          "please enter a sol"
         );
       } else {
         resetUserState(chatId);
