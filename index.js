@@ -268,12 +268,11 @@ const buyKeyboard = {
       { text: "📋 Limit Orders", callback_data: "limitButton" },
     ],
     [
-      { text: "💰 Balance EVM", callback_data: "balanceButton" },
-      { text: "💰 Balance Solona", callback_data: "SolonabalanceButton" },
+      { text: "💰 Balance", callback_data: "balanceButton" },
       { text: "🏦 Wallet Address", callback_data: "walletAddresses" },
     ],
     [
-      { text: "referrals 👨‍👧‍👦", callback_data: "totalReferrals" },
+      { text: "👨‍👧‍👦 referrals", callback_data: "totalReferrals" },
       { text: "⚙️ Setting", callback_data: "settingButton" },
     ],
     [
@@ -287,23 +286,24 @@ const buyKeyboard = {
 const evmWalletBalance = {
   inline_keyboard: [
     [
+      { text: "Solona", callback_data: "SolonabalanceButton" },
       { text: "Ethereum", callback_data: "1b" },
-      { text: "Arbitrum", callback_data: "42161b" },
-      { text: "Optimism", callback_data: "10b" },
-    ],
-    [
-      { text: "Polygon", callback_data: "137b" },
       { text: "Base", callback_data: "8453b" },
-      { text: "BNB Chain", callback_data: "56b" },
     ],
     [
+      { text: "BSC", callback_data: "56b" },
       { text: "Avalanche", callback_data: "43114b" },
-      { text: "Cronos", callback_data: "25b" },
-      { text: "Fantom", callback_data: "250b" },
+      { text: "Arbitrum", callback_data: "42161b" },
     ],
     [
-      { text: "Linea", callback_data: "59144b" },
+      { text: "Fantom", callback_data: "250b" },
       { text: "blast", callback_data: "81457b" },
+      { text: "Polygon", callback_data: "137b" },
+    ],
+    [
+      { text: "Optimism", callback_data: "10b" },
+      { text: "Cronos", callback_data: "25b" },
+      { text: "Linea", callback_data: "59144b" },
     ],
   ],
 };
@@ -313,22 +313,22 @@ const walletAddressKeyboard = {
     [
       { text: "Solona", callback_data: "solanaAddress" },
       { text: "Ethereum", callback_data: "addressEVM" },
+      { text: "Base", callback_data: "addressEVM" },
+    ],
+    [
+      { text: "BSC", callback_data: "addressEVM" },
+      { text: "Avalanche", callback_data: "addressEVM" },
       { text: "Arbitrum", callback_data: "addressEVM" },
     ],
     [
+      { text: "Fantom", callback_data: "addressEVM" },
+      { text: "blast", callback_data: "addressEVM" },
       { text: "Polygon", callback_data: "addressEVM" },
-      { text: "BNB Chain", callback_data: "addressEVM" },
-      { text: "Base", callback_data: "addressEVM" },
     ],
     [
       { text: "Optimism", callback_data: "addressEVM" },
       { text: "Linea", callback_data: "addressEVM" },
-      { text: "blast", callback_data: "addressEVM" },
-    ],
-    [
-      { text: "Avalanche", callback_data: "addressEVM" },
       { text: "Cronos", callback_data: "addressEVM" },
-      { text: "Fantom", callback_data: "addressEVM" },
     ],
   ],
 };
@@ -339,22 +339,22 @@ const positionsKeyboard = {
     [
       { text: "Solona", callback_data: "PositionSolana" },
       { text: "Ethereum", callback_data: "1+Ethereum+Position" },
+      { text: "Base", callback_data: "8453+Base+Position" },
+    ],
+    [
+      { text: "BSC", callback_data: "56+Bsc+Position" },
+      { text: "Avalanche", callback_data: "43114+Avalanche+Position" },
       { text: "Arbitrum", callback_data: "42161+Arbitrum+Position" },
     ],
     [
+      { text: "Fantom", callback_data: "250+Fantom+Position" },
+      { text: "blast", callback_data: "PositionBlast" },
       { text: "Polygon", callback_data: "137+Polygon+Position" },
-      { text: "BNB Chain", callback_data: "56+Bsc+Position" },
-      { text: "Base", callback_data: "8453+Base+Position" },
     ],
     [
       { text: "Optimism", callback_data: "10+Optimism+Position" },
       { text: "Linea", callback_data: "59144+Linea+Position" },
-      { text: "blast", callback_data: "PositionBlast" },
-    ],
-    [
-      { text: "Avalanche", callback_data: "43114+Avalanche+Position" },
       { text: "Cronos", callback_data: "25+Cronos+Position" },
-      { text: "Fantom", callback_data: "250+Fantom+Position" },
     ],
   ],
 };
@@ -364,22 +364,22 @@ const blockchainKeyboard = {
     [
       { text: "Solona", callback_data: "solana" },
       { text: "Ethereum", callback_data: "1" },
+      { text: "Base", callback_data: "8453" },
+    ],
+    [
+      { text: "BSC", callback_data: "56" },
+      { text: "Avalanche", callback_data: "43114" },
       { text: "Arbitrum", callback_data: "42161" },
     ],
     [
+      { text: "Fantom", callback_data: "250" },
+      { text: "blast", callback_data: "81457" },
       { text: "Polygon", callback_data: "137" },
-      { text: "Base", callback_data: "8453" },
-      { text: "BNB Chain", callback_data: "56" },
     ],
     [
       { text: "Optimism", callback_data: "10" },
       { text: "Linea", callback_data: "59144" },
-      { text: "blast", callback_data: "81457" },
-    ],
-    [
-      { text: "Avalanche", callback_data: "43114" },
       { text: "Cronos", callback_data: "25" },
-      { text: "Fantom", callback_data: "250" },
     ],
   ],
 };
@@ -389,23 +389,22 @@ const buyblockchainKeyboard = {
     [
       { text: "Solona", callback_data: "solBuy" },
       { text: "Ethereum", callback_data: "1buy" },
-
+      { text: "Base", callback_data: "8453buy" },
+    ],
+    [
+      { text: "BSC", callback_data: "56buy" },
+      { text: "Avalanche", callback_data: "43114buy" },
       { text: "Arbitrum", callback_data: "42161buy" },
     ],
     [
+      { text: "Fantom", callback_data: "250buy" },
+      { text: "blast", callback_data: "81457buy" },
       { text: "Polygon", callback_data: "137buy" },
-      { text: "Base", callback_data: "8453buy" },
-      { text: "BNB Chain", callback_data: "56buy" },
     ],
     [
       { text: "Optimism", callback_data: "10buy" },
       { text: "Linea", callback_data: "59144buy" },
-      { text: "blast", callback_data: "81457buy" },
-    ],
-    [
-      { text: "Avalanche", callback_data: "43114buy" },
       { text: "Cronos", callback_data: "25buy" },
-      { text: "Fantom", callback_data: "250buy" },
     ],
   ],
 };
@@ -415,22 +414,22 @@ const sellblockchainKeyboard = {
     [
       { text: "Solona", callback_data: "solSellToken" },
       { text: "Ethereum", callback_data: "1sell" },
+      { text: "Base", callback_data: "8453sell" },
+    ],
+    [
+      { text: "BSC", callback_data: "56sell" },
+      { text: "Avalanche", callback_data: "43114sell" },
       { text: "Arbitrum", callback_data: "42161sell" },
     ],
     [
+      { text: "Fantom", callback_data: "250sell" },
+      { text: "blast", callback_data: "81457sell" },
       { text: "Polygon", callback_data: "137sell" },
-      { text: "Base", callback_data: "8453sell" },
-      { text: "BNB Chain", callback_data: "56sell" },
     ],
     [
       { text: "Optimism", callback_data: "10sell" },
       { text: "Linea", callback_data: "59144sell" },
-      { text: "blast", callback_data: "81457sell" },
-    ],
-    [
-      { text: "Avalanche", callback_data: "43114sell" },
       { text: "Cronos", callback_data: "25sell" },
-      { text: "Fantom", callback_data: "250sell" },
     ],
   ],
 };
@@ -440,22 +439,22 @@ const withrawblockchainKeyboard = {
     [
       { text: "Solona", callback_data: "solwithraw" },
       { text: "Ethereum", callback_data: "1withraw" },
+      { text: "Base", callback_data: "8453withraw" },
+    ],
+    [
+      { text: "BSC", callback_data: "56withraw" },
+      { text: "Avalanche", callback_data: "43114withraw" },
       { text: "Arbitrum", callback_data: "42161withraw" },
     ],
     [
+      { text: "Fantom", callback_data: "250withraw" },
+      { text: "blast", callback_data: "81457withraw" },
       { text: "Polygon", callback_data: "137withraw" },
-      { text: "Base", callback_data: "8453withraw" },
-      { text: "BNB Chain", callback_data: "56withraw" },
     ],
     [
       { text: "Optimism", callback_data: "10withraw" },
       { text: "Linea", callback_data: "59144withraw" },
-      { text: "blast", callback_data: "81457withraw" },
-    ],
-    [
-      { text: "Avalanche", callback_data: "43114withraw" },
       { text: "Cronos", callback_data: "25withraw" },
-      { text: "Fantom", callback_data: "250withraw" },
     ],
   ],
 };
@@ -1193,7 +1192,7 @@ async function handleDynamicSellToken(chatId, token) {
           userStates[chatId].selectedSellToken?.balance_formatted
         )?.toFixed(5)}</code>(${Number(
           userStates[chatId].selectedSellToken?.usd_value
-        ).toFixed(3)})
+        ).toFixed(3)}$)
 💵 ${userStates[chatId].selectedSellToken?.symbol} price : <code>${Number(
           userStates[chatId].selectedSellToken?.usd_price
         )?.toFixed(6)}</code>$
@@ -1411,51 +1410,87 @@ async function handlePositions(chatId, chainId, network) {
   }
   const { loaderMessage, interval } = await animateLoader(chatId);
   try {
-    const response = await axios.post(`${API_URL}/fetchbalance`, {
+    const response = await axios.post(`${API_URL}/getPositions`, {
       chatId: chatId,
       chainId: chainId,
     });
     clearInterval(interval);
     await bot.deleteMessage(chatId, loaderMessage?.message_id);
 
-    const balances = response?.data?.data;
-    const tokens = balances?.filter((item) => item?.usd_price != null);
-    userStates[chatId].allPositionTokens = tokens;
+    if (response?.data?.status) {
+      const balances = response?.data?.data;
+      console.log("🚀 ~ handlePositions ~ balances:", balances);
+      userStates[chatId].allPositionTokens = balances?.tokensData;
 
-    let message = "✨ Your Tokens:\n\n";
-    message += `🔗 Chain: ${network}\n\n`;
-    if (tokens) {
-      tokens?.forEach((balance) => {
-        message += `🏷 Token Name: <code>${balance?.symbol}</code>\n`;
-        message += `💰 Balance: <code>${Number(
-          balance?.balance_formatted
-        ).toFixed(4)}</code>(${Number(balance?.usd_value).toFixed(5)}$)\n`;
-        message += `💵 Price: <code>${Number(balance?.usd_price).toFixed(
-          5
-        )}</code>\n`;
-        message += `${
-          balance?.usd_price_24hr_percent_change >= 0 ? "📉" : "📈"
-        } usd_price_24hr_percent_change: <code>${Number(
-          balance?.usd_price_24hr_percent_change
-        ).toFixed(4)}%</code>\n`;
-        message += `${
-          balance?.usd_price_24hr_usd_change >= 0 ? "📉" : "📈"
-        } usd_price_24hr_usd_change: <code>${Number(
-          balance?.usd_price_24hr_usd_change
-        ).toFixed(4)}%</code>\n`;
-        message += `${
-          balance?.usd_value_24hr_usd_change >= 0 ? "📉" : "📈"
-        } usd_value_24hr_usd_change: <code>${Number(
-          balance?.usd_value_24hr_usd_change
-        ).toFixed(4)}$</code>\n`;
-        message += `📊 portfolio_percentage: <code>${Number(
-          balance?.portfolio_percentage
-        ).toFixed(4)}%</code>\n\n`;
+      let message = "✨ Your Tokens:\n\n";
+      message += `🔗 Chain: ${network}\n\n`;
+      message += `🏷 Token Name: <code>${
+        balances?.nativeToken?.symbol
+      }</code>(Native Token)  
+💰 Balance: <code>${Number(balances?.nativeToken?.balance_formatted).toFixed(
+        4
+      )}</code>(${Number(balances?.nativeToken?.usd_value).toFixed(5)}$)
+💵 Price: <code>${Number(balances?.nativeToken?.usd_price).toFixed(5)}</code>
+${
+  balances?.nativeToken?.usd_price_24hr_percent_change >= 0 ? "📉" : "📈"
+} usd_price_24hr_percent_change: <code>${Number(
+        balances?.nativeToken?.usd_price_24hr_percent_change
+      ).toFixed(4)}%</code>
+${
+  balances?.nativeToken?.usd_price_24hr_usd_change >= 0 ? "📉" : "📈"
+} usd_price_24hr_usd_change: <code>${Number(
+        balances?.nativeToken?.usd_price_24hr_usd_change
+      ).toFixed(4)}%</code>
+${
+  balances?.nativeToken?.usd_value_24hr_usd_change >= 0 ? "📉" : "📈"
+} usd_value_24hr_usd_change: <code>${Number(
+        balances?.nativeToken?.usd_value_24hr_usd_change
+      ).toFixed(4)}$</code>
+📊 portfolio_percentage: <code>${Number(
+        balances?.nativeToken?.portfolio_percentage
+      ).toFixed(4)}%</code>\n\n
+    `;
+      if (balances?.tokensData) {
+        balances?.tokensData?.forEach((balance) => {
+          message += `🏷 Token Name: <code>${balance?.symbol}</code>\n`;
+          message += `💰 Balance: <code>${Number(balance?.qty).toFixed(
+            4
+          )}</code>(${Number(balance?.value_in_usd).toFixed(5)}$)\n`;
+          message += `💵 Price_at_buy: <code>${Number(
+            balance?.price_at_invested
+          ).toFixed(5)}</code>\n`;
+          message += `💵 current Price: <code>${Number(
+            balance?.currentPrice
+          ).toFixed(5)}</code>\n`;
+          message += `📊 P&L: <code>${
+            Number(balance?.percentage_of_growth) > 0 ? "+" : ""
+          }${Number(balance?.percentage_of_growth).toFixed(5)}%</code>\n`;
+          message += `${
+            balance?.usd_price_24hr_percent_change >= 0 ? "📉" : "📈"
+          } usd_price_24hr_percent_change: <code>${Number(
+            balance?.usd_price_24hr_percent_change
+          ).toFixed(4)}%</code>\n`;
+          message += `${
+            balance?.usd_price_24hr_usd_change >= 0 ? "📉" : "📈"
+          } usd_price_24hr_usd_change: <code>${Number(
+            balance?.usd_price_24hr_usd_change
+          ).toFixed(4)}%</code>\n`;
+          message += `${
+            balance?.usd_value_24hr_usd_change >= 0 ? "📉" : "📈"
+          } usd_value_24hr_usd_change: <code>${Number(
+            balance?.usd_value_24hr_usd_change
+          ).toFixed(4)}$</code>\n`;
+          message += `📊 portfolio_percentage: <code>${Number(
+            balance?.portfolio_percentage
+          ).toFixed(4)}%</code>\n\n`;
+        });
+      }
+      userStates[chatId].positionList = await bot.sendMessage(chatId, message, {
+        parse_mode: "HTML",
       });
+    } else {
+      await bot.sendMessage(chatId, "🔴 You do not have any holdings!!");
     }
-    userStates[chatId].positionList = await bot.sendMessage(chatId, message, {
-      parse_mode: "HTML",
-    });
   } catch (error) {
     clearInterval(interval);
     await bot.deleteMessage(chatId, loaderMessage.message_id);
