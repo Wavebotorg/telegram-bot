@@ -6114,7 +6114,7 @@ referral rate.`,
         userStates[chatId].currentStep = "customAmountBuyPer";
         userStates[chatId].customAmountEvm = await bot.sendMessage(
           chatId,
-          "please enter "
+          "please enter amount"
         );
       } else {
         resetUserState(chatId);
