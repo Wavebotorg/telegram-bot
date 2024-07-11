@@ -295,7 +295,7 @@ const buyKeyboard = {
       { text: "🏦 Wallet Address", callback_data: "walletAddresses" },
     ],
     [
-      { text: "👨‍👧‍👦 referrals", callback_data: "totalReferrals" },
+      { text: "👨‍👧‍👦 Referrals", callback_data: "totalReferrals" },
       { text: "⚙️ Setting", callback_data: "settingButton" },
     ],
     [
@@ -5145,30 +5145,22 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     case "helpButton":
       resetUserState(chatId);
-      await bot.sendMessage(
-        chatId,
-        ` ❓<b>FAQS</b>
-
-<u><b>How do I use Wave?</b></u>
-Check out our [Wave Manual](https://wavebot.gitbook.io/wave-manual) where we provide detailed explanations.
+      await bot.sendMessage(chatId, `<b>How do I use Wave?</b>
+Check out our https://wavebot.gitbook.io/wave-manual where we provide detailed explanations.
       
-<u><b>Which tokens can I trade?</b></u>
-We currently cover 12 chains. You can check the wallet menu to see all the chains we support now.
+<b>Which tokens can I trade?</b>
+We currently cover 12 chains. 
       
-<u><b>Where can I find my referral code?</b></u>
+<b>Where can I find my referral code?</b>
 Go to the menu and click on 💰Referrals.
       
-<u><b>My transaction timed out. What happened?</b></u>
+<b>My transaction timed out. What happened?</b>
 Transaction timeouts may occur due to heavy network load or instability. This is a common issue with the current network conditions.
-      
-<u><b>What are the fees for using Wave?</b></u>
-Currently, transactions through Wave are free of charge.
-      
-<u><b>Additional questions or need support?</b></u>
-Join our [Telegram group](https://t.me/WaveUsers) and one of our admins will assist you.
-    `,
-        { parse_mode: "HTML" }
-      );
+   
+<b>Additional questions or need support?</b>
+Join our https://t.me/WaveUsers and one of our admins will assist you.
+    `, { parse_mode: "HTML" });
+      break;
       break;
     case "referralQr":
       resetUserState(chatId);
@@ -6736,16 +6728,12 @@ https://dexscreener.com/${userStates[chatId]?.network}/${
                 resetUserState(chatId);
                 await bot.sendMessage(
                   chatId,
-                  "🔴Token you entered is not supported!!"
+                  "🔴Token you entered is not supported(May there is a network issue)!!"
                 );
               }
             })
             .catch(async (error) => {
               console.log("🚀 ~ bot.on ~ error:", error?.message);
-              await bot.sendMessage(
-                chatId,
-                "🔴somthing has been wrong while fetching token price!!"
-              );
             });
         } else {
           resetUserState(chatId);
@@ -6757,6 +6745,7 @@ https://dexscreener.com/${userStates[chatId]?.network}/${
       break;
 
     case "refreshButtonBuySolana":
+    try {
       if (userStates[chatId]?.flag == 19999) {
         await axios
           .post(`${API_URL}/dexSol`, {
@@ -6784,27 +6773,25 @@ https://dexscreener.com/${userStates[chatId]?.network}/${
               const totalTokenBuy = Number(
                 (userStates[chatId].buyPrice *
                   userStates[chatId]?.buyTokenData?.nativePrice) /
-                  userStates[chatId]?.buyTokenData?.price
+                userStates[chatId]?.buyTokenData?.price
               )?.toFixed(2);
               await bot.editMessageText(
-                `✨ <b>Information of ${
-                  userStates[chatId]?.buyTokenData?.name
+                `✨ <b>Information of ${userStates[chatId]?.buyTokenData?.name
                 }</b>\n
 💰 Balance : ${Number(
                   userStates[chatId]?.buyTokenData?.nativeTokenDetails?.solana
                 )?.toFixed(5)} sol(${Number(
                   userStates[chatId]?.buyTokenData?.nativeTokenDetails?.solana *
-                    userStates[chatId]?.buyTokenData?.nativePrice
+                  userStates[chatId]?.buyTokenData?.nativePrice
                 ).toFixed(3)}$)
 🏷  Name : ${userStates[chatId]?.buyTokenData?.name} 
 📭 Address : <code>${userStates[chatId]?.buyTokenData?.address}</code>
 💵 ${userStates[chatId]?.buyTokenData?.name} price : ${Number(
                   userStates[chatId]?.buyTokenData?.price
                 )?.toFixed(6)}$
-📈 liquidity : ${
-                  userStates[chatId]?.liq
-                    ? userStates[chatId]?.liq
-                    : "not available!!"
+📈 liquidity : ${userStates[chatId]?.liq
+                  ? userStates[chatId]?.liq
+                  : "not available!!"
                 }
 📊 5m : ${Number(userStates[chatId]?.buyTokenData?.variation5m)?.toFixed(
                   2
@@ -6815,17 +6802,15 @@ https://dexscreener.com/${userStates[chatId]?.network}/${
                 )?.toFixed(2)}% || 24h : ${Number(
                   userStates[chatId]?.buyTokenData?.variation24h
                 )?.toFixed(2)}%
-🗃 mcap : ${
-                  userStates[chatId]?.market_cap
-                    ? userStates[chatId]?.market_cap
-                    : "not available!!"
+🗃 mcap : ${userStates[chatId]?.market_cap
+                  ? userStates[chatId]?.market_cap
+                  : "not available!!"
                 }
 🔗 Chain : "Solana"
 ↗️ You buy : ${Number(userStates[chatId]?.buyPrice)?.toFixed(5)}sol (${Number(
                   userStates[chatId]?.buyPrice *
-                    userStates[chatId]?.buyTokenData?.nativePrice
-                )?.toFixed(2)}$) ↔️ ${totalTokenBuy} ${
-                  userStates[chatId]?.buyTokenData?.name
+                  userStates[chatId]?.buyTokenData?.nativePrice
+                )?.toFixed(2)}$) ↔️ ${totalTokenBuy} ${userStates[chatId]?.buyTokenData?.name
                 }(${Number(
                   totalTokenBuy * userStates[chatId]?.buyTokenData?.price
                 ).toFixed(2)}$)
@@ -6897,15 +6882,14 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
           })
           .catch(async (error) => {
             console.log("🚀 ~ bot.on ~ error:", error?.message);
-            await bot.sendMessage(
-              chatId,
-              "🔴 somthing has been wrong while fetching token price!!"
-            );
           });
       } else {
         resetUserState(chatId);
         buyStartTokenSelection(chatId);
       }
+    } catch (error) {
+      console.log("🚀 ~ bot.on ~ error:", error?.message)
+    }
       break;
     // -------------------------------------------------- buy ------------------------------------------------------
     case "solBuy":
