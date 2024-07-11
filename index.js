@@ -1170,7 +1170,7 @@ async function setting(chatId) {
             //   text: "Invite",
             //   callback_data: "referralQr",
             // },
-            { text: "❗️ Help", callback_data: "helpButton" },
+            { text: "Help", callback_data: "helpButton" },
             { text: "Reset PW", callback_data: "resetPassword" },
           ],
         ],
