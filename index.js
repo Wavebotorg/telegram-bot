@@ -321,7 +321,7 @@ const evmWalletBalance = {
     ],
     [
       { text: "BSC", callback_data: "56b" },
-      // { text: "Avalanche", callback_data: "43114b" },
+      { text: "Avalanche", callback_data: "43114b" },
       { text: "Arbitrum", callback_data: "42161b" },
     ],
     [
@@ -346,7 +346,7 @@ const walletAddressKeyboard = {
     ],
     [
       { text: "BSC", callback_data: "addressEVM" },
-      // { text: "Avalanche", callback_data: "addressEVM" },
+      { text: "Avalanche", callback_data: "addressEVM" },
       { text: "Arbitrum", callback_data: "addressEVM" },
     ],
     [
@@ -372,7 +372,7 @@ const positionsKeyboard = {
     ],
     [
       { text: "BSC", callback_data: "56+bsc+Position" },
-      // { text: "Avalanche", callback_data: "43114+avalanche+Position" },
+      { text: "Avalanche", callback_data: "43114+avalanche+Position" },
       { text: "Arbitrum", callback_data: "42161+arbitrum+Position" },
     ],
     [
@@ -397,7 +397,7 @@ const blockchainKeyboard = {
     ],
     [
       { text: "BSC", callback_data: "56" },
-      // { text: "Avalanche", callback_data: "43114" },
+      { text: "Avalanche", callback_data: "43114" },
       { text: "Arbitrum", callback_data: "42161" },
     ],
     [
@@ -422,7 +422,7 @@ const buyblockchainKeyboard = {
     ],
     [
       { text: "BSC", callback_data: "56buy" },
-      // { text: "Avalanche", callback_data: "43114buy" },
+      { text: "Avalanche", callback_data: "43114buy" },
       { text: "Arbitrum", callback_data: "42161buy" },
     ],
     [
@@ -447,7 +447,7 @@ const sellblockchainKeyboard = {
     ],
     [
       { text: "BSC", callback_data: "56sell" },
-      // { text: "Avalanche", callback_data: "43114sell" },
+      { text: "Avalanche", callback_data: "43114sell" },
       { text: "Arbitrum", callback_data: "42161sell" },
     ],
     [
@@ -472,7 +472,7 @@ const withrawblockchainKeyboard = {
     ],
     [
       { text: "BSC", callback_data: "56withraw" },
-      // { text: "Avalanche", callback_data: "43114withraw" },
+      { text: "Avalanche", callback_data: "43114withraw" },
       { text: "Arbitrum", callback_data: "42161withraw" },
     ],
     [
