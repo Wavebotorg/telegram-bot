@@ -579,6 +579,7 @@ async function handleSolanaSwap(chatId) {
         let message = "Your Solana tokens:\n\n";
         if (res?.data?.data?.length > 0) {
           userStates[chatId].allSellSolanaToken = res?.data?.data;
+          userStates[chatId].nativeBalance = res?.data?.nativePrice;
           // message += `🏷 Token Name: <code>Sol</code>\n`;
           // message += `💰 Balance: <code>${
           //   response?.data?.native ? response?.data?.native : "0.00000"
@@ -674,77 +675,92 @@ async function handleEvmSwap(chatId, chainId, network) {
     }
     const { loaderMessage, interval } = await animateLoader(chatId);
     try {
-      const response = await axios.post(`${API_URL}/fetchbalance`, {
-        chatId: chatId,
-        chainId: chainId,
-        network,
-      });
-      clearInterval(interval);
-      await bot.deleteMessage(chatId, loaderMessage?.message_id);
+      await axios
+        .post(`${API_URL}/fetchbalance`, {
+          chatId: chatId,
+          chainId: chainId,
+          network,
+        })
+        .then(async (response) => {
+          clearInterval(interval);
+          await bot.deleteMessage(chatId, loaderMessage?.message_id);
+          if (response?.data?.status) {
+            userStates[chatId].nativeBalance = response.data.data[0];
+            console.log("🚀 ~ .then ~", userStates[chatId].nativeBalance);
+            const balances = response?.data?.data;
+            const tokens = balances
+              ?.slice(1, balances?.length)
+              ?.filter((item) => item?.usd_price != null);
+            userStates[chatId].allSellTokens = tokens;
 
-      const balances = response?.data?.data;
-      const tokens = balances
-        ?.slice(1, balances?.length)
-        ?.filter((item) => item?.usd_price != null);
-      userStates[chatId].allSellTokens = tokens;
+            if (tokens?.length > 0) {
+              let message = "✨ Your Tokens:\n\n";
+              tokens?.forEach((balance) => {
+                message += `🏷 Token Name: <code>${balance?.symbol}</code>\n`;
+                message += `💰 Balance: <code>${Number(
+                  balance?.balance_formatted
+                ).toFixed(4)}</code>(${Number(balance?.usd_value).toFixed(
+                  5
+                )}$)\n\n`;
+              });
+              const buttons = tokens?.map((item) => ({
+                text: item.symbol,
+                callback_data: `${item.symbol}SwapEvm`,
+              }));
 
-      if (tokens?.length > 0) {
-        let message = "✨ Your Tokens:\n\n";
-        tokens?.forEach((balance) => {
-          message += `🏷 Token Name: <code>${balance?.symbol}</code>\n`;
-          message += `💰 Balance: <code>${Number(
-            balance?.balance_formatted
-          ).toFixed(4)}</code>(${Number(balance?.usd_value).toFixed(5)}$)\n\n`;
-        });
-        const buttons = tokens?.map((item) => ({
-          text: item.symbol,
-          callback_data: `${item.symbol}SwapEvm`,
-        }));
+              const keyboard = [];
 
-        const keyboard = [];
+              // add dynamic buttons in the keyboard
+              for (let i = 0; i < buttons.length; i += 4) {
+                keyboard.push(buttons.slice(i, i + 4));
+              }
 
-        // add dynamic buttons in the keyboard
-        for (let i = 0; i < buttons.length; i += 4) {
-          keyboard.push(buttons.slice(i, i + 4));
-        }
-
-        // add static buttons
-        if (tokens?.length <= 1) {
-          message += "🔴 you do not have any token to Withraw!!";
-          keyboard.push([
-            { text: "⬅️ Back", callback_data: "withrawButton" },
-            { text: "⬅️ Buy", callback_data: "buyButton" },
-          ]);
-        } else {
-          keyboard.push([{ text: "⬅️ Back", callback_data: "withrawButton" }]);
-        }
-
-        userStates[chatId].sellTokensList = await bot.sendMessage(
-          chatId,
-          message,
-          {
-            reply_markup: {
-              inline_keyboard: keyboard,
-            },
-            parse_mode: "HTML",
-          }
-        );
-      } else {
-        await bot.sendMessage(
-          chatId,
-          "🔴 You do not have any tokens to Withraw!!",
-          {
-            reply_markup: {
-              inline_keyboard: [
-                [
+              // add static buttons
+              if (tokens?.length <= 1) {
+                message += "🔴 you do not have any token to Withraw!!";
+                keyboard.push([
                   { text: "⬅️ Back", callback_data: "withrawButton" },
                   { text: "⬅️ Buy", callback_data: "buyButton" },
-                ],
-              ],
-            },
+                ]);
+              } else {
+                keyboard.push([
+                  { text: "⬅️ Back", callback_data: "withrawButton" },
+                ]);
+              }
+
+              userStates[chatId].sellTokensList = await bot.sendMessage(
+                chatId,
+                message,
+                {
+                  reply_markup: {
+                    inline_keyboard: keyboard,
+                  },
+                  parse_mode: "HTML",
+                }
+              );
+            } else {
+              await bot.sendMessage(
+                chatId,
+                "🔴 You do not have any tokens to Withraw!!",
+                {
+                  reply_markup: {
+                    inline_keyboard: [
+                      [
+                        { text: "⬅️ Back", callback_data: "withrawButton" },
+                        { text: "⬅️ Buy", callback_data: "buyButton" },
+                      ],
+                    ],
+                  },
+                }
+              );
+            }
+          } else {
+            console.log(response?.data?.message);
           }
-        );
-      }
+        })
+        .catch((error) => {
+          console.log("🚀 ~ handleEvmSwap ~ error:", error?.message);
+        });
     } catch (error) {
       clearInterval(interval);
       await bot.deleteMessage(chatId, loaderMessage.message_id);
@@ -2550,26 +2566,16 @@ async function handleToBySolanaPercentageDynamically(chatId, percentage) {
       console.log("--------------------------->", userStates[chatId].buyPrice);
 
       await bot.editMessageText(
-        `🌊 <b>Information of ${
-          userStates[chatId]?.buyTokenData?.symbol
-        }</b> 🌊\n
-💰 Balance : ${Number(
-          userStates[chatId]?.buyTokenData?.nativeTokenDetails?.solana
-        )?.toFixed(5)}sol /${Number(
-          userStates[chatId]?.buyTokenData?.nativeTokenDetails?.solana *
-            userStates[chatId]?.buyTokenData?.nativePrice
-        ).toFixed(2)}$
+        `🌊 <b>Information of ${userStates[chatId]?.buyTokenData?.name}</b> 🌊\n
 🏷  Name : ${userStates[chatId]?.buyTokenData?.symbol} 
-📭 Address : <code>${userStates[chatId]?.buyTokenData?.address}</code>
+🔗 Chain : "Solana"
+📭 Address : <code>${userStates[chatId]?.buyTokenData?.address}</code>\n
 💵 ${userStates[chatId]?.buyTokenData?.symbol} price : ${Number(
           userStates[chatId]?.buyTokenData?.price /
             userStates[chatId]?.buyTokenData?.nativePrice
-        ).toFixed(4)}Sol / ${Number(
+        ).toFixed(5)}Sol / ${Number(
           userStates[chatId]?.buyTokenData?.price
         )?.toFixed(5)}$
-📈 liquidity : ${
-          userStates[chatId]?.liq ? userStates[chatId]?.liq : "not available!!"
-        }
 📊 5m : ${Number(userStates[chatId]?.buyTokenData?.variation5m)?.toFixed(
           2
         )}% || 1h : ${Number(
@@ -2578,13 +2584,21 @@ async function handleToBySolanaPercentageDynamically(chatId, percentage) {
           userStates[chatId]?.buyTokenData?.variation6h
         )?.toFixed(2)}% || 24h : ${Number(
           userStates[chatId]?.buyTokenData?.variation24h
-        )?.toFixed(2)}%
+        )?.toFixed(2)}%\n
+📈 liquidity : ${
+          userStates[chatId]?.liq ? userStates[chatId]?.liq : "not available!!"
+        }
 🗃 mcap : ${
           userStates[chatId]?.market_cap
             ? userStates[chatId]?.market_cap
             : "not available!!"
-        }
-🔗 Chain : "Solana"
+        }\n
+💰 Balance : ${Number(
+          userStates[chatId]?.buyTokenData?.nativeTokenDetails?.solana
+        )?.toFixed(5)}sol / ${Number(
+          userStates[chatId]?.buyTokenData?.nativeTokenDetails?.solana *
+            userStates[chatId]?.buyTokenData?.nativePrice
+        ).toFixed(2)}$
 🛒 You buy : ${Number(userStates[chatId]?.buyPrice)?.toFixed(5)}sol (${Number(
           userStates[chatId]?.buyPrice *
             userStates[chatId]?.buyTokenData?.nativePrice
@@ -2593,7 +2607,7 @@ async function handleToBySolanaPercentageDynamically(chatId, percentage) {
         }(${Number(
           totalTokenBuy * userStates[chatId]?.buyTokenData?.price
         ).toFixed(2)}$)
-https://dexscreener.com/solana/${userStates[chatId]?.buyTokenData?.address}`,
+https://dexscreener.com/solana/${userStates[chatId].toToken}`,
         {
           chat_id: chatId,
           message_id: userStates[chatId].solanaBuyMessage.message_id,
@@ -2723,8 +2737,36 @@ async function handleToByEvmPercentageDynamically(chatId, percentage) {
       ).toFixed(2);
       await bot.editMessageText(
         `🌊 <b>Information of ${
-          userStates[chatId]?.evmBuyMessageDetail?.symbol
+          userStates[chatId]?.evmBuyMessageDetail?.name
         }</b> 🌊\n
+🏷  Name : ${userStates[chatId]?.evmBuyMessageDetail?.symbol}
+🔗 Chain : ${state?.network}  
+📭 Address: <code>${userStates[chatId]?.evmBuyMessageDetail?.address}</code>\n
+💵 ${userStates[chatId]?.evmBuyMessageDetail?.name} price : ${Number(
+          userStates[chatId]?.evmBuyMessageDetail?.price /
+            userStates[chatId]?.buyTokenNativename?.usd_price
+        ).toFixed(4)}${
+          userStates[chatId]?.buyTokenNativename?.symbol
+        } / ${Number(userStates[chatId]?.evmBuyMessageDetail?.price)?.toFixed(
+          5
+        )}$
+📊 5m : ${Number(userStates[chatId]?.evmBuyMessageDetail?.variation5m)?.toFixed(
+          3
+        )}% || 1h : ${Number(
+          userStates[chatId]?.evmBuyMessageDetail?.variation1h
+        )?.toFixed(3)}% || 6h : ${Number(
+          userStates[chatId]?.evmBuyMessageDetail?.variation6h
+        )?.toFixed(3)}% || 24h : ${Number(
+          userStates[chatId]?.evmBuyMessageDetail?.variation24h
+        )?.toFixed(3)}%\n
+📈 liquidity : ${
+          userStates[chatId]?.liq ? userStates[chatId]?.liq : "not available"
+        }
+🗃 mcap : ${
+          userStates[chatId]?.market_cap
+            ? userStates[chatId]?.market_cap
+            : "not available!!"
+        }\n
 💰 ${
           userStates[chatId]?.buyTokenNativename
             ? userStates[chatId]?.buyTokenNativename?.symbol
@@ -2738,34 +2780,6 @@ async function handleToByEvmPercentageDynamically(chatId, percentage) {
             ? userStates[chatId]?.buyTokenNativename?.usd_value
             : 0
         ).toFixed(2)}$
-🏷  Name : ${userStates[chatId]?.evmBuyMessageDetail?.symbol}  
-📭 Address: <code>${userStates[chatId]?.evmBuyMessageDetail?.address}</code>
-💵 ${userStates[chatId]?.evmBuyMessageDetail?.name} price : ${Number(
-          userStates[chatId]?.evmBuyMessageDetail?.price /
-            userStates[chatId]?.buyTokenNativename?.usd_price
-        ).toFixed(4)}${
-          userStates[chatId]?.buyTokenNativename?.symbol
-        } / ${Number(userStates[chatId]?.evmBuyMessageDetail?.price)?.toFixed(
-          5
-        )}$
-📈 liquidity : ${
-          userStates[chatId]?.liq ? userStates[chatId]?.liq : "not available"
-        }
-📊 5m : ${Number(userStates[chatId]?.evmBuyMessageDetail?.variation5m)?.toFixed(
-          3
-        )}% || 1h : ${Number(
-          userStates[chatId]?.evmBuyMessageDetail?.variation1h
-        )?.toFixed(3)}% || 6h : ${Number(
-          userStates[chatId]?.evmBuyMessageDetail?.variation6h
-        )?.toFixed(3)}% || 24h : ${Number(
-          userStates[chatId]?.evmBuyMessageDetail?.variation24h
-        )?.toFixed(3)}%
-🗃 mcap : ${
-          userStates[chatId]?.market_cap
-            ? userStates[chatId]?.market_cap
-            : "not available!!"
-        }
-🔗 Chain : ${userStates[chatId]?.network}
 🛒 You buy : ${Number(userStates[chatId]?.buyPrice).toFixed(3)} ${
           userStates[chatId]?.buyTokenNativename?.symbol
         } (${totalBuyUsd}$) ⇄ ${Number(
@@ -2782,9 +2796,11 @@ ${
     ? `🔴 Insufficient balance for buy amount + gas ⇅`
     : ""
 }
-https://dexscreener.com/${userStates[chatId]?.network}/${
-          userStates[chatId]?.toToken
-        }`,
+https://dexscreener.com/${
+          userStates[chatId]?.network == "ether"
+            ? "ethereum"
+            : userStates[chatId]?.network
+        }/${userStates[chatId]?.toToken}`,
 
         {
           chat_id: chatId,
@@ -3631,7 +3647,7 @@ async function handleSolanaPercentage(chatId, percentage) {
         userStates[chatId].sellPrice = Number(
           userStates[chatId].selectedSellToken?.amount
         );
-        console.log("🚀sellPrice:", userStates[chatId].sellPrice)
+        console.log("🚀sellPrice:", userStates[chatId].sellPrice);
       }
       await bot.editMessageText(
         `🏷 Name : ${userStates[chatId].selectedSellToken?.symbol}
@@ -4159,22 +4175,16 @@ async function handleSolSwapPercentage(chatId, percentage) {
       );
     }
     await bot.editMessageText(
-      `🗃 ${
-        userStates[chatId]?.selectedSellToken?.name
-      } balance : <code>${Number(
-        userStates[chatId]?.selectedSellSolanaToken?.amount
-      ).toFixed(5)}</code>(<code>${Number(
-        userStates[chatId]?.selectedSellSolanaToken?.amount *
-          userStates[chatId]?.selectedSellToken?.price
-      ).toFixed(4)}$</code>)
-🏷 Name : ${userStates[chatId]?.selectedSellToken?.name} 
-📭 Address : <code>${userStates[chatId]?.selectedSellToken?.address}</code>
-💵 ${userStates[chatId]?.selectedSellToken?.name} price : <code>${Number(
+      `✨ Information of ${userStates[chatId]?.selectedSellToken?.name}\n
+🏷 Name : ${userStates[chatId]?.selectedSellToken?.symbol}
+🔗 Chain : "Solana"
+📭 Address : <code>${userStates[chatId]?.selectedSellToken?.address}</code>\n
+💵 ${userStates[chatId]?.selectedSellToken?.symbol} price : ${Number(
+        userStates[chatId]?.selectedSellToken?.price /
+          userStates[chatId].nativeBalance
+      ).toFixed(5)}Sol / ${Number(
         userStates[chatId]?.selectedSellToken?.price
-      )?.toFixed(6)}$</code>
-📊 P&L : ${userStates[chatId].percentageChange > 0 ? "+" : ""}${
-        userStates[chatId].percentageChange
-      }%
+      )?.toFixed(5)}$
 📊 5m : ${Number(userStates[chatId]?.selectedSellToken?.variation5m)?.toFixed(
         3
       )}% || 1h : ${Number(
@@ -4183,7 +4193,7 @@ async function handleSolSwapPercentage(chatId, percentage) {
         userStates[chatId]?.selectedSellToken?.variation6h
       )?.toFixed(3)}% || 24h : ${Number(
         userStates[chatId]?.selectedSellToken?.variation24h
-      )?.toFixed(3)}%
+      )?.toFixed(3)}%\n
 📈 liquidity : ${
         userStates[chatId]?.liq ? userStates[chatId]?.liq : "not available!!"
       }
@@ -4191,12 +4201,28 @@ async function handleSolSwapPercentage(chatId, percentage) {
         userStates[chatId].market_cap
           ? userStates[chatId].market_cap
           : "not available!!"
-      }
-🔗 Chain : "Solana"
-📉 You sell : ${Number(userStates[chatId]?.swapPrice).toFixed(5)}(${Number(
+      }\n
+🗃 ${userStates[chatId]?.selectedSellToken?.symbol} balance : <code>${Number(
+        userStates[chatId]?.selectedSellSolanaToken?.amount
+      ).toFixed(5)}</code>(<code>${Number(
+        userStates[chatId].selectedSellSolanaToken?.amount *
+          userStates[chatId]?.selectedSellToken?.price
+      ).toFixed(4)}$</code>)
+🛒 You swap :${Number(
+        (userStates[chatId]?.selectedSellToken?.price *
+          userStates[chatId]?.swapPrice) /
+          userStates[chatId].nativeBalance
+      ).toFixed(5)}(${Number(
+        ((userStates[chatId]?.selectedSellToken?.price *
+          userStates[chatId]?.swapPrice) /
+          userStates[chatId].nativeBalance) *
+          userStates[chatId].nativeBalance
+      ).toFixed(2)}$)sol ⇄ ${Number(userStates[chatId]?.swapPrice).toFixed(
+        5
+      )}(${Number(
         userStates[chatId]?.selectedSellToken?.price *
           userStates[chatId]?.swapPrice
-      ).toFixed(5)}$) ↔️ 
+      ).toFixed(2)}$)  
 https://dexscreener.com/solana/${
         userStates[chatId]?.selectedSellToken?.address
       }`,
@@ -4330,24 +4356,16 @@ async function handleEvmSwapPercentage(chatId, percentage) {
       );
     }
     await bot.editMessageText(
-      `🏷 Name : ${userStates[chatId].selectedSellToken?.symbol}
+      `✨ Information of ${userStates[chatId].selectedSellToken?.name}\n
+🏷  Name : ${userStates[chatId].selectedSellToken?.symbol}
 📭 Address : <code>${userStates[chatId].selectedSellToken?.token_address}</code>
-💰 ${userStates[chatId].selectedSellToken?.symbol} Balance : <code>${Number(
-        userStates[chatId].selectedSellToken?.balance_formatted
-      )?.toFixed(5)}</code>(${Number(
-        userStates[chatId].selectedSellToken?.usd_value
-      ).toFixed(3)}$)
-💵 ${userStates[chatId].selectedSellToken?.symbol} price : <code>${Number(
+🔗 Chain: ${userStates[chatId]?.network}\n
+💵 ${userStates[chatId].selectedSellToken?.symbol} price : ${Number(
+        userStates[chatId].selectedSellToken?.usd_price /
+          userStates[chatId].nativeBalance?.usd_price
+      ).toFixed(5)}${userStates[chatId].nativeBalance?.symbol} / ${Number(
         userStates[chatId].selectedSellToken?.usd_price
-      )?.toFixed(6)}</code>$
-📊 P&L : ${userStates[chatId].percentageChange > 0 ? "+" : ""}${
-        userStates[chatId].percentageChange
-      }%
-🗃 mcap : ${
-        userStates[chatId]?.market_cap
-          ? userStates[chatId]?.market_cap
-          : "not available!!"
-      }
+      )?.toFixed(5)}$
 📊 5m : ${Number(
         userStates[chatId]?.selectedSellToken?.variation5m
           ? userStates[chatId]?.selectedSellToken?.variation5m
@@ -4364,12 +4382,32 @@ async function handleEvmSwapPercentage(chatId, percentage) {
         userStates[chatId]?.selectedSellToken?.variation24h
           ? userStates[chatId]?.selectedSellToken?.variation24h
           : 0
-      )?.toFixed(3)}%
-🔗 Chain: <code>${userStates[chatId]?.network}</code>
-📉 You sell : ${Number(userStates[chatId].swapPrice).toFixed(5)}(${Number(
+      )?.toFixed(3)}%\n
+🗃 mcap : ${
+        userStates[chatId]?.market_cap
+          ? userStates[chatId]?.market_cap
+          : "not available!!"
+      }\n
+💰 ${userStates[chatId].selectedSellToken?.symbol} Balance : ${Number(
+        userStates[chatId].selectedSellToken?.balance_formatted
+      )?.toFixed(5)}(${Number(
+        userStates[chatId].selectedSellToken?.usd_value
+      ).toFixed(3)}$)
+📉 You swap :${Number(
+        (userStates[chatId].selectedSellToken?.usd_price *
+          userStates[chatId].swapPrice) /
+          userStates[chatId]?.nativeBalance?.usd_price
+      ).toFixed(5)}(${Number(
+        ((userStates[chatId].selectedSellToken?.usd_price *
+          userStates[chatId].swapPrice) /
+          userStates[chatId]?.nativeBalance?.usd_price) *
+          userStates[chatId]?.nativeBalance?.usd_price
+      ).toFixed(2)}$)${userStates[chatId]?.nativeBalance?.symbol} ⇄ ${Number(
+        userStates[chatId].swapPrice
+      ).toFixed(5)}(${Number(
         userStates[chatId].selectedSellToken?.usd_price *
           userStates[chatId].swapPrice
-      ).toFixed(5)}$)
+      ).toFixed(2)}$)${userStates[chatId].selectedSellToken?.symbol}
 https://dexscreener.com/${
         userStates[chatId]?.network == "ether"
           ? "ethereum"
@@ -4699,21 +4737,18 @@ bot.on("message", async (msg) => {
                     );
                     userStates[chatId].evmSwapMessage = await bot.sendMessage(
                       chatId,
-                      `🗃 ${
+                      `✨ Information of ${
                         userStates[chatId]?.selectedSellToken?.name
-                      } balance : <code>${Number(
-                        userStates[chatId]?.selectedSellSolanaToken?.amount
-                      ).toFixed(5)}</code>(<code>${Number(balanceInUSD).toFixed(
-                        4
-                      )}$</code>)
-🏷 Name : ${userStates[chatId]?.selectedSellToken?.name} 
-📭 Address : <code>${userStates[chatId]?.selectedSellToken?.address}</code>
-💵 ${userStates[chatId]?.selectedSellToken?.name} price : <code>${Number(
+                      }\n
+🏷 Name : ${userStates[chatId]?.selectedSellToken?.symbol}
+🔗 Chain : "Solana"
+📭 Address : <code>${userStates[chatId]?.selectedSellToken?.address}</code>\n
+💵 ${userStates[chatId]?.selectedSellToken?.symbol} price : ${Number(
+                        userStates[chatId]?.selectedSellToken?.price /
+                          userStates[chatId].nativeBalance
+                      ).toFixed(5)}Sol / ${Number(
                         userStates[chatId]?.selectedSellToken?.price
-                      )?.toFixed(6)}$</code>
-📊 P&L : ${userStates[chatId].percentageChange > 0 ? "+" : ""}${
-                        userStates[chatId].percentageChange
-                      }%
+                      )?.toFixed(5)}$
 📊 5m : ${Number(userStates[chatId]?.selectedSellToken?.variation5m)?.toFixed(
                         3
                       )}% || 1h : ${Number(
@@ -4722,7 +4757,7 @@ bot.on("message", async (msg) => {
                         userStates[chatId]?.selectedSellToken?.variation6h
                       )?.toFixed(3)}% || 24h : ${Number(
                         userStates[chatId]?.selectedSellToken?.variation24h
-                      )?.toFixed(3)}%
+                      )?.toFixed(3)}%\n
 📈 liquidity : ${
                         userStates[chatId]?.liq
                           ? userStates[chatId]?.liq
@@ -4732,12 +4767,27 @@ bot.on("message", async (msg) => {
                         userStates[chatId].market_cap
                           ? userStates[chatId].market_cap
                           : "not available!!"
-                      }
-🔗 Chain : "Solana"
-📉 You sell : ${Number(userStates[chatId]?.swapPrice).toFixed(5)}(${Number(
+                      }\n
+🗃 ${userStates[chatId]?.selectedSellToken?.symbol} balance : <code>${Number(
+                        userStates[chatId]?.selectedSellSolanaToken?.amount
+                      ).toFixed(5)}</code>(<code>${Number(balanceInUSD).toFixed(
+                        4
+                      )}$</code>)
+🛒 You swap :${Number(
+                        (userStates[chatId]?.selectedSellToken?.price *
+                          userStates[chatId]?.swapPrice) /
+                          userStates[chatId].nativeBalance
+                      ).toFixed(5)}(${Number(
+                        ((userStates[chatId]?.selectedSellToken?.price *
+                          userStates[chatId]?.swapPrice) /
+                          userStates[chatId].nativeBalance) *
+                          userStates[chatId].nativeBalance
+                      ).toFixed(2)}$)sol ⇄ ${Number(
+                        userStates[chatId]?.swapPrice
+                      ).toFixed(5)}(${Number(
                         userStates[chatId]?.selectedSellToken?.price *
                           userStates[chatId]?.swapPrice
-                      ).toFixed(5)}$) ↔️ 
+                      ).toFixed(2)}$)  
 https://dexscreener.com/solana/${
                         userStates[chatId]?.selectedSellToken?.address
                       }`,
@@ -4791,7 +4841,7 @@ https://dexscreener.com/solana/${
                             ],
                             [
                               {
-                                text: `Withraw`,
+                                text: `Swap`,
                                 callback_data: "finalSwapSolWallet",
                               },
                             ],
@@ -4841,22 +4891,18 @@ https://dexscreener.com/solana/${
             }
             await bot.deleteMessage(chatId, msg.message_id);
             await bot.editMessageText(
-              `🗃 ${
+              `✨ Information of ${
                 userStates[chatId]?.selectedSellToken?.name
-              } balance : <code>${Number(
-                userStates[chatId]?.selectedSellSolanaToken?.amount
-              ).toFixed(5)}</code>(<code>${Number(
-                userStates[chatId]?.selectedSellSolanaToken?.amount *
-                  userStates[chatId]?.selectedSellToken?.price
-              ).toFixed(4)}$</code>)
-🏷 Name : ${userStates[chatId]?.selectedSellToken?.name} 
-📭 Address : <code>${userStates[chatId]?.selectedSellToken?.address}</code>
-💵 ${userStates[chatId]?.selectedSellToken?.name} price : <code>${Number(
+              }\n
+🏷 Name : ${userStates[chatId]?.selectedSellToken?.symbol}
+🔗 Chain : "Solana"
+📭 Address : <code>${userStates[chatId]?.selectedSellToken?.address}</code>\n
+💵 ${userStates[chatId]?.selectedSellToken?.symbol} price : ${Number(
+                userStates[chatId]?.selectedSellToken?.price /
+                  userStates[chatId].nativeBalance
+              ).toFixed(5)}Sol / ${Number(
                 userStates[chatId]?.selectedSellToken?.price
-              )?.toFixed(6)}$</code>
-📊 P&L : ${userStates[chatId].percentageChange > 0 ? "+" : ""}${
-                userStates[chatId].percentageChange
-              }%
+              )?.toFixed(5)}$
 📊 5m : ${Number(userStates[chatId]?.selectedSellToken?.variation5m)?.toFixed(
                 3
               )}% || 1h : ${Number(
@@ -4865,7 +4911,7 @@ https://dexscreener.com/solana/${
                 userStates[chatId]?.selectedSellToken?.variation6h
               )?.toFixed(3)}% || 24h : ${Number(
                 userStates[chatId]?.selectedSellToken?.variation24h
-              )?.toFixed(3)}%
+              )?.toFixed(3)}%\n
 📈 liquidity : ${
                 userStates[chatId]?.liq
                   ? userStates[chatId]?.liq
@@ -4875,12 +4921,28 @@ https://dexscreener.com/solana/${
                 userStates[chatId].market_cap
                   ? userStates[chatId].market_cap
                   : "not available!!"
-              }
-🔗 Chain : "Solana"
-📉 You sell : ${Number(userStates[chatId]?.swapPrice).toFixed(5)}(${Number(
+              }\n
+🗃 ${userStates[chatId]?.selectedSellToken?.symbol} balance : <code>${Number(
+                userStates[chatId]?.selectedSellSolanaToken?.amount
+              ).toFixed(5)}</code>(<code>${Number(
+                userStates[chatId].selectedSellSolanaToken?.amount *
+                  userStates[chatId]?.selectedSellToken?.price
+              ).toFixed(4)}$</code>)
+🛒 You swap :${Number(
+                (userStates[chatId]?.selectedSellToken?.price *
+                  userStates[chatId]?.swapPrice) /
+                  userStates[chatId].nativeBalance
+              ).toFixed(5)}(${Number(
+                ((userStates[chatId]?.selectedSellToken?.price *
+                  userStates[chatId]?.swapPrice) /
+                  userStates[chatId].nativeBalance) *
+                  userStates[chatId].nativeBalance
+              ).toFixed(2)}$)sol ⇄ ${Number(
+                userStates[chatId]?.swapPrice
+              ).toFixed(5)}(${Number(
                 userStates[chatId]?.selectedSellToken?.price *
                   userStates[chatId]?.swapPrice
-              ).toFixed(5)}$) ↔️ 
+              ).toFixed(2)}$)  
 https://dexscreener.com/solana/${
                 userStates[chatId]?.selectedSellToken?.address
               }`,
@@ -4963,22 +5025,18 @@ https://dexscreener.com/solana/${
             }
             await bot.deleteMessage(chatId, msg.message_id);
             await bot.editMessageText(
-              `🗃 ${
+              `✨ Information of ${
                 userStates[chatId]?.selectedSellToken?.name
-              } balance : <code>${Number(
-                userStates[chatId]?.selectedSellSolanaToken?.amount
-              ).toFixed(5)}</code>(<code>${Number(
-                userStates[chatId]?.selectedSellSolanaToken?.amount *
-                  userStates[chatId]?.selectedSellToken?.price
-              ).toFixed(4)}$</code>)
-🏷 Name : ${userStates[chatId]?.selectedSellToken?.name} 
-📭 Address : <code>${userStates[chatId]?.selectedSellToken?.address}</code>
-💵 ${userStates[chatId]?.selectedSellToken?.name} price : <code>${Number(
+              }\n
+🏷 Name : ${userStates[chatId]?.selectedSellToken?.symbol}
+🔗 Chain : "Solana"
+📭 Address : <code>${userStates[chatId]?.selectedSellToken?.address}</code>\n
+💵 ${userStates[chatId]?.selectedSellToken?.symbol} price : ${Number(
+                userStates[chatId]?.selectedSellToken?.price /
+                  userStates[chatId].nativeBalance
+              ).toFixed(5)}Sol / ${Number(
                 userStates[chatId]?.selectedSellToken?.price
-              )?.toFixed(6)}$</code>
-📊 P&L : ${userStates[chatId].percentageChange > 0 ? "+" : ""}${
-                userStates[chatId].percentageChange
-              }%
+              )?.toFixed(5)}$
 📊 5m : ${Number(userStates[chatId]?.selectedSellToken?.variation5m)?.toFixed(
                 3
               )}% || 1h : ${Number(
@@ -4987,7 +5045,7 @@ https://dexscreener.com/solana/${
                 userStates[chatId]?.selectedSellToken?.variation6h
               )?.toFixed(3)}% || 24h : ${Number(
                 userStates[chatId]?.selectedSellToken?.variation24h
-              )?.toFixed(3)}%
+              )?.toFixed(3)}%\n
 📈 liquidity : ${
                 userStates[chatId]?.liq
                   ? userStates[chatId]?.liq
@@ -4997,12 +5055,28 @@ https://dexscreener.com/solana/${
                 userStates[chatId].market_cap
                   ? userStates[chatId].market_cap
                   : "not available!!"
-              }
-🔗 Chain : "Solana"
-📉 You sell : ${Number(userStates[chatId]?.swapPrice).toFixed(5)}(${Number(
+              }\n
+🗃 ${userStates[chatId]?.selectedSellToken?.symbol} balance : <code>${Number(
+                userStates[chatId]?.selectedSellSolanaToken?.amount
+              ).toFixed(5)}</code>(<code>${Number(
+                userStates[chatId].selectedSellSolanaToken?.amount *
+                  userStates[chatId]?.selectedSellToken?.price
+              ).toFixed(4)}$</code>)
+🛒 You swap :${Number(
+                (userStates[chatId]?.selectedSellToken?.price *
+                  userStates[chatId]?.swapPrice) /
+                  userStates[chatId].nativeBalance
+              ).toFixed(5)}(${Number(
+                ((userStates[chatId]?.selectedSellToken?.price *
+                  userStates[chatId]?.swapPrice) /
+                  userStates[chatId].nativeBalance) *
+                  userStates[chatId].nativeBalance
+              ).toFixed(2)}$)sol ⇄ ${Number(
+                userStates[chatId]?.swapPrice
+              ).toFixed(5)}(${Number(
                 userStates[chatId]?.selectedSellToken?.price *
                   userStates[chatId]?.swapPrice
-              ).toFixed(5)}$) ↔️ 
+              ).toFixed(2)}$)  
 https://dexscreener.com/solana/${
                 userStates[chatId]?.selectedSellToken?.address
               }`,
@@ -5086,22 +5160,18 @@ https://dexscreener.com/solana/${
             }
             await bot.deleteMessage(chatId, msg.message_id);
             await bot.editMessageText(
-              `🗃 ${
+              `✨ Information of ${
                 userStates[chatId]?.selectedSellToken?.name
-              } balance : <code>${Number(
-                userStates[chatId]?.selectedSellSolanaToken?.amount
-              ).toFixed(5)}</code>(<code>${Number(
-                userStates[chatId]?.selectedSellSolanaToken?.amount *
-                  userStates[chatId]?.selectedSellToken?.price
-              ).toFixed(4)}$</code>)
-🏷 Name : ${userStates[chatId]?.selectedSellToken?.name} 
-📭 Address : <code>${userStates[chatId]?.selectedSellToken?.address}</code>
-💵 ${userStates[chatId]?.selectedSellToken?.name} price : <code>${Number(
+              }\n
+🏷 Name : ${userStates[chatId]?.selectedSellToken?.symbol}
+🔗 Chain : "Solana"
+📭 Address : <code>${userStates[chatId]?.selectedSellToken?.address}</code>\n
+💵 ${userStates[chatId]?.selectedSellToken?.symbol} price : ${Number(
+                userStates[chatId]?.selectedSellToken?.price /
+                  userStates[chatId].nativeBalance
+              ).toFixed(5)}Sol / ${Number(
                 userStates[chatId]?.selectedSellToken?.price
-              )?.toFixed(6)}$</code>
-📊 P&L : ${userStates[chatId].percentageChange > 0 ? "+" : ""}${
-                userStates[chatId].percentageChange
-              }%
+              )?.toFixed(5)}$
 📊 5m : ${Number(userStates[chatId]?.selectedSellToken?.variation5m)?.toFixed(
                 3
               )}% || 1h : ${Number(
@@ -5110,7 +5180,7 @@ https://dexscreener.com/solana/${
                 userStates[chatId]?.selectedSellToken?.variation6h
               )?.toFixed(3)}% || 24h : ${Number(
                 userStates[chatId]?.selectedSellToken?.variation24h
-              )?.toFixed(3)}%
+              )?.toFixed(3)}%\n
 📈 liquidity : ${
                 userStates[chatId]?.liq
                   ? userStates[chatId]?.liq
@@ -5120,12 +5190,28 @@ https://dexscreener.com/solana/${
                 userStates[chatId].market_cap
                   ? userStates[chatId].market_cap
                   : "not available!!"
-              }
-🔗 Chain : "Solana"
-📉 You sell : ${Number(userStates[chatId]?.swapPrice).toFixed(5)}(${Number(
+              }\n
+🗃 ${userStates[chatId]?.selectedSellToken?.symbol} balance : <code>${Number(
+                userStates[chatId]?.selectedSellSolanaToken?.amount
+              ).toFixed(5)}</code>(<code>${Number(
+                userStates[chatId].selectedSellSolanaToken?.amount *
+                  userStates[chatId]?.selectedSellToken?.price
+              ).toFixed(4)}$</code>)
+🛒 You swap :${Number(
+                (userStates[chatId]?.selectedSellToken?.price *
+                  userStates[chatId]?.swapPrice) /
+                  userStates[chatId].nativeBalance
+              ).toFixed(5)}(${Number(
+                ((userStates[chatId]?.selectedSellToken?.price *
+                  userStates[chatId]?.swapPrice) /
+                  userStates[chatId].nativeBalance) *
+                  userStates[chatId].nativeBalance
+              ).toFixed(2)}$)sol ⇄ ${Number(
+                userStates[chatId]?.swapPrice
+              ).toFixed(5)}(${Number(
                 userStates[chatId]?.selectedSellToken?.price *
                   userStates[chatId]?.swapPrice
-              ).toFixed(5)}$) ↔️ 
+              ).toFixed(2)}$)  
 https://dexscreener.com/solana/${
                 userStates[chatId]?.selectedSellToken?.address
               }`,
@@ -5248,24 +5334,20 @@ https://dexscreener.com/solana/${
               );
               userStates[chatId].evmSwapMessage = await bot.sendMessage(
                 chatId,
-                `🏷 Name : ${userStates[chatId].selectedSellToken?.symbol}
+                `✨ Information of ${
+                  userStates[chatId].selectedSellToken?.name
+                }\n
+🏷  Name : ${userStates[chatId].selectedSellToken?.symbol}
 📭 Address : <code>${userStates[chatId].selectedSellToken?.token_address}</code>
-💰 ${userStates[chatId].selectedSellToken?.symbol} Balance : <code>${Number(
-                  userStates[chatId].selectedSellToken?.balance_formatted
-                )?.toFixed(5)}</code>(${Number(
-                  userStates[chatId].selectedSellToken?.usd_value
-                ).toFixed(3)}$)
-💵 ${userStates[chatId].selectedSellToken?.symbol} price : <code>${Number(
+🔗 Chain: ${userStates[chatId]?.network}\n
+💵 ${userStates[chatId].selectedSellToken?.symbol} price : ${Number(
+                  userStates[chatId].selectedSellToken?.usd_price /
+                    userStates[chatId].nativeBalance?.usd_price
+                ).toFixed(5)}${
+                  userStates[chatId].nativeBalance?.symbol
+                } / ${Number(
                   userStates[chatId].selectedSellToken?.usd_price
-                )?.toFixed(6)}</code>$
-📊 P&L : ${userStates[chatId].percentageChange > 0 ? "+" : ""}${
-                  userStates[chatId].percentageChange
-                }%
-🗃 mcap : ${
-                  userStates[chatId]?.market_cap
-                    ? userStates[chatId]?.market_cap
-                    : "not available!!"
-                }
+                )?.toFixed(5)}$
 📊 5m : ${Number(
                   userStates[chatId]?.selectedSellToken?.variation5m
                     ? userStates[chatId]?.selectedSellToken?.variation5m
@@ -5282,12 +5364,32 @@ https://dexscreener.com/solana/${
                   userStates[chatId]?.selectedSellToken?.variation24h
                     ? userStates[chatId]?.selectedSellToken?.variation24h
                     : 0
-                )?.toFixed(3)}%
-🔗 Chain: <code>${userStates[chatId]?.network}</code>
-📉 You sell : ${Number(userStates[chatId].swapPrice).toFixed(5)}(${Number(
+                )?.toFixed(3)}%\n
+🗃 mcap : ${
+                  userStates[chatId]?.market_cap
+                    ? userStates[chatId]?.market_cap
+                    : "not available!!"
+                }\n
+💰 ${userStates[chatId].selectedSellToken?.symbol} Balance : ${Number(
+                  userStates[chatId].selectedSellToken?.balance_formatted
+                )?.toFixed(5)}(${Number(
+                  userStates[chatId].selectedSellToken?.usd_value
+                ).toFixed(3)}$)
+📉 You swap :${Number(
+                  (userStates[chatId].selectedSellToken?.usd_price *
+                    userStates[chatId].swapPrice) /
+                    userStates[chatId]?.nativeBalance?.usd_price
+                ).toFixed(5)}(${Number(
+                  ((userStates[chatId].selectedSellToken?.usd_price *
+                    userStates[chatId].swapPrice) /
+                    userStates[chatId]?.nativeBalance?.usd_price) *
+                    userStates[chatId]?.nativeBalance?.usd_price
+                ).toFixed(2)}$)${
+                  userStates[chatId]?.nativeBalance?.symbol
+                } ⇄ ${Number(userStates[chatId].swapPrice).toFixed(5)}(${Number(
                   userStates[chatId].selectedSellToken?.usd_price *
                     userStates[chatId].swapPrice
-                ).toFixed(5)}$)
+                ).toFixed(2)}$)${userStates[chatId].selectedSellToken?.symbol}
 https://dexscreener.com/${
                   userStates[chatId]?.network == "ether"
                     ? "ethereum"
@@ -5371,24 +5473,18 @@ https://dexscreener.com/${
             }
             await bot.deleteMessage(chatId, msg.message_id);
             await bot.editMessageText(
-              `🏷 Name : ${userStates[chatId].selectedSellToken?.symbol}
+              `✨ Information of ${userStates[chatId].selectedSellToken?.name}\n
+🏷  Name : ${userStates[chatId].selectedSellToken?.symbol}
 📭 Address : <code>${userStates[chatId].selectedSellToken?.token_address}</code>
-💰 ${userStates[chatId].selectedSellToken?.symbol} Balance : <code>${Number(
-                userStates[chatId].selectedSellToken?.balance_formatted
-              )?.toFixed(5)}</code>(${Number(
-                userStates[chatId].selectedSellToken?.usd_value
-              ).toFixed(3)}$)
-💵 ${userStates[chatId].selectedSellToken?.symbol} price : <code>${Number(
+🔗 Chain: ${userStates[chatId]?.network}\n
+💵 ${userStates[chatId].selectedSellToken?.symbol} price : ${Number(
+                userStates[chatId].selectedSellToken?.usd_price /
+                  userStates[chatId].nativeBalance?.usd_price
+              ).toFixed(5)}${
+                userStates[chatId].nativeBalance?.symbol
+              } / ${Number(
                 userStates[chatId].selectedSellToken?.usd_price
-              )?.toFixed(6)}</code>$
-📊 P&L : ${userStates[chatId].percentageChange > 0 ? "+" : ""}${
-                userStates[chatId].percentageChange
-              }%
-🗃 mcap : ${
-                userStates[chatId]?.market_cap
-                  ? userStates[chatId]?.market_cap
-                  : "not available!!"
-              }
+              )?.toFixed(5)}$
 📊 5m : ${Number(
                 userStates[chatId]?.selectedSellToken?.variation5m
                   ? userStates[chatId]?.selectedSellToken?.variation5m
@@ -5405,12 +5501,32 @@ https://dexscreener.com/${
                 userStates[chatId]?.selectedSellToken?.variation24h
                   ? userStates[chatId]?.selectedSellToken?.variation24h
                   : 0
-              )?.toFixed(3)}%
-🔗 Chain: <code>${userStates[chatId]?.network}</code>
-📉 You sell : ${Number(userStates[chatId].swapPrice).toFixed(5)}(${Number(
+              )?.toFixed(3)}%\n
+🗃 mcap : ${
+                userStates[chatId]?.market_cap
+                  ? userStates[chatId]?.market_cap
+                  : "not available!!"
+              }\n
+💰 ${userStates[chatId].selectedSellToken?.symbol} Balance : ${Number(
+                userStates[chatId].selectedSellToken?.balance_formatted
+              )?.toFixed(5)}(${Number(
+                userStates[chatId].selectedSellToken?.usd_value
+              ).toFixed(3)}$)
+📉 You swap :${Number(
+                (userStates[chatId].selectedSellToken?.usd_price *
+                  userStates[chatId].swapPrice) /
+                  userStates[chatId]?.nativeBalance?.usd_price
+              ).toFixed(5)}(${Number(
+                ((userStates[chatId].selectedSellToken?.usd_price *
+                  userStates[chatId].swapPrice) /
+                  userStates[chatId]?.nativeBalance?.usd_price) *
+                  userStates[chatId]?.nativeBalance?.usd_price
+              ).toFixed(2)}$)${
+                userStates[chatId]?.nativeBalance?.symbol
+              } ⇄ ${Number(userStates[chatId].swapPrice).toFixed(5)}(${Number(
                 userStates[chatId].selectedSellToken?.usd_price *
                   userStates[chatId].swapPrice
-              ).toFixed(5)}$)
+              ).toFixed(2)}$)${userStates[chatId].selectedSellToken?.symbol}
 https://dexscreener.com/${
                 userStates[chatId]?.network == "ether"
                   ? "ethereum"
@@ -5495,24 +5611,18 @@ https://dexscreener.com/${
             }
             await bot.deleteMessage(chatId, msg.message_id);
             await bot.editMessageText(
-              `🏷 Name : ${userStates[chatId].selectedSellToken?.symbol}
+              `✨ Information of ${userStates[chatId].selectedSellToken?.name}\n
+🏷  Name : ${userStates[chatId].selectedSellToken?.symbol}
 📭 Address : <code>${userStates[chatId].selectedSellToken?.token_address}</code>
-💰 ${userStates[chatId].selectedSellToken?.symbol} Balance : <code>${Number(
-                userStates[chatId].selectedSellToken?.balance_formatted
-              )?.toFixed(5)}</code>(${Number(
-                userStates[chatId].selectedSellToken?.usd_value
-              ).toFixed(3)}$)
-💵 ${userStates[chatId].selectedSellToken?.symbol} price : <code>${Number(
+🔗 Chain: ${userStates[chatId]?.network}\n
+💵 ${userStates[chatId].selectedSellToken?.symbol} price : ${Number(
+                userStates[chatId].selectedSellToken?.usd_price /
+                  userStates[chatId].nativeBalance?.usd_price
+              ).toFixed(5)}${
+                userStates[chatId].nativeBalance?.symbol
+              } / ${Number(
                 userStates[chatId].selectedSellToken?.usd_price
-              )?.toFixed(6)}</code>$
-📊 P&L : ${userStates[chatId].percentageChange > 0 ? "+" : ""}${
-                userStates[chatId].percentageChange
-              }%
-🗃 mcap : ${
-                userStates[chatId]?.market_cap
-                  ? userStates[chatId]?.market_cap
-                  : "not available!!"
-              }
+              )?.toFixed(5)}$
 📊 5m : ${Number(
                 userStates[chatId]?.selectedSellToken?.variation5m
                   ? userStates[chatId]?.selectedSellToken?.variation5m
@@ -5529,12 +5639,32 @@ https://dexscreener.com/${
                 userStates[chatId]?.selectedSellToken?.variation24h
                   ? userStates[chatId]?.selectedSellToken?.variation24h
                   : 0
-              )?.toFixed(3)}%
-🔗 Chain: <code>${userStates[chatId]?.network}</code>
-📉 You sell : ${Number(userStates[chatId].swapPrice).toFixed(5)}(${Number(
+              )?.toFixed(3)}%\n
+🗃 mcap : ${
+                userStates[chatId]?.market_cap
+                  ? userStates[chatId]?.market_cap
+                  : "not available!!"
+              }\n
+💰 ${userStates[chatId].selectedSellToken?.symbol} Balance : ${Number(
+                userStates[chatId].selectedSellToken?.balance_formatted
+              )?.toFixed(5)}(${Number(
+                userStates[chatId].selectedSellToken?.usd_value
+              ).toFixed(3)}$)
+📉 You swap :${Number(
+                (userStates[chatId].selectedSellToken?.usd_price *
+                  userStates[chatId].swapPrice) /
+                  userStates[chatId]?.nativeBalance?.usd_price
+              ).toFixed(5)}(${Number(
+                ((userStates[chatId].selectedSellToken?.usd_price *
+                  userStates[chatId].swapPrice) /
+                  userStates[chatId]?.nativeBalance?.usd_price) *
+                  userStates[chatId]?.nativeBalance?.usd_price
+              ).toFixed(2)}$)${
+                userStates[chatId]?.nativeBalance?.symbol
+              } ⇄ ${Number(userStates[chatId].swapPrice).toFixed(5)}(${Number(
                 userStates[chatId].selectedSellToken?.usd_price *
                   userStates[chatId].swapPrice
-              ).toFixed(5)}$)
+              ).toFixed(2)}$)${userStates[chatId].selectedSellToken?.symbol}
 https://dexscreener.com/${
                 userStates[chatId]?.network == "ether"
                   ? "ethereum"
@@ -5622,24 +5752,18 @@ https://dexscreener.com/${
             }
             await bot.deleteMessage(chatId, msg.message_id);
             await bot.editMessageText(
-              `🏷 Name : ${userStates[chatId].selectedSellToken?.symbol}
+              `✨ Information of ${userStates[chatId].selectedSellToken?.name}\n
+🏷  Name : ${userStates[chatId].selectedSellToken?.symbol}
 📭 Address : <code>${userStates[chatId].selectedSellToken?.token_address}</code>
-💰 ${userStates[chatId].selectedSellToken?.symbol} Balance : <code>${Number(
-                userStates[chatId].selectedSellToken?.balance_formatted
-              )?.toFixed(5)}</code>(${Number(
-                userStates[chatId].selectedSellToken?.usd_value
-              ).toFixed(3)}$)
-💵 ${userStates[chatId].selectedSellToken?.symbol} price : <code>${Number(
+🔗 Chain: ${userStates[chatId]?.network}\n
+💵 ${userStates[chatId].selectedSellToken?.symbol} price : ${Number(
+                userStates[chatId].selectedSellToken?.usd_price /
+                  userStates[chatId].nativeBalance?.usd_price
+              ).toFixed(5)}${
+                userStates[chatId].nativeBalance?.symbol
+              } / ${Number(
                 userStates[chatId].selectedSellToken?.usd_price
-              )?.toFixed(6)}</code>$
-📊 P&L : ${userStates[chatId].percentageChange > 0 ? "+" : ""}${
-                userStates[chatId].percentageChange
-              }%
-🗃 mcap : ${
-                userStates[chatId]?.market_cap
-                  ? userStates[chatId]?.market_cap
-                  : "not available!!"
-              }
+              )?.toFixed(5)}$
 📊 5m : ${Number(
                 userStates[chatId]?.selectedSellToken?.variation5m
                   ? userStates[chatId]?.selectedSellToken?.variation5m
@@ -5656,12 +5780,32 @@ https://dexscreener.com/${
                 userStates[chatId]?.selectedSellToken?.variation24h
                   ? userStates[chatId]?.selectedSellToken?.variation24h
                   : 0
-              )?.toFixed(3)}%
-🔗 Chain: <code>${userStates[chatId]?.network}</code>
-📉 You sell : ${Number(userStates[chatId].swapPrice).toFixed(5)}(${Number(
+              )?.toFixed(3)}%\n
+🗃 mcap : ${
+                userStates[chatId]?.market_cap
+                  ? userStates[chatId]?.market_cap
+                  : "not available!!"
+              }\n
+💰 ${userStates[chatId].selectedSellToken?.symbol} Balance : ${Number(
+                userStates[chatId].selectedSellToken?.balance_formatted
+              )?.toFixed(5)}(${Number(
+                userStates[chatId].selectedSellToken?.usd_value
+              ).toFixed(3)}$)
+📉 You swap :${Number(
+                (userStates[chatId].selectedSellToken?.usd_price *
+                  userStates[chatId].swapPrice) /
+                  userStates[chatId]?.nativeBalance?.usd_price
+              ).toFixed(5)}(${Number(
+                ((userStates[chatId].selectedSellToken?.usd_price *
+                  userStates[chatId].swapPrice) /
+                  userStates[chatId]?.nativeBalance?.usd_price) *
+                  userStates[chatId]?.nativeBalance?.usd_price
+              ).toFixed(2)}$)${
+                userStates[chatId]?.nativeBalance?.symbol
+              } ⇄ ${Number(userStates[chatId].swapPrice).toFixed(5)}(${Number(
                 userStates[chatId].selectedSellToken?.usd_price *
                   userStates[chatId].swapPrice
-              ).toFixed(5)}$)
+              ).toFixed(2)}$)${userStates[chatId].selectedSellToken?.symbol}
 https://dexscreener.com/${
                 userStates[chatId]?.network == "ether"
                   ? "ethereum"
@@ -5895,29 +6039,17 @@ https://dexscreener.com/${
                       state.solanaBuyMessage = await bot.sendMessage(
                         chatId,
                         `🌊 <b>Information of ${
-                          userStates[chatId]?.buyTokenData?.symbol
+                          userStates[chatId]?.buyTokenData?.name
                         }</b> 🌊\n
-💰 Balance : ${Number(
-                          userStates[chatId]?.buyTokenData?.nativeTokenDetails
-                            ?.solana
-                        )?.toFixed(5)}sol / ${Number(
-                          userStates[chatId]?.buyTokenData?.nativeTokenDetails
-                            ?.solana *
-                            userStates[chatId]?.buyTokenData?.nativePrice
-                        ).toFixed(2)}$
 🏷  Name : ${userStates[chatId]?.buyTokenData?.symbol} 
-📭 Address : <code>${userStates[chatId]?.buyTokenData?.address}</code>
+🔗 Chain : "Solana"
+📭 Address : <code>${userStates[chatId]?.buyTokenData?.address}</code>\n
 💵 ${userStates[chatId]?.buyTokenData?.symbol} price : ${Number(
                           userStates[chatId]?.buyTokenData?.price /
                             userStates[chatId]?.buyTokenData?.nativePrice
-                        ).toFixed(4)}Sol / ${Number(
+                        ).toFixed(5)}Sol / ${Number(
                           userStates[chatId]?.buyTokenData?.price
                         )?.toFixed(5)}$
-📈 liquidity : ${
-                          userStates[chatId]?.liq
-                            ? userStates[chatId]?.liq
-                            : "not available!!"
-                        }
 📊 5m : ${Number(userStates[chatId]?.buyTokenData?.variation5m)?.toFixed(
                           2
                         )}% || 1h : ${Number(
@@ -5926,13 +6058,25 @@ https://dexscreener.com/${
                           userStates[chatId]?.buyTokenData?.variation6h
                         )?.toFixed(2)}% || 24h : ${Number(
                           userStates[chatId]?.buyTokenData?.variation24h
-                        )?.toFixed(2)}%
+                        )?.toFixed(2)}%\n
+📈 liquidity : ${
+                          userStates[chatId]?.liq
+                            ? userStates[chatId]?.liq
+                            : "not available!!"
+                        }
 🗃 mcap : ${
                           userStates[chatId]?.market_cap
                             ? userStates[chatId]?.market_cap
                             : "not available!!"
-                        }
-🔗 Chain : "Solana"
+                        }\n
+💰 Balance : ${Number(
+                          userStates[chatId]?.buyTokenData?.nativeTokenDetails
+                            ?.solana
+                        )?.toFixed(5)}sol / ${Number(
+                          userStates[chatId]?.buyTokenData?.nativeTokenDetails
+                            ?.solana *
+                            userStates[chatId]?.buyTokenData?.nativePrice
+                        ).toFixed(2)}$
 🛒 You buy : ${Number(userStates[chatId]?.buyPrice)?.toFixed(5)}sol (${Number(
                           userStates[chatId]?.buyPrice *
                             userStates[chatId]?.buyTokenData?.nativePrice
@@ -6079,8 +6223,38 @@ https://dexscreener.com/solana/${state.toToken}`,
                       userStates[chatId].evmBuyMessage = await bot.sendMessage(
                         chatId,
                         `🌊 <b>Information of ${
-                          userStates[chatId]?.evmBuyMessageDetail?.symbol
+                          userStates[chatId]?.evmBuyMessageDetail?.name
                         }</b> 🌊\n
+🏷  Name : ${userStates[chatId]?.evmBuyMessageDetail?.symbol}
+🔗 Chain : ${state?.network}  
+📭 Address: <code>${userStates[chatId]?.evmBuyMessageDetail?.address}</code>\n
+💵 ${userStates[chatId]?.evmBuyMessageDetail?.name} price : ${Number(
+                          userStates[chatId]?.evmBuyMessageDetail?.price /
+                            userStates[chatId]?.buyTokenNativename?.usd_price
+                        ).toFixed(4)}${
+                          userStates[chatId]?.buyTokenNativename?.symbol
+                        } / ${Number(
+                          userStates[chatId]?.evmBuyMessageDetail?.price
+                        )?.toFixed(5)}$
+📊 5m : ${Number(userStates[chatId]?.evmBuyMessageDetail?.variation5m)?.toFixed(
+                          3
+                        )}% || 1h : ${Number(
+                          userStates[chatId]?.evmBuyMessageDetail?.variation1h
+                        )?.toFixed(3)}% || 6h : ${Number(
+                          userStates[chatId]?.evmBuyMessageDetail?.variation6h
+                        )?.toFixed(3)}% || 24h : ${Number(
+                          userStates[chatId]?.evmBuyMessageDetail?.variation24h
+                        )?.toFixed(3)}%\n
+📈 liquidity : ${
+                          userStates[chatId]?.liq
+                            ? userStates[chatId]?.liq
+                            : "not available"
+                        }
+🗃 mcap : ${
+                          userStates[chatId]?.market_cap
+                            ? userStates[chatId]?.market_cap
+                            : "not available!!"
+                        }\n
 💰 ${
                           state?.buyTokenNativename
                             ? state?.buyTokenNativename?.symbol
@@ -6094,36 +6268,6 @@ https://dexscreener.com/solana/${state.toToken}`,
                             ? state?.buyTokenNativename?.usd_value
                             : 0
                         ).toFixed(2)}$
-🏷  Name : ${userStates[chatId]?.evmBuyMessageDetail?.symbol}  
-📭 Address: <code>${userStates[chatId]?.evmBuyMessageDetail?.address}</code>
-💵 ${userStates[chatId]?.evmBuyMessageDetail?.name} price : ${Number(
-                          userStates[chatId]?.evmBuyMessageDetail?.price /
-                            userStates[chatId]?.buyTokenNativename?.usd_price
-                        ).toFixed(4)}${
-                          userStates[chatId]?.buyTokenNativename?.symbol
-                        } / ${Number(
-                          userStates[chatId]?.evmBuyMessageDetail?.price
-                        )?.toFixed(5)}$
-📈 liquidity : ${
-                          userStates[chatId]?.liq
-                            ? userStates[chatId]?.liq
-                            : "not available"
-                        }
-📊 5m : ${Number(userStates[chatId]?.evmBuyMessageDetail?.variation5m)?.toFixed(
-                          3
-                        )}% || 1h : ${Number(
-                          userStates[chatId]?.evmBuyMessageDetail?.variation1h
-                        )?.toFixed(3)}% || 6h : ${Number(
-                          userStates[chatId]?.evmBuyMessageDetail?.variation6h
-                        )?.toFixed(3)}% || 24h : ${Number(
-                          userStates[chatId]?.evmBuyMessageDetail?.variation24h
-                        )?.toFixed(3)}%
-🗃 mcap : ${
-                          userStates[chatId]?.market_cap
-                            ? userStates[chatId]?.market_cap
-                            : "not available!!"
-                        }
-🔗 Chain : ${state?.network}
 🛒 You buy : ${Number(userStates[chatId]?.buyPrice).toFixed(3)} ${
                           userStates[chatId]?.buyTokenNativename?.symbol
                         } (${totalBuyUsd}$) ⇄ ${Number(
@@ -6398,8 +6542,38 @@ https://dexscreener.com/${
               await bot.deleteMessage(chatId, msg.message_id);
               await bot.editMessageText(
                 `🌊 <b>Information of ${
-                  userStates[chatId]?.evmBuyMessageDetail?.symbol
+                  userStates[chatId]?.evmBuyMessageDetail?.name
                 }</b> 🌊\n
+🏷  Name : ${userStates[chatId]?.evmBuyMessageDetail?.symbol}
+🔗 Chain : ${state?.network}  
+📭 Address: <code>${userStates[chatId]?.evmBuyMessageDetail?.address}</code>\n
+💵 ${userStates[chatId]?.evmBuyMessageDetail?.name} price : ${Number(
+                  userStates[chatId]?.evmBuyMessageDetail?.price /
+                    userStates[chatId]?.buyTokenNativename?.usd_price
+                ).toFixed(4)}${
+                  userStates[chatId]?.buyTokenNativename?.symbol
+                } / ${Number(
+                  userStates[chatId]?.evmBuyMessageDetail?.price
+                )?.toFixed(5)}$
+📊 5m : ${Number(userStates[chatId]?.evmBuyMessageDetail?.variation5m)?.toFixed(
+                  3
+                )}% || 1h : ${Number(
+                  userStates[chatId]?.evmBuyMessageDetail?.variation1h
+                )?.toFixed(3)}% || 6h : ${Number(
+                  userStates[chatId]?.evmBuyMessageDetail?.variation6h
+                )?.toFixed(3)}% || 24h : ${Number(
+                  userStates[chatId]?.evmBuyMessageDetail?.variation24h
+                )?.toFixed(3)}%\n
+📈 liquidity : ${
+                  userStates[chatId]?.liq
+                    ? userStates[chatId]?.liq
+                    : "not available"
+                }
+🗃 mcap : ${
+                  userStates[chatId]?.market_cap
+                    ? userStates[chatId]?.market_cap
+                    : "not available!!"
+                }\n
 💰 ${
                   userStates[chatId]?.buyTokenNativename
                     ? userStates[chatId]?.buyTokenNativename?.symbol
@@ -6413,36 +6587,6 @@ https://dexscreener.com/${
                     ? userStates[chatId]?.buyTokenNativename?.usd_value
                     : 0
                 ).toFixed(2)}$
-🏷  Name : ${userStates[chatId]?.evmBuyMessageDetail?.symbol}  
-📭 Address: <code>${userStates[chatId]?.evmBuyMessageDetail?.address}</code>
-💵 ${userStates[chatId]?.evmBuyMessageDetail?.name} price : ${Number(
-                  userStates[chatId]?.evmBuyMessageDetail?.price /
-                    userStates[chatId]?.buyTokenNativename?.usd_price
-                ).toFixed(4)}${
-                  userStates[chatId]?.buyTokenNativename?.symbol
-                } / ${Number(
-                  userStates[chatId]?.evmBuyMessageDetail?.price
-                )?.toFixed(5)}$
-📈 liquidity : ${
-                  userStates[chatId]?.liq
-                    ? userStates[chatId]?.liq
-                    : "not available"
-                }
-📊 5m : ${Number(userStates[chatId]?.evmBuyMessageDetail?.variation5m)?.toFixed(
-                  3
-                )}% || 1h : ${Number(
-                  userStates[chatId]?.evmBuyMessageDetail?.variation1h
-                )?.toFixed(3)}% || 6h : ${Number(
-                  userStates[chatId]?.evmBuyMessageDetail?.variation6h
-                )?.toFixed(3)}% || 24h : ${Number(
-                  userStates[chatId]?.evmBuyMessageDetail?.variation24h
-                )?.toFixed(3)}%
-🗃 mcap : ${
-                  userStates[chatId]?.market_cap
-                    ? userStates[chatId]?.market_cap
-                    : "not available!!"
-                }
-🔗 Chain : ${userStates[chatId]?.network}
 🛒 You buy : ${Number(userStates[chatId]?.buyPrice).toFixed(3)} ${
                   userStates[chatId]?.buyTokenNativename?.symbol
                 } (${totalBuyUsd}$) ⇄ ${Number(
@@ -6460,9 +6604,11 @@ ${
     ? `🔴 Insufficient balance for buy amount + gas ⇅`
     : ""
 }
-https://dexscreener.com/${userStates[chatId]?.network}/${
-                  userStates[chatId]?.toToken
-                }`,
+https://dexscreener.com/${
+                  userStates[chatId]?.network == "ether"
+                    ? "ethereum"
+                    : userStates[chatId]?.network
+                }/${userStates[chatId]?.toToken}`,
                 {
                   chat_id: chatId,
                   message_id: userStates[chatId]?.evmBuyMessage?.message_id,
@@ -6662,27 +6808,17 @@ https://dexscreener.com/${userStates[chatId]?.network}/${
               await bot.deleteMessage(chatId, msg.message_id);
               await bot.editMessageText(
                 `🌊 <b>Information of ${
-                  userStates[chatId]?.buyTokenData?.symbol
+                  userStates[chatId]?.buyTokenData?.name
                 }</b> 🌊\n
-💰 Balance : ${Number(
-                  userStates[chatId]?.buyTokenData?.nativeTokenDetails?.solana
-                )?.toFixed(5)}sol /${Number(
-                  userStates[chatId]?.buyTokenData?.nativeTokenDetails?.solana *
-                    userStates[chatId]?.buyTokenData?.nativePrice
-                ).toFixed(2)}$
 🏷  Name : ${userStates[chatId]?.buyTokenData?.symbol} 
-📭 Address : <code>${userStates[chatId]?.buyTokenData?.address}</code>
+🔗 Chain : "Solana"
+📭 Address : <code>${userStates[chatId]?.buyTokenData?.address}</code>\n
 💵 ${userStates[chatId]?.buyTokenData?.symbol} price : ${Number(
                   userStates[chatId]?.buyTokenData?.price /
                     userStates[chatId]?.buyTokenData?.nativePrice
-                ).toFixed(4)}Sol / ${Number(
+                ).toFixed(5)}Sol / ${Number(
                   userStates[chatId]?.buyTokenData?.price
                 )?.toFixed(5)}$
-📈 liquidity : ${
-                  userStates[chatId]?.liq
-                    ? userStates[chatId]?.liq
-                    : "not available!!"
-                }
 📊 5m : ${Number(userStates[chatId]?.buyTokenData?.variation5m)?.toFixed(
                   2
                 )}% || 1h : ${Number(
@@ -6691,13 +6827,23 @@ https://dexscreener.com/${userStates[chatId]?.network}/${
                   userStates[chatId]?.buyTokenData?.variation6h
                 )?.toFixed(2)}% || 24h : ${Number(
                   userStates[chatId]?.buyTokenData?.variation24h
-                )?.toFixed(2)}%
+                )?.toFixed(2)}%\n
+📈 liquidity : ${
+                  userStates[chatId]?.liq
+                    ? userStates[chatId]?.liq
+                    : "not available!!"
+                }
 🗃 mcap : ${
                   userStates[chatId]?.market_cap
                     ? userStates[chatId]?.market_cap
                     : "not available!!"
-                }
-🔗 Chain : "Solana"
+                }\n
+💰 Balance : ${Number(
+                  userStates[chatId]?.buyTokenData?.nativeTokenDetails?.solana
+                )?.toFixed(5)}sol / ${Number(
+                  userStates[chatId]?.buyTokenData?.nativeTokenDetails?.solana *
+                    userStates[chatId]?.buyTokenData?.nativePrice
+                ).toFixed(2)}$
 🛒 You buy : ${Number(userStates[chatId]?.buyPrice)?.toFixed(5)}sol (${Number(
                   userStates[chatId]?.buyPrice *
                     userStates[chatId]?.buyTokenData?.nativePrice
@@ -6706,7 +6852,7 @@ https://dexscreener.com/${userStates[chatId]?.network}/${
                 }(${Number(
                   totalTokenBuy * userStates[chatId]?.buyTokenData?.price
                 ).toFixed(2)}$)
-https://dexscreener.com/solana/${userStates[chatId]?.buyTokenData?.address}`,
+https://dexscreener.com/solana/${userStates[chatId].toToken}`,
                 {
                   chat_id: chatId,
                   message_id: userStates[chatId].solanaBuyMessage.message_id,
