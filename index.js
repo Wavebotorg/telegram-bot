@@ -365,12 +365,6 @@ async function transferHoldingsSol(chatId) {
             amount: res?.data?.native,
             symbol: "Sol",
           });
-          // message += `🏷 Token Name: <code> SOL</code>\n`;
-          // message += `💰 Balance: <code>${
-          //   res?.data?.native ? res?.data?.native : "0.00000"
-          // }</code>(${Number(res?.data?.native * res?.data?.nativePrice).toFixed(
-          //   3
-          // )}$)\n\n`;
           res?.data?.data?.forEach((balance) => {
             message += `🏷 Token Name: <code>${balance?.name}</code>\n`;
             message += `💰 Balance: <code>${balance?.amount}</code>(${Number(
@@ -389,12 +383,6 @@ async function transferHoldingsSol(chatId) {
           for (let i = 0; i < buttons.length; i += 4) {
             keyboard.push(buttons.slice(i, i + 4));
           }
-
-          // add solana button
-          keyboard.push([{
-            text: "Sol",
-            callback_data: `SolTransferSol`,
-          }]);
 
           // add static buttons
           keyboard.push([{ text: "⬅️ Back", callback_data: "withrawButton" }]);
@@ -2784,24 +2772,24 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
                   text: `${
                     percentage == 10
                       ? `✅ ${Number(userStates[chatId].buyPrice).toFixed(5)}`
-                      : "Buy 10%  SOL"
-                  }  SOL`,
+                      : "Buy 10% "
+                  } SOL`,
                   callback_data: "10SolPer",
                 },
                 {
                   text: `${
                     percentage == 25
                       ? `✅ ${Number(userStates[chatId].buyPrice).toFixed(5)}`
-                      : "Buy 25%  SOL"
-                  }  SOL`,
+                      : "Buy 25%"
+                  } SOL`,
                   callback_data: "25SolPer",
                 },
                 {
                   text: `${
                     percentage == 50
                       ? `✅ ${Number(userStates[chatId].buyPrice).toFixed(5)}`
-                      : "Buy 50%  SOL"
-                  }  SOL`,
+                      : "Buy 50%"
+                  } SOL`,
                   callback_data: "50SolPer",
                 },
               ],
@@ -2810,16 +2798,16 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
                   text: `${
                     percentage == 75
                       ? `✅ ${Number(userStates[chatId].buyPrice).toFixed(5)}`
-                      : "Buy 75%  SOL"
-                  }  SOL`,
+                      : "Buy 75% "
+                  } SOL`,
                   callback_data: "70SolPer",
                 },
                 {
                   text: `${
                     percentage == 100
                       ? `✅ ${Number(userStates[chatId].buyPrice).toFixed(5)}`
-                      : "Buy 100%  SOL"
-                  }  SOL`,
+                      : "Buy 100% "
+                  } SOL`,
                   callback_data: "100SolPer",
                 },
                 {
@@ -2843,7 +2831,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
         userStates[chatId].currentStep = "customAmountBuySolPer";
         userStates[chatId].customAmountBuySol = await bot.sendMessage(
           chatId,
-          "please enter a  SOL"
+          "please enter a SOL"
         );
       }
     } else {
@@ -3030,7 +3018,7 @@ https://dexscreener.com/${
                       ? `✅ ${Number(userStates[chatId].buyPrice).toFixed(5)}`
                       : "Buy 100%"
                   } ${
-                    userStates[chatId].buyTokenNativename
+                    userStates[chatId].buyTokenNativename 
                       ? userStates[chatId].buyTokenNativename?.symbol
                       : ""
                   }`,
