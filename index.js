@@ -358,24 +358,24 @@ async function transferHoldingsSol(chatId) {
         if (res?.data?.data?.length > 0) {
           let message = "Your Solana tokens:\n\n";
           userStates[chatId].allSellSolanaToken = res?.data?.data;
-          userStates[chatId].allSellSolanaToken.push({
+          userStates[chatId].allSellSolanaToken.unshift({
             mint: "So11111111111111111111111111111111111111112",
             price: res?.data?.nativePrice,
             name: "Solana",
             amount: res?.data?.native,
             symbol: "Sol",
           });
-          message += `🏷 Token Name: <code> SOL</code>\n`;
-          message += `💰 Balance: <code>${
-            res?.data?.native ? res?.data?.native : "0.00000"
-          }</code>(${Number(res?.data?.native * res?.data?.nativePrice).toFixed(
-            3
-          )}$)\n\n`;
+          // message += `🏷 Token Name: <code> SOL</code>\n`;
+          // message += `💰 Balance: <code>${
+          //   res?.data?.native ? res?.data?.native : "0.00000"
+          // }</code>(${Number(res?.data?.native * res?.data?.nativePrice).toFixed(
+          //   3
+          // )}$)\n\n`;
           res?.data?.data?.forEach((balance) => {
             message += `🏷 Token Name: <code>${balance?.name}</code>\n`;
             message += `💰 Balance: <code>${balance?.amount}</code>(${Number(
               balance?.amount * balance?.price
-            ).toFixed(3)}$)\n\n`;
+            ).toFixed(2)}$)\n\n`;
           });
 
           const buttons = res?.data?.data?.map((item) => ({
