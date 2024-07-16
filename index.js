@@ -1371,7 +1371,7 @@ async function evmSwapHandle(amount, chatId, method) {
           tokenIn: userStates[chatId]?.fromToken,
           tokenOut: userStates[chatId]?.toToken,
           chainId: userStates[chatId]?.network,
-          amount: Number(amount).toFixed(5) - 0.00001,
+          amount: Number(amount).toFixed(5),
           chain: userStates[chatId]?.flag,
           chatId,
           method,
@@ -1436,7 +1436,7 @@ async function evmSellHandle(amount, chatId) {
         tokenIn: userStates[chatId]?.selectedSellToken?.token_address,
         tokenOut: userStates[chatId]?.toToken,
         chainId: userStates[chatId]?.network,
-        amount: Number(amount).toFixed(5) - 0.00001,
+        amount: Number(amount).toFixed(5),
         chain: userStates[chatId]?.flag,
         chatId,
         method: "sell",
@@ -1495,7 +1495,7 @@ async function evmSellHandlePercentage(amount, chatId) {
         tokenIn: userStates[chatId]?.selectedSellToken?.tokenAddress,
         tokenOut: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
         chainId: userStates[chatId]?.network,
-        amount: Number(amount)?.toFixed(5) - 0.00001,
+        amount: Number(amount)?.toFixed(5),
         chain: userStates[chatId]?.flag,
         chatId,
         method: "sell",
@@ -6538,7 +6538,7 @@ https://dexscreener.com/${
                                   callback_data: "70EVMPer",
                                 },
                                 {
-                                  text: `Buy 10% ${
+                                  text: `Buy 100% ${
                                     res?.data?.data?.nativeTokenDetails
                                       ? res?.data?.data?.nativeTokenDetails
                                           ?.symbol
@@ -10771,7 +10771,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
                 tokenOut: userStates[chatId]?.selectedSellToken?.token_address,
                 chainId: userStates[chatId]?.network,
                 amount:
-                  Number(userStates[chatId]?.swapPrice).toFixed(5) - 0.00001,
+                  Number(userStates[chatId]?.swapPrice).toFixed(5),
                 chain: userStates[chatId]?.flag,
                 chatId,
                 method: "swap",
