@@ -358,13 +358,13 @@ async function transferHoldingsSol(chatId) {
         if (res?.data?.data?.length > 0) {
           let message = "Your Solana tokens:\n\n";
           userStates[chatId].allSellSolanaToken = res?.data?.data;
-          userStates[chatId].allSellSolanaToken.unshift({
-            mint: "So11111111111111111111111111111111111111112",
-            price: res?.data?.nativePrice,
-            name: "Solana",
-            amount: res?.data?.native,
-            symbol: "Sol",
-          });
+          // userStates[chatId].allSellSolanaToken.unshift({
+          //   mint: "So11111111111111111111111111111111111111112",
+          //   price: res?.data?.nativePrice,
+          //   name: "Solana",
+          //   amount: res?.data?.native,
+          //   symbol: "Sol",
+          // });
           res?.data?.data?.forEach((balance) => {
             message += `🏷 Token Name: <code>${balance?.name}</code>\n`;
             message += `💰 Balance: <code>${balance?.amount}</code>(${Number(
