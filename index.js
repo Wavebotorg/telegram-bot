@@ -9238,8 +9238,6 @@ https://dexscreener.com/solana/${
               })
               .catch(async (error) => {
                 resetUserState(chatId);
-                clearInterval(interval);
-                await bot.deleteMessage(chatId, loaderMessage.message_id);
                 await bot.sendMessage(
                   chatId,
                   "❌ An error occurred while register in please try again",
