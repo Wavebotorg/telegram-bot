@@ -11195,6 +11195,9 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       } else {
         const { loaderMessage, interval } = await animateLoader(chatId);
         try {
+          let partAmount = userStates[chatId]?.transferPrice?.toString()?.split(".");
+          let finalAmount = partAmount[0] + "." + partAmount[1]?.slice(0, 5);
+          let fullFinal = partAmount[1]?.length > 5 ? finalAmount : userStates[chatId]?.transferPrice
           await axios({
             url: `${API_URL}/transferEvmToken`,
             method: "post",
@@ -11204,7 +11207,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
               toWallet: userStates[chatId]?.toWalletAddress,
               chain: userStates[chatId]?.flag,
               amount:
-                Number(userStates[chatId]?.transferPrice).toFixed(5) - 0.00001,
+                Number(fullFinal),
             },
           })
             .then(async (res) => {
