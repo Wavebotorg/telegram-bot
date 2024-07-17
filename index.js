@@ -2076,7 +2076,8 @@ async function handleSolSellPercentageDynamically(chatId, percentage) {
       }
       if (percentage == 100) {
         userStates[chatId].sellPrice =
-          userStates[chatId]?.selectedSellSolanaToken?.amount;
+          (userStates[chatId]?.selectedSellSolanaToken?.amount * 99.80) /
+          100;
         console.log(
           "--------------------------->",
           userStates[chatId].sellPrice
@@ -2656,8 +2657,8 @@ https://dexscreener.com/solana/${
                       callback_data: "75EvmSellSolanaPer",
                     },
                     {
-                      text: `Sell 100% ${tokenDetails[0]?.symbol}`,
                       callback_data: "100EvmSellSolanaPer",
+                      text: `Sell 100% ${tokenDetails[0]?.symbol}`,
                     },
                     {
                       text: `Sell X %${tokenDetails[0]?.symbol} ✏️`,
@@ -3892,9 +3893,9 @@ async function handleSolanaPercentage(chatId, percentage) {
         );
       }
       if (percentage == 100) {
-        userStates[chatId].sellPrice = Number(
-          userStates[chatId].selectedSellToken?.amount
-        );
+        userStates[chatId].sellPrice =
+          (userStates[chatId]?.selectedSellToken?.amount * 99.80) /
+          100;
         console.log("🚀sellPrice:", userStates[chatId].sellPrice);
       }
       await bot.editMessageText(
@@ -4406,7 +4407,7 @@ async function handleSolSwapPercentage(chatId, percentage) {
     }
     if (percentage == 100) {
       userStates[chatId].swapPrice = Number(
-        userStates[chatId]?.selectedSellSolanaToken?.amount
+        (userStates[chatId]?.selectedSellSolanaToken?.amount * 99.80) / 100
       );
     }
     await bot.editMessageText(
