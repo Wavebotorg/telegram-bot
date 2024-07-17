@@ -1496,7 +1496,7 @@ async function evmSellHandlePercentage(amount, chatId) {
         tokenIn: userStates[chatId]?.selectedSellToken?.tokenAddress,
         tokenOut: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
         chainId: userStates[chatId]?.network,
-        amount: Number(amount)?.toFixed(5),
+        amount: Number(amount),
         chain: userStates[chatId]?.flag,
         chatId,
         method: "sell",
@@ -3181,122 +3181,126 @@ ${balance?.price_at_invested < balance?.currentPrice ? "🟩" : "🟥"} PNL ${
 }
 
 async function handleSolanaPosition(chatId) {
-  if (userStates[chatId]?.positionList) {
-    await bot.deleteMessage(
-      chatId,
-      userStates[chatId]?.positionList?.message_id
-    );
-    userStates[chatId].positionList = null;
-  }
-  if (userStates[chatId].evmSellMessage) {
-    await bot.deleteMessage(
-      chatId,
-      userStates[chatId]?.evmSellMessage?.message_id
-    );
-    userStates[chatId].evmSellMessage = null;
-  }
-  const { loaderMessage, interval } = await animateLoader(chatId);
   try {
-    await axios
-      .post(`${API_URL}/getSolanaPositions`, {
-        chatId: chatId,
-      })
-      .then(async (response) => {
-        clearInterval(interval);
-        await bot.deleteMessage(chatId, loaderMessage?.message_id);
-        console.log("🚀 ~ handleSolanaPosition ~ response:", response);
-        if (response?.data?.status && response?.data?.data) {
-          const balances = response?.data?.data?.allTokenPrice;
-          userStates[chatId].nativeBalance = response?.data?.data?.solanaInfo;
-          userStates[chatId].allPositionTokens = balances;
-
-          let message = "✨ Your Tokens:\n";
-          message += `🔗 Chain: "Solana"\n\n`;
-
-          if (balances?.length > 0) {
-            balances?.forEach((balance) => {
-              const oldPrice = balance?.amount * balance?.price_at_invested;
-              const newPrice = balance?.amount * balance?.price;
-              const difference = Math.abs(
-                Number(oldPrice - newPrice).toFixed(2)
-              );
-              message += `🏷 Token Name: ${balance?.symbol}
-💰 Balance: ${Number(balance?.amount).toFixed(4)}(${Number(
-                balance?.amount * balance?.price
-              ).toFixed(2)}$)
-💵 ${balance?.symbol} Price: ${Number(balance?.price).toFixed(5)}$
-📊 Avg Entry Price : ${Number(balance?.price_at_invested).toFixed(5)}
-${balance?.price_at_invested < balance?.price ? "🟩" : "🟥"} PNL USD : ${
-                balance?.price_at_invested < balance?.price
-                  ? `+${difference}$`
-                  : `-${difference}$`
-              }(${balance?.percentage > 0 ? "+" : ""}${balance?.percentage}%)
-${balance?.price_at_invested < balance?.price ? "🟩" : "🟥"} PNL  SOL : ${
-                balance?.price_at_invested < balance?.price
-                  ? `+${Number(
-                      difference / userStates[chatId].nativeBalance
-                    ).toFixed(5)} SOL`
-                  : `-${Number(
-                      difference / userStates[chatId].nativeBalance
-                    ).toFixed(5)} SOL`
-              }(${balance?.percentage > 0 ? "+" : ""}${
-                balance?.percentage
-              }%)\n\n\n`;
-            });
-            const buttons = balances?.map((item) => ({
-              text: item.symbol,
-              callback_data: `${item.symbol}SellPositionSol`,
-            }));
-
-            const keyboard = [];
-
-            // add dynamic buttons in the keyboard
-            for (let i = 0; i < buttons.length; i += 4) {
-              keyboard.push(buttons.slice(i, i + 4));
-            }
-
-            // add static buttons
-            keyboard.push([{ text: "⬅️ Back", callback_data: "sellButton" }]);
-
-            userStates[chatId].positionList = await bot.sendMessage(
-              chatId,
-              message,
-              {
-                parse_mode: "HTML",
-                reply_markup: {
-                  inline_keyboard: keyboard,
-                },
+    if (userStates[chatId]?.positionList) {
+      await bot.deleteMessage(
+        chatId,
+        userStates[chatId]?.positionList?.message_id
+      );
+      userStates[chatId].positionList = null;
+    }
+    if (userStates[chatId].evmSellMessage) {
+      await bot.deleteMessage(
+        chatId,
+        userStates[chatId]?.evmSellMessage?.message_id
+      );
+      userStates[chatId].evmSellMessage = null;
+    }
+    const { loaderMessage, interval } = await animateLoader(chatId);
+    try {
+      await axios
+        .post(`${API_URL}/getSolanaPositions`, {
+          chatId: chatId,
+        })
+        .then(async (response) => {
+          clearInterval(interval);
+          await bot.deleteMessage(chatId, loaderMessage?.message_id);
+          if (response?.data?.status && response?.data?.data) {
+            const balances = response?.data?.data?.allTokenPrice;
+            userStates[chatId].nativeBalance = response?.data?.data?.solanaInfo;
+            userStates[chatId].allPositionTokens = balances;
+  
+            let message = "✨ Your Tokens:\n";
+            message += `🔗 Chain: "Solana"\n\n`;
+  
+            if (balances?.length > 0) {
+              balances?.forEach((balance) => {
+                const oldPrice = balance?.amount * balance?.price_at_invested;
+                const newPrice = balance?.amount * balance?.price;
+                const difference = Math.abs(
+                  Number(oldPrice - newPrice).toFixed(2)
+                );
+                message += `🏷 Token Name: ${balance?.symbol}
+  💰 Balance: ${Number(balance?.amount).toFixed(4)}(${Number(
+                  balance?.amount * balance?.price
+                ).toFixed(2)}$)
+  💵 ${balance?.symbol} Price: ${Number(balance?.price).toFixed(5)}$
+  📊 Avg Entry Price : ${Number(balance?.price_at_invested).toFixed(5)}
+  ${balance?.price_at_invested < balance?.price ? "🟩" : "🟥"} PNL USD : ${
+                  balance?.price_at_invested < balance?.price
+                    ? `+${difference}$`
+                    : `-${difference}$`
+                }(${balance?.percentage > 0 ? "+" : ""}${balance?.percentage}%)
+  ${balance?.price_at_invested < balance?.price ? "🟩" : "🟥"} PNL  SOL : ${
+                  balance?.price_at_invested < balance?.price
+                    ? `+${Number(
+                        difference / userStates[chatId].nativeBalance
+                      ).toFixed(5)} SOL`
+                    : `-${Number(
+                        difference / userStates[chatId].nativeBalance
+                      ).toFixed(5)} SOL`
+                }(${balance?.percentage > 0 ? "+" : ""}${
+                  balance?.percentage
+                }%)\n\n\n`;
+              });
+              const buttons = balances?.map((item) => ({
+                text: item?.symbol,
+                callback_data: `${item?.symbol}SellPositionSol`,
+              }));
+  
+              const keyboard = [];
+              
+              // add dynamic buttons in the keyboard
+              for (let i = 0; i < buttons.length; i += 4) {
+                keyboard.push(buttons.slice(i, i + 4));
               }
-            );
-          } else {
-            await bot.sendMessage(chatId, "🔴 You do not have any holdings!!", {
-              reply_markup: {
-                inline_keyboard: [
-                  [
-                    {
-                      text: "⬅️ Back",
-                      callback_data: "positionButton",
-                    },
-                    {
-                      text: "⬆️ Buy",
-                      callback_data: "buyButton",
-                    },
+              
+              // add static buttons
+              keyboard.push([{ text: "⬅️ Back", callback_data: "sellButton" }]);
+              
+              userStates[chatId].positionList = await bot.sendMessage(
+                chatId,
+                message,
+                {
+                  parse_mode: "HTML",
+                  reply_markup: {
+                    inline_keyboard: keyboard,
+                  },
+                }
+              );
+            } else {
+              await bot.sendMessage(chatId, "🔴 You do not have any holdings!!", {
+                reply_markup: {
+                  inline_keyboard: [
+                    [
+                      {
+                        text: "⬅️ Back",
+                        callback_data: "positionButton",
+                      },
+                      {
+                        text: "⬆️ Buy",
+                        callback_data: "buyButton",
+                      },
+                    ],
                   ],
-                ],
-
-                resize_keyboard: true,
-                one_time_keyboard: true,
-              },
-            });
+  
+                  resize_keyboard: true,
+                  one_time_keyboard: true,
+                },
+              });
+            }
+          } else {
+            console.log(response?.data?.message);
           }
-        } else {
-          console.log(res?.data?.message);
-        }
-      });
+        });
+    } catch (error) {
+      // clearInterval(interval);
+      //   await bot.deleteMessage(chatId, loaderMessage.message_id);
+      console.error("Error fetching balance:", error.message);
+    }
   } catch (error) {
-    clearInterval(interval);
-    await bot.deleteMessage(chatId, loaderMessage.message_id);
-    console.error("Error fetching balance:", error.message);
+    console.log("🚀 ~ handleSolanaPosition ~ error:", error?.message)
+    
   }
 }
 
@@ -9925,7 +9929,13 @@ referral rate.`,
       break;
     case "finalSellEvmPercentageF":
       if (userStates[chatId]?.flag && userStates[chatId]?.sellPrice) {
-        evmSellHandlePercentage(userStates[chatId]?.sellPrice, chatId);
+        let partAmount = userStates[chatId]?.sellPrice?.toString()?.split(".");
+        if (partAmount[1]?.length > 5) {
+          let finalAmount = partAmount[0] + "." + partAmount[1]?.slice(0, 5);
+          evmSellHandlePercentage(finalAmount, chatId);
+        } else {
+          evmSellHandlePercentage(userStates[chatId]?.sellPrice, chatId);
+        }
       } else {
         resetUserState(chatId);
         sellStartTokenSelection(chatId);
@@ -10813,8 +10823,8 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
             }
             await axios
               .post(`${API_URL}/EVMswap`, {
-                tokenIn: userStates[chatId]?.toSwapAddress,
-                tokenOut: userStates[chatId]?.selectedSellToken?.token_address,
+                tokenOut: userStates[chatId]?.toSwapAddress,
+                tokenIn: userStates[chatId]?.selectedSellToken?.token_address,
                 chainId: userStates[chatId]?.network,
                 amount: Number(finalAmount),
                 chain: userStates[chatId]?.flag,
