@@ -1730,6 +1730,7 @@ async function fetchSolanaBalance(chatId) {
       chatId: chatId,
     });
     const balances = response?.data;
+    console.log("🚀 ~ fetchSolanaBalance ~ balances:", balances)
     let message = "Your Solana Wallet balances:\n\n";
     if (balances) {
       message += `🏷 Token Name:  SOL\n`;
@@ -9127,8 +9128,6 @@ https://dexscreener.com/solana/${
               })
               .catch(async (error) => {
                 resetUserState(chatId);
-                clearInterval(interval);
-                await bot.deleteMessage(chatId, loaderMessage.message_id);
                 await bot.sendMessage(
                   chatId,
                   "❌ An error occurred while register in please try again",
