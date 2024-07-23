@@ -60,6 +60,7 @@ const resetUserState = (chatId) => {
     liq: null,
     market_cap: null,
     sellSolanaTokensDex: null,
+    back: null,
     sellToken: null,
     currentPlPrice: null,
     percentageChange: null,
@@ -92,6 +93,7 @@ const resetUserState = (chatId) => {
     evmTransferMessage: userStates[chatId]?.evmTransferMessage,
     evmSellMessage: userStates[chatId]?.evmSellMessage,
     evmBuyMessage: userStates[chatId]?.evmBuyMessage,
+    evmSwapMessage: userStates[chatId]?.evmSwapMessage,
     buyPrice: null,
     sellPrice: null,
     transferPrice: null,
@@ -121,12 +123,14 @@ const resetUserStateRef = (chatId) => {
     sellToken: null,
     transferCustomMessage: null,
     market_cap: null,
+    back: null,
     sellSolanaTokensDex: null,
     currentPlPrice: null,
     sellTokensList: userStates[chatId]?.sellTokensList,
     sellSolanaTokensList: userStates[chatId]?.sellSolanaTokensList,
     positionList: userStates[chatId]?.positionList,
     evmTransferMessage: userStates[chatId]?.evmTransferMessage,
+    evmSwapMessage: userStates[chatId]?.evmSwapMessage,
     selectedSellSolanaToken: null,
     desCode: null,
     swapToTokenMessage: null,
@@ -631,9 +635,7 @@ async function handleSolanaSwap(chatId) {
           userStates[chatId].nativeBalance = res?.data?.nativePrice;
           message += `🏷 Token Name : <code> Solana</code>\n`;
           message += `💰 Balance : <code>${
-            res?.data?.native
-              ? Number(res?.data?.native).toFixed(5)
-              : "0.00000"
+            res?.data?.native ? Number(res?.data?.native).toFixed(5) : "0.00000"
           }</code>($${Number(
             res?.data?.native * res?.data?.nativePrice
           ).toFixed(2)})\n\n`;
@@ -646,10 +648,12 @@ async function handleSolanaSwap(chatId) {
             )})\n\n`;
           });
 
-          const buttons = userStates[chatId].allSellSolanaToken?.map((item) => ({
-            text: item.symbol,
-            callback_data: `${item.symbol}solanaSwap`,
-          }));
+          const buttons = userStates[chatId].allSellSolanaToken?.map(
+            (item) => ({
+              text: item.symbol,
+              callback_data: `${item.symbol}solanaSwap`,
+            })
+          );
 
           const keyboard = [];
 
@@ -691,7 +695,7 @@ async function handleSolanaSwap(chatId) {
         }
       })
       .catch(async (err) => {
-        console.log("🚀 ~ handleSolanaSwap ~ err:", err?.message)
+        console.log("🚀 ~ handleSolanaSwap ~ err:", err?.message);
         await bot.sendMessage(
           chatId,
           "🔴 Somthing went wrong please try again later!!"
@@ -864,10 +868,12 @@ async function handleSolanaSwap(chatId) {
             )})\n\n`;
           });
 
-          const buttons = userStates[chatId].allSellSolanaToken?.map((item) => ({
-            text: item.symbol,
-            callback_data: `${item.symbol}solanaSwap`,
-          }));
+          const buttons = userStates[chatId].allSellSolanaToken?.map(
+            (item) => ({
+              text: item.symbol,
+              callback_data: `${item.symbol}solanaSwap`,
+            })
+          );
 
           const keyboard = [];
 
@@ -923,7 +929,6 @@ async function handleSolanaSwap(chatId) {
     );
   }
 }
-
 
 // main keyboard
 const buyKeyboard = {
@@ -1188,10 +1193,10 @@ async function getQrCode(chatId, wallet, chainName) {
         not: "When depositing funds into our application, please ensure you deposit BNB on the BSC chain.",
       },
       avalanche: {
-        not: "When depositing funds into our application, please ensure you deposit Avalanche on the Avalanche chain.",
+        not: "When depositing funds into our application, please ensure you deposit AVAX on the Avalanche chain.",
       },
       fantom: {
-        not: "When depositing funds into our application, please ensure you deposit Fantom on the Fantom chain.",
+        not: "When depositing funds into our application, please ensure you deposit FTM on the Fantom chain.",
       },
       blast: {
         not: "When depositing funds into our application, please ensure you deposit ETH on the Blast chain.",
@@ -1206,7 +1211,7 @@ async function getQrCode(chatId, wallet, chainName) {
         not: "When depositing funds into our application, please ensure you deposit ETH on the Linea chain.",
       },
       cronos: {
-        not: "When depositing funds into our application, please ensure you deposit CRONOS on the Cronos chain.",
+        not: "When depositing funds into our application, please ensure you deposit CRO on the Cronos chain.",
       },
     };
     if (userStates[chatId]?.walletQrCode) {
@@ -2209,7 +2214,10 @@ https://dexscreener.com/${userStates[chatId]?.network}/${
           reply_markup: {
             inline_keyboard: [
               [
-                { text: "⬅️ Back", callback_data: "sellButton" },
+                {
+                  text: "⬅️ Back",
+                  callback_data: `${userStates[chatId].back}`,
+                },
                 { text: "🔄 Refresh", callback_data: "evmSellRefresh" },
               ],
               [
@@ -2373,7 +2381,10 @@ https://dexscreener.com/solana/${
           reply_markup: {
             inline_keyboard: [
               [
-                { text: "⬅️ Back", callback_data: "sellButton" },
+                {
+                  text: "⬅️ Back",
+                  callback_data: `${userStates[chatId].back}`,
+                },
                 { text: "🔄 Refresh", callback_data: "solanaSellRefresh" },
               ],
               [
@@ -2573,7 +2584,10 @@ https://dexscreener.com/${userStates[chatId]?.network}/${
           reply_markup: {
             inline_keyboard: [
               [
-                { text: "⬅️ Back", callback_data: "sellButton" },
+                {
+                  text: "⬅️ Back",
+                  callback_data: `${userStates[chatId].back}`,
+                },
                 { text: "🔄 Refresh", callback_data: "evmSellRefresh" },
               ],
               [
@@ -2826,7 +2840,10 @@ https://dexscreener.com/solana/${
               reply_markup: {
                 inline_keyboard: [
                   [
-                    { text: "⬅️ Back", callback_data: "sellButton" },
+                    {
+                      text: "⬅️ Back",
+                      callback_data: `${userStates[chatId].back}`,
+                    },
                     { text: "🔄 Refresh", callback_data: "solanaSellRefresh" },
                   ],
                   [
@@ -3645,7 +3662,10 @@ https://dexscreener.com/${userStates[chatId]?.network}/${
           reply_markup: {
             inline_keyboard: [
               [
-                { text: "⬅️ Back", callback_data: "positionButton" },
+                {
+                  text: "⬅️ Back",
+                  callback_data: `${userStates[chatId].back}`,
+                },
                 { text: "🔄 Refresh", callback_data: "sellEvmPositionRefresh" },
               ],
               [
@@ -3814,7 +3834,10 @@ https://dexscreener.com/${userStates[chatId]?.network}/${
           reply_markup: {
             inline_keyboard: [
               [
-                { text: "⬅️ Back", callback_data: "positionButton" },
+                {
+                  text: "⬅️ Back",
+                  callback_data: `${userStates[chatId].back}`,
+                },
                 { text: "🔄 Refresh", callback_data: "sellEvmPositionRefresh" },
               ],
               [
@@ -4022,7 +4045,10 @@ https://dexscreener.com/solana/${userStates[chatId].selectedSellToken?.mint}`,
           reply_markup: {
             inline_keyboard: [
               [
-                { text: "⬅️ Back", callback_data: "positionButton" },
+                {
+                  text: "⬅️ Back",
+                  callback_data: `${userStates[chatId].back}`,
+                },
                 {
                   text: "🔄 Refresh",
                   callback_data: "sellSolanaPositionRefresh",
@@ -4186,7 +4212,10 @@ https://dexscreener.com/solana/${userStates[chatId].selectedSellToken?.mint}`,
           reply_markup: {
             inline_keyboard: [
               [
-                { text: "⬅️ Back", callback_data: "positionButton" },
+                {
+                  text: "⬅️ Back",
+                  callback_data: `${userStates[chatId].back}`,
+                },
                 {
                   text: "🔄 Refresh",
                   callback_data: "sellSolanaPositionRefresh",
@@ -4315,7 +4344,7 @@ https://dexscreener.com/${
         parse_mode: "HTML",
         reply_markup: {
           inline_keyboard: [
-            [{ text: "⬅️ Back", callback_data: "withrawButton" }],
+            [{ text: "⬅️ Back", callback_data: `${userStates[chatId].back}` }],
             [
               {
                 text: `${
@@ -4475,7 +4504,7 @@ https://dexscreener.com/solana/${
         parse_mode: "HTML",
         reply_markup: {
           inline_keyboard: [
-            [{ text: "⬅️ Back", callback_data: "withrawButton" }],
+            [{ text: "⬅️ Back", callback_data: `${userStates[chatId].back}` }],
             [
               {
                 text: `${
@@ -4664,6 +4693,12 @@ https://dexscreener.com/solana/${
         parse_mode: "HTML",
         reply_markup: {
           inline_keyboard: [
+            [
+              {
+                text: "⬅️ Back",
+                callback_data: `${userStates[chatId].back}`,
+              },
+            ],
             [
               {
                 text: `${
@@ -4861,7 +4896,7 @@ ${
             [
               {
                 text: "⬅️ Back",
-                callback_data: "SwaptokenButton",
+                callback_data: `${userStates[chatId].back}`,
               },
             ],
             [
@@ -5237,6 +5272,12 @@ https://dexscreener.com/solana/${
                           inline_keyboard: [
                             [
                               {
+                                text: "⬅️ Back",
+                                callback_data: `${userStates[chatId].back}`,
+                              },
+                            ],
+                            [
+                              {
                                 text: `✅ ${Number(
                                   userStates[chatId]?.swapPrice
                                 ).toFixed(4)} ${
@@ -5388,6 +5429,12 @@ https://dexscreener.com/solana/${
                   inline_keyboard: [
                     [
                       {
+                        text: "⬅️ Back",
+                        callback_data: `${userStates[chatId].back}`,
+                      },
+                    ],
+                    [
+                      {
                         text: `10% ${userStates[chatId]?.selectedSellToken?.symbol}`,
                         callback_data: "10SolPerSwap",
                       },
@@ -5515,6 +5562,12 @@ https://dexscreener.com/solana/${
                 parse_mode: "HTML",
                 reply_markup: {
                   inline_keyboard: [
+                    [
+                      {
+                        text: "⬅️ Back",
+                        callback_data: `${userStates[chatId].back}`,
+                      },
+                    ],
                     [
                       {
                         text: `10% ${userStates[chatId]?.selectedSellToken?.symbol}`,
@@ -5645,6 +5698,12 @@ https://dexscreener.com/solana/${
                 parse_mode: "HTML",
                 reply_markup: {
                   inline_keyboard: [
+                    [
+                      {
+                        text: "⬅️ Back",
+                        callback_data: `${userStates[chatId].back}`,
+                      },
+                    ],
                     [
                       {
                         text: `✅ ${Number(
@@ -5835,7 +5894,7 @@ ${
                       [
                         {
                           text: "⬅️ Back",
-                          callback_data: "SwaptokenButton",
+                          callback_data: `${userStates[chatId].back}`,
                         },
                       ],
                       [
@@ -5989,7 +6048,7 @@ ${
                     [
                       {
                         text: "⬅️ Back",
-                        callback_data: "SwaptokenButton",
+                        callback_data: `${userStates[chatId].back}`,
                       },
                     ],
                     [
@@ -6142,7 +6201,7 @@ ${
                     [
                       {
                         text: "⬅️ Back",
-                        callback_data: "SwaptokenButton",
+                        callback_data: `${userStates[chatId].back}`,
                       },
                     ],
                     [
@@ -6298,7 +6357,7 @@ ${
                     [
                       {
                         text: "⬅️ Back",
-                        callback_data: "SwaptokenButton",
+                        callback_data: `${userStates[chatId].back}`,
                       },
                     ],
                     [
@@ -7498,7 +7557,10 @@ https://dexscreener.com/${userStates[chatId]?.network}/${
               reply_markup: {
                 inline_keyboard: [
                   [
-                    { text: "⬅️ Back", callback_data: "sellButton" },
+                    {
+                      text: "⬅️ Back",
+                      callback_data: `${userStates[chatId].back}`,
+                    },
                     { text: "🔄 Refresh", callback_data: "evmSellRefresh" },
                   ],
                   [
@@ -7658,7 +7720,10 @@ https://dexscreener.com/${userStates[chatId]?.network}/${
               reply_markup: {
                 inline_keyboard: [
                   [
-                    { text: "⬅️ Back", callback_data: "positionButton" },
+                    {
+                      text: "⬅️ Back",
+                      callback_data: `${userStates[chatId].back}`,
+                    },
                     {
                       text: "🔄 Refresh",
                       callback_data: "sellEvmPositionRefresh",
@@ -7805,7 +7870,10 @@ https://dexscreener.com/solana/${userStates[chatId].selectedSellToken?.mint}`,
               reply_markup: {
                 inline_keyboard: [
                   [
-                    { text: "⬅️ Back", callback_data: "positionButton" },
+                    {
+                      text: "⬅️ Back",
+                      callback_data: `${userStates[chatId].back}`,
+                    },
                     {
                       text: "🔄 Refresh",
                       callback_data: "sellSolanaPositionRefresh",
@@ -7956,7 +8024,10 @@ https://dexscreener.com/solana/${
               reply_markup: {
                 inline_keyboard: [
                   [
-                    { text: "⬅️ Back", callback_data: "sellButton" },
+                    {
+                      text: "⬅️ Back",
+                      callback_data: `${userStates[chatId].back}`,
+                    },
                     { text: "🔄 Refresh", callback_data: "solanaSellRefresh" },
                   ],
                   [
@@ -8178,7 +8249,12 @@ https://dexscreener.com/${
                   parse_mode: "HTML",
                   reply_markup: {
                     inline_keyboard: [
-                      [{ text: "⬅️ Back", callback_data: "withrawButton" }],
+                      [
+                        {
+                          text: "⬅️ Back",
+                          callback_data: `${userStates[chatId].back}`,
+                        },
+                      ],
                       [
                         {
                           text: `✅ ${Number(
@@ -8279,7 +8355,7 @@ https://dexscreener.com/${
                 parse_mode: "HTML",
                 reply_markup: {
                   inline_keyboard: [
-                    [{ text: "⬅️ Back", callback_data: "withrawButton" }],
+                    [{ text: "⬅️ Back", callback_data: `${userStates[chatId].back}` }],
                     [
                       {
                         text: `10% ${userStates[chatId]?.selectedSellToken?.symbol}`,
@@ -8379,7 +8455,7 @@ https://dexscreener.com/${
                 parse_mode: "HTML",
                 reply_markup: {
                   inline_keyboard: [
-                    [{ text: "⬅️ Back", callback_data: "withrawButton" }],
+                    [{ text: "⬅️ Back", callback_data: `${userStates[chatId].back}` }],
                     [
                       {
                         text: `10% ${userStates[chatId]?.selectedSellToken?.symbol}`,
@@ -8479,7 +8555,7 @@ https://dexscreener.com/${
                 parse_mode: "HTML",
                 reply_markup: {
                   inline_keyboard: [
-                    [{ text: "⬅️ Back", callback_data: "withrawButton" }],
+                    [{ text: "⬅️ Back", callback_data: `${userStates[chatId].back}` }],
                     [
                       {
                         text: `✅ ${Number(
@@ -8649,7 +8725,7 @@ https://dexscreener.com/solana/${
                               [
                                 {
                                   text: "⬅️ Back",
-                                  callback_data: "withrawButton",
+                                  callback_data: `${userStates[chatId].back}`,
                                 },
                               ],
                               [
@@ -8773,7 +8849,7 @@ https://dexscreener.com/solana/${
                 parse_mode: "HTML",
                 reply_markup: {
                   inline_keyboard: [
-                    [{ text: "⬅️ Back", callback_data: "withrawButton" }],
+                    [{ text: "⬅️ Back", callback_data: `${userStates[chatId].back}` }],
                     [
                       {
                         text: `10% ${userStates[chatId]?.selectedSellToken?.symbol}`,
@@ -8871,7 +8947,7 @@ https://dexscreener.com/solana/${
                 parse_mode: "HTML",
                 reply_markup: {
                   inline_keyboard: [
-                    [{ text: "⬅️ Back", callback_data: "withrawButton" }],
+                    [{ text: "⬅️ Back", callback_data: `${userStates[chatId].back}` }],
                     [
                       {
                         text: `10% ${userStates[chatId]?.selectedSellToken?.symbol}`,
@@ -8972,7 +9048,7 @@ https://dexscreener.com/solana/${
                 parse_mode: "HTML",
                 reply_markup: {
                   inline_keyboard: [
-                    [{ text: "⬅️ Back", callback_data: "withrawButton" }],
+                    [{ text: "⬅️ Back", callback_data: `${userStates[chatId].back}` }],
                     [
                       {
                         text: `✅ ${Number(
@@ -9837,6 +9913,7 @@ bot.on("callback_query", async (callbackQuery) => {
   // handle EVM position
   if (data?.slice(-8) == "Position") {
     resetUserState(chatId);
+    userStates[chatId].back = data;
     const positionData = data?.split("+");
     userStates[chatId].chainName = positionData[2];
     await handlePositions(chatId, Number(positionData[0]), positionData[1]);
@@ -9909,7 +9986,7 @@ bot.on("callback_query", async (callbackQuery) => {
     userStates[chatId].swapFromToken = data?.slice(0, -10);
     userStates[chatId].swapToTokenMessage = await bot.sendMessage(
       chatId,
-      "Enter the token address  you want to swap"
+      "Enter the token address you want to swap"
     );
     userStates[chatId].currentStep = "infoSolanaSwap";
   }
@@ -9919,7 +9996,7 @@ bot.on("callback_query", async (callbackQuery) => {
     userStates[chatId].swapFromToken = data?.slice(0, -7);
     userStates[chatId].swapToTokenMessage = await bot.sendMessage(
       chatId,
-      "Enter the token address  you want to swap"
+      "Enter the token address you want to swap"
     );
     userStates[chatId].currentStep = "infoEvmSwap";
   }
@@ -9960,6 +10037,7 @@ bot.on("callback_query", async (callbackQuery) => {
       break;
     case "positionSolana":
       resetUserState(chatId);
+      userStates[chatId].back = "positionSolana";
       await handleSolanaPosition(chatId);
       break;
     case "settingButton":
@@ -9981,7 +10059,10 @@ Go to the menu and click on 💰Referrals.
       
 <u><b>My transaction timed out. What happened?</b></u>
 Transaction timeouts may occur due to heavy network load or instability. This is a common issue with the current network conditions.
-   
+
+<u><b>Why is my Net Profit lower than expected?</b></u>
+Your Net Profit is lower than expected because it is calculated after deducting all associated costs, including Price Impact, Transfer Tax, Dex Fees, and a Wave transaction fee.
+
 <u><b>Additional questions or need support?</b></u>
 Join our https://t.me/WaveUsers and one of our admins will assist you.
     `,
@@ -10270,6 +10351,7 @@ end of the week to get a boost in your referral rate.`,
         sellTokensList: null,
         sellSolanaTokensList: null,
         positionList: null,
+        back: null,
         buyTokenData: null,
         selectedSellSolanaToken: null,
         allSellTokens: null,
@@ -10366,12 +10448,7 @@ end of the week to get a boost in your referral rate.`,
 🏷 Name : ${userStates[chatId]?.evmBuyMessageDetail?.symbol}
 🔗 Chain : ${userStates[chatId]?.chainName}  
 📭 Address : <code>${userStates[chatId]?.evmBuyMessageDetail?.address}</code>\n
-💵 ${userStates[chatId]?.evmBuyMessageDetail?.name} Price : ${Number(
-                    userStates[chatId]?.evmBuyMessageDetail?.price /
-                      userStates[chatId]?.buyTokenNativename?.usd_price
-                  ).toFixed(4)}${
-                    userStates[chatId]?.buyTokenNativename?.symbol
-                  } / $${Number(
+💵 ${userStates[chatId]?.evmBuyMessageDetail?.name} Price : $${Number(
                     userStates[chatId]?.evmBuyMessageDetail?.price
                   )?.toFixed(5)}
 📊 5M : ${Number(userStates[chatId]?.evmBuyMessageDetail?.variation5m)?.toFixed(
@@ -10397,11 +10474,11 @@ end of the week to get a boost in your referral rate.`,
                       ? userStates[chatId]?.buyTokenNativename
                           ?.balance_formatted
                       : 0.0
-                  ).toFixed(5)} / $${Number(
+                  ).toFixed(5)} ($${Number(
                     userStates[chatId]?.buyTokenNativename
                       ? userStates[chatId]?.buyTokenNativename?.usd_value
                       : 0
-                  ).toFixed(2)}
+                  ).toFixed(2)})
 🛒 You Buy : ${Number(userStates[chatId]?.buyPrice).toFixed(
                     5
                   )} ($${totalBuyUsd}) ${
@@ -10587,10 +10664,7 @@ https://dexscreener.com/${
 🏷 Name : ${userStates[chatId]?.buyTokenData?.symbol} 
 🔗 Chain : Solana
 📭 Address : <code>${userStates[chatId]?.buyTokenData?.address}</code>\n
-💵 ${userStates[chatId]?.buyTokenData?.symbol} Price : ${Number(
-                    userStates[chatId]?.buyTokenData?.price /
-                      userStates[chatId]?.buyTokenData?.nativePrice
-                  ).toFixed(5)} SOL / $${Number(
+💵 ${userStates[chatId]?.buyTokenData?.symbol} Price : $${Number(
                     userStates[chatId]?.buyTokenData?.price
                   )?.toFixed(5)}
 📊 5M : ${Number(userStates[chatId]?.buyTokenData?.variation5m)?.toFixed(
@@ -10609,10 +10683,10 @@ https://dexscreener.com/${
                   }\n
 💰 Balance : ${Number(
                     userStates[chatId]?.buyTokenData?.nativeTokenDetails?.solana
-                  )?.toFixed(5)} SOL / $${Number(
+                  )?.toFixed(5)} SOL ($${Number(
                     userStates[chatId]?.buyTokenData?.nativeTokenDetails
                       ?.solana * userStates[chatId]?.buyTokenData?.nativePrice
-                  ).toFixed(2)}
+                  ).toFixed(2)})
 🛒 You Buy : ${Number(userStates[chatId]?.buyPrice)?.toFixed(5)} ($${Number(
                     userStates[chatId]?.buyPrice *
                       userStates[chatId]?.buyTokenData?.nativePrice
@@ -10665,7 +10739,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
                             callback_data: "100SolPer",
                           },
                           {
-                            text: "Buy X% ✏️",
+                            text: "Buy X% of SOL ✏️",
                             callback_data: "customSolPer",
                           },
                         ],
@@ -10890,12 +10964,14 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
     // ------------------------------------------------ sell -----------------------------------------------------------
     case "solSellToken":
       resetUserState(chatId);
+      userStates[chatId].back = "solSellToken";
       userStates[chatId].flag = 19999;
       userStates[chatId].method = "sell";
       await handleToSellSolana(chatId);
       break;
     case "1sell":
       resetUserState(chatId);
+      userStates[chatId].back = "1sell";
       userStates[chatId].flag = 1;
       userStates[chatId].network = "ethereum";
       userStates[chatId].chainName = "Ethereum";
@@ -10906,6 +10982,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       break;
     case "42161sell":
       resetUserState(chatId);
+      userStates[chatId].back = "42161sell";
       userStates[chatId].flag = 42161;
       userStates[chatId].network = "arbitrum";
       userStates[chatId].chainName = "Arbitrum";
@@ -10916,6 +10993,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       break;
     case "10sell":
       resetUserState(chatId);
+      userStates[chatId].back = "10sell";
       userStates[chatId].flag = 10;
       userStates[chatId].network = "optimism";
       userStates[chatId].chainName = "Optimism";
@@ -10926,6 +11004,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       break;
     case "137sell":
       resetUserState(chatId);
+      userStates[chatId].back = "137sell";
       userStates[chatId].flag = 137;
       userStates[chatId].network = "polygon";
       userStates[chatId].chainName = "Polygon";
@@ -10936,6 +11015,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       break;
     case "8453sell":
       resetUserState(chatId);
+      userStates[chatId].back = "8453sell";
       userStates[chatId].flag = 8453;
       userStates[chatId].network = "base";
       userStates[chatId].chainName = "Base";
@@ -10946,6 +11026,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       break;
     case "56sell":
       resetUserState(chatId);
+      userStates[chatId].back = "56sell";
       userStates[chatId].flag = 56;
       userStates[chatId].network = "bsc";
       userStates[chatId].chainName = "BSC";
@@ -10956,6 +11037,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       break;
     case "43114sell":
       resetUserState(chatId);
+      userStates[chatId].back = "43114sell";
       userStates[chatId].flag = 43114;
       userStates[chatId].method = "sell";
       userStates[chatId].network = "avalanche";
@@ -10966,6 +11048,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       break;
     case "25sell":
       resetUserState(chatId);
+      userStates[chatId].back = "25sell";
       userStates[chatId].flag = 25;
       userStates[chatId].network = "cronos";
       userStates[chatId].chainName = "Cronos";
@@ -10976,6 +11059,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       break;
     case "250sell":
       resetUserState(chatId);
+      userStates[chatId].back = "250sell";
       userStates[chatId].flag = 250;
       userStates[chatId].network = "fantom";
       userStates[chatId].chainName = "Fantom";
@@ -10985,6 +11069,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       break;
     case "59144sell":
       resetUserState(chatId);
+      userStates[chatId].back = "59144sell";
       userStates[chatId].flag = 59144;
       userStates[chatId].network = "linea";
       userStates[chatId].chainName = "Linea";
@@ -11005,6 +11090,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
     // ---------------------------------------------------------------- swap --------------------------------------------------------
     case "solana":
       resetUserState(chatId);
+      userStates[chatId].back = "solana";
       userStates[chatId].flag = 19999;
       userStates[chatId].method = "swap";
       await handleSolanaSwap(chatId);
@@ -11245,7 +11331,10 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
               userStates[chatId]?.network == "ether"
                 ? "ethereum"
                 : userStates[chatId]?.network;
-            if (userStates[chatId]?.selectedSellToken?.token_address == "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE") {
+            if (
+              userStates[chatId]?.selectedSellToken?.token_address ==
+              "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
+            ) {
               await axios({
                 url: `${API_URL}/EVMBuy`,
                 method: "post",
@@ -11256,7 +11345,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
                   amount: Number(finalAmount),
                   chain: userStates[chatId]?.flag,
                   chatId,
-                  method:"swap",
+                  method: "swap",
                 },
               })
                 .then(async (response) => {
@@ -11264,10 +11353,16 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
                   clearInterval(interval);
                   await bot.deleteMessage(chatId, loaderMessage.message_id);
                   if (response?.data?.status) {
-                    await bot.sendMessage(chatId, `✅ ${response?.data?.message}`);
+                    await bot.sendMessage(
+                      chatId,
+                      `✅ ${response?.data?.message}`
+                    );
                     return await bot.sendMessage(chatId, response?.data?.txUrl);
                   } else {
-                    await bot.sendMessage(chatId, `🔴 ${response?.data?.message}`);
+                    await bot.sendMessage(
+                      chatId,
+                      `🔴 ${response?.data?.message}`
+                    );
                   }
                 })
                 .catch(async (error) => {
@@ -11311,7 +11406,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
                   clearInterval(interval);
                   await bot.deleteMessage(chatId, loaderMessage.message_id);
                   return await bot.sendMessage(chatId, err?.message);
-                }); 
+                });
             }
           } catch (error) {
             console.log("🚀 ~ bot.on ~ error:", error?.message);
@@ -11324,6 +11419,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       break;
     case "1":
       resetUserState(chatId);
+      userStates[chatId].back = "1";
       userStates[chatId].flag = 1;
       userStates[chatId].network = "ethereum";
       userStates[chatId].chainName = "Ethereum";
@@ -11333,6 +11429,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       break;
     case "42161":
       resetUserState(chatId);
+      userStates[chatId].back = "42161";
       userStates[chatId].flag = 42161;
       userStates[chatId].network = "arbitrum";
       userStates[chatId].chainName = "Arbitrum";
@@ -11342,6 +11439,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       break;
     case "10":
       resetUserState(chatId);
+      userStates[chatId].back = "10";
       userStates[chatId].flag = 10;
       userStates[chatId].network = "optimism";
       userStates[chatId].chainName = "Optimism";
@@ -11351,6 +11449,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       break;
     case "137":
       resetUserState(chatId);
+      userStates[chatId].back = "137";
       userStates[chatId].flag = 137;
       userStates[chatId].method = "swap";
       userStates[chatId].network = "polygon";
@@ -11360,6 +11459,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       break;
     case "8453":
       resetUserState(chatId);
+      userStates[chatId].back = "8453";
       userStates[chatId].flag = 8453;
       userStates[chatId].network = "base";
       userStates[chatId].chainName = "Base";
@@ -11369,6 +11469,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       break;
     case "56":
       resetUserState(chatId);
+      userStates[chatId].back = "56";
       userStates[chatId].flag = 56;
       userStates[chatId].network = "bsc";
       userStates[chatId].chainName = "BSC";
@@ -11378,6 +11479,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       break;
     case "43114":
       resetUserState(chatId);
+      userStates[chatId].back = "43114";
       userStates[chatId].flag = 43114;
       userStates[chatId].network = "avalanche";
       userStates[chatId].chainName = "Avalanche";
@@ -11387,6 +11489,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       break;
     case "25":
       resetUserState(chatId);
+      userStates[chatId].back = "25";
       userStates[chatId].flag = 25;
       userStates[chatId].network = "cronos";
       userStates[chatId].chainName = "Cronos";
@@ -11396,6 +11499,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       break;
     case "250":
       resetUserState(chatId);
+      userStates[chatId].back = "250";
       userStates[chatId].flag = 250;
       userStates[chatId].network = "fantom";
       userStates[chatId].chainName = "Fantom";
@@ -11405,6 +11509,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       break;
     case "59144":
       resetUserState(chatId);
+      userStates[chatId].back = "59144";
       userStates[chatId].flag = 59144;
       userStates[chatId].network = "linea";
       userStates[chatId].chainName = "Linea";
@@ -11419,7 +11524,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       userStates[chatId].method = "swap";
       handleSwap(chatId);
       break;
-    // ------------------------------------- balance ---------------------------------------------------
+    // ------------------------------------- balance ------------------------------------------
     case "1b":
       resetUserState(chatId);
       fetchTokenBalances(chatId, "0x1", 1, isUser);
@@ -11488,6 +11593,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
     // ------------------------------------------------------ transfer token --------------------------------------------------------
     case "solwithraw":
       resetUserState(chatId);
+      userStates[chatId].back = "solwithraw";
       userStates[chatId].flag = 19999;
       userStates[chatId].method = "transfer";
       await transferHoldingsSol(chatId);
@@ -11495,6 +11601,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       break;
     case "1withraw":
       resetUserState(chatId);
+      userStates[chatId].back = "1withraw";
       userStates[chatId].flag = 1;
       userStates[chatId].method = "transfer";
       userStates[chatId].network = "ether";
@@ -11504,6 +11611,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       break;
     case "42161withraw":
       resetUserState(chatId);
+      userStates[chatId].back = "42161withraw";
       userStates[chatId].flag = 42161;
       userStates[chatId].method = "transfer";
       userStates[chatId].network = "arbitrum";
@@ -11513,6 +11621,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       break;
     case "10withraw":
       resetUserState(chatId);
+      userStates[chatId].back = "10withraw";
       userStates[chatId].flag = 10;
       userStates[chatId].method = "transfer";
       userStates[chatId].network = "optimism";
@@ -11522,6 +11631,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       break;
     case "137withraw":
       resetUserState(chatId);
+      userStates[chatId].back = "137withraw";
       userStates[chatId].flag = 137;
       userStates[chatId].method = "transfer";
       userStates[chatId].network = "polygon";
@@ -11531,6 +11641,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       break;
     case "8453withraw":
       resetUserState(chatId);
+      userStates[chatId].back = "8453withraw";
       userStates[chatId].flag = 8453;
       userStates[chatId].method = "transfer";
       userStates[chatId].network = "base";
@@ -11540,6 +11651,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       break;
     case "56withraw":
       resetUserState(chatId);
+      userStates[chatId].back = "56withraw";
       userStates[chatId].flag = 56;
       userStates[chatId].method = "transfer";
       userStates[chatId].network = "bsc";
@@ -11549,6 +11661,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       break;
     case "43114withraw":
       resetUserState(chatId);
+      userStates[chatId].back = "43114withraw";
       userStates[chatId].flag = 43114;
       userStates[chatId].method = "transfer";
       userStates[chatId].network = "avalanche";
@@ -11558,6 +11671,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       break;
     case "25withraw":
       resetUserState(chatId);
+      userStates[chatId].back = "25withraw";
       userStates[chatId].flag = 25;
       userStates[chatId].method = "transfer";
       userStates[chatId].network = "cronos";
@@ -11567,6 +11681,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       break;
     case "250withraw":
       resetUserState(chatId);
+      userStates[chatId].back = "250withraw";
       userStates[chatId].flag = 250;
       userStates[chatId].method = "transfer";
       userStates[chatId].network = "fantom";
@@ -11575,6 +11690,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       break;
     case "59144withraw":
       resetUserState(chatId);
+      userStates[chatId].back = "59144withraw";
       userStates[chatId].flag = 59144;
       userStates[chatId].method = "transfer";
       userStates[chatId].network = "linea";
@@ -11583,6 +11699,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       break;
     case "81457withraw":
       resetUserState(chatId);
+      userStates[chatId].back = "81457withraw";
       userStates[chatId].flag = 81457;
       userStates[chatId].method = "transfer";
       userStates[chatId].network = "blast";
