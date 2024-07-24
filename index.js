@@ -963,7 +963,9 @@ const buyKeyboard = {
 
 // fucntion to convert big decimals
 function decimalConvert(price) {
-  const [integerPart, decimalPart] = price.toString().split(".");
+  console.log("🚀 ~ decimalConvert ~ price:", price)
+  console.log("🚀 ~ decimalConvert ~ price:", price.toFixed(11))
+  const [integerPart, decimalPart] = Number(price).toFixed(11).split(".")
   const leadingZeros = decimalPart.match(/^0*/)[0].length;
 
   if (leadingZeros > 4) {
