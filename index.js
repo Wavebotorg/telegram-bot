@@ -3329,6 +3329,7 @@ async function handlePositions(chatId, chainId, network) {
 
     if (response?.data?.status) {
       const balances = response?.data?.data;
+      console.log("🚀 ~ handlePositions ~ balances:", balances)
       userStates[chatId].nativeBalance = response?.data?.data?.nativeToken;
       userStates[chatId].allPositionTokens = balances?.tokensData;
 
@@ -3399,7 +3400,7 @@ ${balance?.price_at_invested < balance?.currentPrice ? "🟩" : "🟥"} PNL ${
             inline_keyboard: [
               [
                 { text: "⬅️ Back", callback_data: "positionButton" },
-                { text: "⬆📈 Buy", callback_data: "buyButton" },
+                { text: "📈 Buy", callback_data: "buyButton" },
               ],
             ],
           },
@@ -3412,9 +3413,7 @@ ${balance?.price_at_invested < balance?.currentPrice ? "🟩" : "🟥"} PNL ${
       );
     }
   } catch (error) {
-    clearInterval(interval);
-    await bot.deleteMessage(chatId, loaderMessage.message_id);
-    console.error("Error fetching balance:", error.message);
+    console.error("Error fetching balance:", error.message); 
     await bot.sendMessage(
       chatId,
       "🔴 Something went wrong, please try again after some time!!"
@@ -11885,6 +11884,8 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
               );
             });
         } catch (error) {
+          clearInterval(interval);
+          await bot.deleteMessage(chatId, loaderMessage.message_id);
           resetUserState(chatId);
           console.log("🚀 ~ bot.on ~ error:", error?.message);
         }
