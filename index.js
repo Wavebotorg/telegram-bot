@@ -963,16 +963,14 @@ const buyKeyboard = {
 
 // fucntion to convert big decimals
 function decimalConvert(price) {
-  console.log("🚀 ~ decimalConvert ~ price:", price)
-  console.log("🚀 ~ decimalConvert ~ price:", price.toFixed(11))
-  const [integerPart, decimalPart] = Number(price).toFixed(11).split(".")
+  console.log("🚀 ~ decimalConvert ~ price:", price);
+  console.log("🚀 ~ decimalConvert ~ price:", price.toFixed(11));
+  const [integerPart, decimalPart] = Number(price).toFixed(11).split(".");
   const leadingZeros = decimalPart.match(/^0*/)[0].length;
 
-  if (leadingZeros > 4) {
+  if (leadingZeros > 4 && integerPart == 0) {
     const m = -Math.floor(Math.log10(price) + 1);
-
     const decimalNumber = Number(decimalPart);
-
     const finalAmount = `${integerPart}.0(${m})${decimalNumber
       .toString()
       .slice(0, 4)}`;
@@ -3329,7 +3327,7 @@ async function handlePositions(chatId, chainId, network) {
 
     if (response?.data?.status) {
       const balances = response?.data?.data;
-      console.log("🚀 ~ handlePositions ~ balances:", balances)
+      console.log("🚀 ~ handlePositions ~ balances:", balances);
       userStates[chatId].nativeBalance = response?.data?.data?.nativeToken;
       userStates[chatId].allPositionTokens = balances?.tokensData;
 
@@ -3340,8 +3338,8 @@ async function handlePositions(chatId, chainId, network) {
           const oldPrice = balance?.qty * balance?.price_at_invested;
           const newPrice = balance?.qty * balance?.currentPrice;
 
-          const oldConverted =  decimalConvert(balance?.price_at_invested);
-          const newConverted =  decimalConvert(balance?.currentPrice);
+          const oldConverted = decimalConvert(balance?.price_at_invested);
+          const newConverted = decimalConvert(balance?.currentPrice);
           const difference = Math.abs(Number(oldPrice - newPrice).toFixed(2));
           message += `🏷 Token Name : ${balance?.symbol}
 💰 Balance : ${Number(balance?.qty).toFixed(5)} ($${Number(
@@ -3413,7 +3411,7 @@ ${balance?.price_at_invested < balance?.currentPrice ? "🟩" : "🟥"} PNL ${
       );
     }
   } catch (error) {
-    console.error("Error fetching balance:", error.message); 
+    console.error("Error fetching balance:", error.message);
     await bot.sendMessage(
       chatId,
       "🔴 Something went wrong, please try again after some time!!"
@@ -3459,8 +3457,8 @@ async function handleSolanaPosition(chatId) {
                 const oldPrice = balance?.amount * balance?.price_at_invested;
                 const newPrice = balance?.amount * balance?.price;
 
-                const oldConverted = decimalConvert(balance?.price_at_invested)
-                const newConverted = decimalConvert(balance?.price)
+                const oldConverted = decimalConvert(balance?.price_at_invested);
+                const newConverted = decimalConvert(balance?.price);
                 const difference = Math.abs(
                   Number(oldPrice - newPrice).toFixed(2)
                 );
@@ -3489,12 +3487,14 @@ ${balance?.price_at_invested < balance?.price ? "🟩" : "🟥"} PNL SOL : ${
                   balance?.percentage
                 ).toFixed(2)}%)\n\n\n`;
               });
-              const buttons = balances?.filter(item => item?.symbol).map((item) => {
-                return {
-                  text: item.symbol,
-                  callback_data: `${item.symbol}SellPositionSol`,
-                };
-              });
+              const buttons = balances
+                ?.filter((item) => item?.symbol)
+                .map((item) => {
+                  return {
+                    text: item.symbol,
+                    callback_data: `${item.symbol}SellPositionSol`,
+                  };
+                });
 
               const keyboard = [];
 
