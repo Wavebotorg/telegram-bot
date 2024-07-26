@@ -3361,7 +3361,9 @@ ${balance?.price_at_invested < balance?.currentPrice ? "🟩" : "🟥"} PNL ${
               ? `+${Number(
                   difference / userStates[chatId].nativeBalance?.usd_price
                 ).toFixed(5)}`
-              : `-${Number(difference).toFixed(5)}`
+            : `-${Number(
+              difference / userStates[chatId].nativeBalance?.usd_price
+            ).toFixed(5)}`
           } (${balance?.percentage_of_growth > 0 ? "+" : ""}${Number(
             balance?.percentage_of_growth
           ).toFixed(2)}%)\n\n\n`;
