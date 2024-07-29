@@ -59,6 +59,7 @@ const resetUserState = (chatId) => {
     email: null,
     liq: null,
     market_cap: null,
+    leaderTransactionMes: userStates[chatId]?.leaderTransactionMes,
     sellSolanaTokensDex: null,
     back: null,
     sellToken: null,
@@ -121,6 +122,7 @@ const resetUserStateRef = (chatId) => {
     liq: null,
     decimalValue: null,
     swapFromToken: null,
+    leaderTransactionMes: userStates[chatId]?.leaderTransactionMes,
     percentageChange: null,
     sellToken: null,
     transferCustomMessage: null,
@@ -281,7 +283,9 @@ async function transferHoldingsEvm(chatId, chainId, network) {
       await bot.deleteMessage(chatId, loaderMessage?.message_id);
 
       const balances = response?.data?.data;
-      const tokens = balances?.filter((item) => item?.usd_price != null);
+      const tokens = await balances
+        ?.filter((item) => item?.usd_price != null)
+        ?.filter((item) => item?.usd_value > 0.5);
       userStates[chatId].allSellTokens = tokens;
 
       if (tokens) {
@@ -397,28 +401,31 @@ async function transferHoldingsSol(chatId) {
         clearInterval(interval);
         await bot.deleteMessage(chatId, loaderMessage?.message_id);
         userStates[chatId].allSellSolanaToken = res?.data?.data;
-        userStates[chatId].allSellSolanaToken.unshift({
+        await userStates[chatId].allSellSolanaToken.unshift({
           mint: "So11111111111111111111111111111111111111112",
           price: res?.data?.nativePrice,
           name: "Solana",
           amount: res?.data?.native,
           symbol: "SOL",
         });
-        if (userStates[chatId]?.allSellSolanaToken?.length > 0) {
+        let allSellSolanaToken = await userStates[
+          chatId
+        ].allSellSolanaToken?.filter(
+          (item) => Number(item?.amount * item?.price) > 0.5
+        );
+        if (allSellSolanaToken?.length > 0) {
           let message = "Your Tokens :\n\n";
-          userStates[chatId].allSellSolanaToken?.forEach((balance) => {
+          allSellSolanaToken?.forEach((balance) => {
             message += `🏷 Token Name : <code>${balance?.name}</code>\n`;
             message += `💰 Balance : ${Number(balance?.amount).toFixed(
               5
             )} ($${Number(balance?.amount * balance?.price).toFixed(2)})\n\n`;
           });
 
-          const buttons = userStates[chatId].allSellSolanaToken?.map(
-            (item) => ({
-              text: item.symbol,
-              callback_data: `${item.symbol}TransferSol`,
-            })
-          );
+          const buttons = allSellSolanaToken?.map((item) => ({
+            text: item.symbol,
+            callback_data: `${item.symbol}TransferSol`,
+          }));
 
           const keyboard = [];
 
@@ -520,17 +527,13 @@ const handleToSellSolana = async (chatId) => {
         clearInterval(interval);
         await bot.deleteMessage(chatId, loaderMessage.message_id);
         let message = "Your Tokens :\n\n";
-        if (res?.data?.data?.length > 0) {
-          userStates[chatId].allSellSolanaToken = res?.data?.data;
+        let allSellSolanaToken = await res?.data?.data?.filter(
+          (item) => item?.amount * item?.price > 0.5
+        );
+        if (allSellSolanaToken?.length > 0) {
+          userStates[chatId].allSellSolanaToken = allSellSolanaToken;
           userStates[chatId].nativeBalance = res?.data?.nativePrice;
-          // message += `🏷 Token Name: <code> SOL</code>\n`;
-          // message += `💰 Balance: <code>${
-          //   response?.data?.native ? response?.data?.native : "0.00000"
-          // }</code>(${Number(
-          //   response?.data?.native * response?.data?.nativePrice
-          // ).toFixed(3)}$)\n\n`;
-
-          res?.data?.data?.forEach((balance) => {
+          allSellSolanaToken?.forEach((balance) => {
             message += `🏷 Token Name : <code>${balance?.name}</code>\n`;
             message += `💰 Balance : <code>${Number(balance?.amount).toFixed(
               5
@@ -539,7 +542,7 @@ const handleToSellSolana = async (chatId) => {
             )})\n\n`;
           });
 
-          const buttons = res?.data?.data?.map((item) => ({
+          const buttons = allSellSolanaToken?.map((item) => ({
             text: item.symbol,
             callback_data: `${item.symbol}SellSolana`,
           }));
@@ -599,119 +602,6 @@ const handleToSellSolana = async (chatId) => {
   }
 };
 
-// frist handle to swap  SOL
-async function handleSolanaSwap(chatId) {
-  try {
-    if (userStates[chatId]?.evmSwapMessage) {
-      await bot.deleteMessage(
-        chatId,
-        userStates[chatId]?.evmSwapMessage?.message_id
-      );
-      userStates[chatId].evmSwapMessage = null;
-    }
-    if (userStates[chatId]?.sellTokensList) {
-      await bot.deleteMessage(
-        chatId,
-        userStates[chatId]?.sellTokensList?.message_id
-      );
-      userStates[chatId].sellTokensList = null;
-    }
-    const { loaderMessage, interval } = await animateLoader(chatId);
-    await axios
-      .post(`${API_URL}/solanaBalance`, {
-        chatId: chatId,
-      })
-      .then(async (res) => {
-        clearInterval(interval);
-        await bot.deleteMessage(chatId, loaderMessage.message_id);
-        userStates[chatId].allSellSolanaToken = res?.data?.data;
-        userStates[chatId].allSellSolanaToken.unshift({
-          mint: "So11111111111111111111111111111111111111112",
-          price: res?.data?.nativePrice,
-          name: "Solana",
-          amount: res?.data?.native,
-          symbol: "SOL",
-        });
-        let message = "Your Solana tokens:\n\n";
-        if (userStates[chatId].allSellSolanaToken?.length > 0) {
-          userStates[chatId].nativeBalance = res?.data?.nativePrice;
-          message += `🏷 Token Name : <code> Solana</code>\n`;
-          message += `💰 Balance : <code>${
-            res?.data?.native ? Number(res?.data?.native).toFixed(5) : "0.00000"
-          }</code>($${Number(
-            res?.data?.native * res?.data?.nativePrice
-          ).toFixed(2)})\n\n`;
-          userStates[chatId].allSellSolanaToken?.forEach((balance) => {
-            message += `🏷 Token Name : <code>${balance?.name}</code>\n`;
-            message += `💰 Balance : ${Number(balance?.amount).toFixed(
-              5
-            )}</code> ($${Number(balance?.amount * balance?.price).toFixed(
-              2
-            )})\n\n`;
-          });
-
-          const buttons = userStates[chatId].allSellSolanaToken?.map(
-            (item) => ({
-              text: item.symbol,
-              callback_data: `${item.symbol}solanaSwap`,
-            })
-          );
-
-          const keyboard = [];
-
-          // add dynamic buttons in the keyboard
-          for (let i = 0; i < buttons.length; i += 4) {
-            keyboard.push(buttons.slice(i, i + 4));
-          }
-
-          // add static buttons
-          keyboard.push([
-            { text: "⬅️ Back", callback_data: "SwaptokenButton" },
-          ]);
-
-          userStates[chatId].sellTokensList = await bot.sendMessage(
-            chatId,
-            message,
-            {
-              parse_mode: "HTML",
-              reply_markup: {
-                inline_keyboard: keyboard,
-              },
-            }
-          );
-        } else {
-          await bot.sendMessage(
-            chatId,
-            "🔴 You do not have any token to Swap!!",
-            {
-              reply_markup: {
-                inline_keyboard: [
-                  [
-                    { text: "⬅️ Back", callback_data: "SwaptokenButton" },
-                    { text: "📈 Buy", callback_data: "buyButton" },
-                  ],
-                ],
-              },
-            }
-          );
-        }
-      })
-      .catch(async (err) => {
-        console.log("🚀 ~ handleSolanaSwap ~ err:", err?.message);
-        await bot.sendMessage(
-          chatId,
-          "🔴 Somthing went wrong please try again later!!"
-        );
-      });
-  } catch (error) {
-    console.error("Error fetching balance:", error?.message);
-    await bot.sendMessage(
-      chatId,
-      "An error occurred while fetching your balance."
-    );
-  }
-}
-
 // frist handle to swap EVM
 async function handleEvmSwap(chatId, chainId, network) {
   try {
@@ -744,7 +634,9 @@ async function handleEvmSwap(chatId, chainId, network) {
             userStates[chatId].nativeBalance = response.data.data[0];
             console.log("🚀 ~ .then ~", userStates[chatId].nativeBalance);
             const balances = response?.data?.data;
-            const tokens = balances?.filter((item) => item?.usd_price != null);
+            const tokens = balances
+              ?.filter((item) => item?.usd_price != null)
+              ?.filter((item) => item?.usd_value > 0.5);
             userStates[chatId].allSellTokens = tokens;
 
             if (tokens?.length > 0) {
@@ -858,10 +750,13 @@ async function handleSolanaSwap(chatId) {
           amount: res?.data?.native,
           symbol: "SOL",
         });
-        let message = "Your Solana tokens:\n\n";
-        if (userStates[chatId].allSellSolanaToken?.length > 0) {
-          userStates[chatId].nativeBalance = res?.data?.nativePrice;
-          userStates[chatId].allSellSolanaToken?.forEach((balance) => {
+        let allSellSolanaToken = userStates[chatId].allSellSolanaToken?.filter(
+          (item) => Number(item?.amount * item?.price) > 0.5
+        );
+        let message = "Your Solana tokens :\n\n";
+        if (allSellSolanaToken?.length > 0) {
+          nativeBalance = res?.data?.nativePrice;
+          allSellSolanaToken?.forEach((balance) => {
             message += `🏷 Token Name : <code>${balance?.name}</code>\n`;
             message += `💰 Balance : <code>${Number(balance?.amount).toFixed(
               5
@@ -870,12 +765,10 @@ async function handleSolanaSwap(chatId) {
             )})\n\n`;
           });
 
-          const buttons = userStates[chatId].allSellSolanaToken?.map(
-            (item) => ({
-              text: item.symbol,
-              callback_data: `${item.symbol}solanaSwap`,
-            })
-          );
+          const buttons = allSellSolanaToken?.map((item) => ({
+            text: item.symbol,
+            callback_data: `${item.symbol}solanaSwap`,
+          }));
 
           const keyboard = [];
 
@@ -931,6 +824,25 @@ async function handleSolanaSwap(chatId) {
     );
   }
 }
+// fucntion to convert big decimals
+function decimalConvert(price) {
+  console.log("🚀 ~ decimalConvert ~ price:", price);
+  console.log("🚀 ~ decimalConvert ~ price:", price.toFixed(11));
+  const [integerPart, decimalPart] = Number(price).toFixed(11).split(".");
+  const leadingZeros = decimalPart.match(/^0*/)[0].length;
+
+  if (leadingZeros > 4 && integerPart == 0) {
+    const m = -Math.floor(Math.log10(price) + 1);
+    const decimalNumber = Number(decimalPart);
+    const finalAmount = `${integerPart}.0(${m})${decimalNumber
+      .toString()
+      .slice(0, 4)}`;
+    console.log("🚀 ~ finalAmount ~ finalAmount:", finalAmount);
+    return finalAmount;
+  } else {
+    return Number(price).toFixed(5);
+  }
+}
 
 // main keyboard
 const buyKeyboard = {
@@ -952,34 +864,15 @@ const buyKeyboard = {
     ],
     [
       { text: "👨‍👧‍👦 Referrals", callback_data: "totalReferrals" },
-      { text: "⚙️ Setting", callback_data: "settingButton" },
+      { text: "🏆 Leaderboaed", callback_data: "leaderBoard" },
     ],
     [
+      { text: "⚙️ Setting", callback_data: "settingButton" },
       { text: "🔄 Refresh", callback_data: "refreshButton" },
       { text: "🚪 Logout", callback_data: "logoutButton" },
     ],
   ],
 };
-
-// fucntion to convert big decimals
-function decimalConvert(price) {
-  console.log("🚀 ~ decimalConvert ~ price:", price);
-  console.log("🚀 ~ decimalConvert ~ price:", price.toFixed(11));
-  const [integerPart, decimalPart] = Number(price).toFixed(11).split(".");
-  const leadingZeros = decimalPart.match(/^0*/)[0].length;
-
-  if (leadingZeros > 4 && integerPart == 0) {
-    const m = -Math.floor(Math.log10(price) + 1);
-    const decimalNumber = Number(decimalPart);
-    const finalAmount = `${integerPart}.0(${m})${decimalNumber
-      .toString()
-      .slice(0, 4)}`;
-    console.log("🚀 ~ finalAmount ~ finalAmount:", finalAmount);
-    return finalAmount;
-  } else {
-    return Number(price).toFixed(5);
-  }
-}
 
 // wallet balance keyboard
 const evmWalletBalance = {
@@ -1409,19 +1302,17 @@ async function logoutfunaction(chatId) {
 //Send welcome Msg
 async function sendWelcomeMessage(chatId) {
   const isUser = await getstartBot(chatId);
-  const keyboard = isUser
-    ? [[{ text: "Start", request_contact: false, request_location: false }]]
-    : [
-        [{ text: "SignUp", request_contact: false, request_location: false }],
-        [{ text: "Login", request_contact: false, request_location: false }],
-        [
-          {
-            text: "ForgotPassword",
-            request_contact: false,
-            request_location: false,
-          },
-        ],
-      ];
+  const keyboard = isUser && [
+    [{ text: "SignUp", request_contact: false, request_location: false }],
+    [{ text: "Login", request_contact: false, request_location: false }],
+    [
+      {
+        text: "ForgotPassword",
+        request_contact: false,
+        request_location: false,
+      },
+    ],
+  ];
   await bot.sendMessage(chatId, `please Login!!🤖💬`, {
     reply_markup: {
       keyboard: keyboard,
@@ -1946,7 +1837,9 @@ async function fetchSolanaBalance(chatId) {
     const response = await axios.post(`${API_URL}/solanaBalance`, {
       chatId: chatId,
     });
-    const balances = response?.data;
+    const balances = await response?.data?.data?.filter(
+      (item) => item?.amount * item?.price > 0.5
+    );
     console.log("🚀 ~ fetchSolanaBalance ~ balances :", balances);
     let message = "Your Token Balances :\n\n";
     if (balances) {
@@ -1955,11 +1848,13 @@ async function fetchSolanaBalance(chatId) {
         response?.data?.native
           ? Number(response?.data?.native).toFixed(5)
           : "0.00000"
-      }($${Number(response?.data?.native * response?.data?.nativePrice).toFixed(
-        2
-      )})\n\n`;
-      console.log(balances?.data);
-      balances?.data?.forEach((balance) => {
+      }($${Number(
+        response?.data?.native
+          ? response?.data?.native * response?.data?.nativePrice
+          : 0.0
+      ).toFixed(2)})\n\n`;
+      console.log(balances);
+      balances?.forEach((balance) => {
         message += `🏷 Token Name : ${balance?.name}\n`;
         message += `💰 Balance : ${Number(balance?.amount).toFixed(
           5
@@ -1986,19 +1881,38 @@ async function fetchTokenBalances(chatId, chainId, chain, isUser) {
       chainId: chainId,
     });
     const balances = response.data;
-    let message = "Your Token Balances :\n\n";
-    let finalTokens = balances?.data?.filter((item) => item?.usd_price != null);
-    finalTokens?.forEach((balance) => {
-      message += `🏷 Token Name : ${balance.name}\n`;
-      message += `💰 Balance : ${Number(balance.balance_formatted).toFixed(
-        5
-      )} ($${Number(balance?.usd_value).toFixed(2)})\n\n`;
-    });
-
-    message += `For more info (${chainAddressUrl[chain]?.url}${isUser?.isLogin?.wallet})\n\n`;
-
-    message += "Thank you for using our service!✌️";
-    await bot.sendMessage(chatId, message);
+    let finalTokens = await balances?.data
+      ?.filter((item) => item?.usd_price != null)
+      ?.filter((item) => item?.usd_value > 0.5);
+    if (finalTokens?.length > 0) {
+      let message = "Your Token Balances :\n\n";
+      finalTokens?.forEach((balance) => {
+        message += `🏷 Token Name : ${balance.name}\n`;
+        message += `💰 Balance : ${Number(balance.balance_formatted).toFixed(
+          5
+        )} ($${Number(balance?.usd_value).toFixed(2)})\n\n`;
+      });
+      message += `For more info (${chainAddressUrl[chain]?.url}${isUser?.isLogin?.wallet})\n\n`;
+      message += "Thank you for using our service!✌️";
+      await bot.sendMessage(chatId, message);
+    } else {
+      await bot.sendMessage(chatId, "🔴 you do not have any tokens!!", {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: "⬅️ Back",
+                callback_data: "balanceButton",
+              },
+              {
+                text: "📈 Buy",
+                callback_data: "buyButton",
+              },
+            ],
+          ],
+        },
+      });
+    }
   } catch (error) {
     console.error("Error fetching balance:", error);
     await bot.sendMessage(
@@ -2021,7 +1935,9 @@ async function fetchWalletTokenBalances(chatId, chainId, network) {
     await bot.deleteMessage(chatId, loaderMessage?.message_id);
 
     const balances = response?.data?.data;
-    const tokens = balances?.filter((item) => item?.usd_price != null);
+    const tokens = await balances
+      ?.filter((item) => item?.usd_price != null)
+      ?.filter((item) => item?.usd_value > 0.5);
     userStates[chatId].allSellTokens = tokens;
     userStates[chatId].nativeBalance = tokens[0];
 
@@ -3361,9 +3277,9 @@ ${balance?.price_at_invested < balance?.currentPrice ? "🟩" : "🟥"} PNL ${
               ? `+${Number(
                   difference / userStates[chatId].nativeBalance?.usd_price
                 ).toFixed(5)}`
-            : `-${Number(
-              difference / userStates[chatId].nativeBalance?.usd_price
-            ).toFixed(5)}`
+              : `-${Number(
+                  difference / userStates[chatId].nativeBalance?.usd_price
+                ).toFixed(5)}`
           } (${balance?.percentage_of_growth > 0 ? "+" : ""}${Number(
             balance?.percentage_of_growth
           ).toFixed(2)}%)\n\n\n`;
@@ -5038,6 +4954,82 @@ ${
     }
   } catch (error) {
     console.log("🚀 ~ handleEvmSwapPercentage ~ error:", error?.message);
+  }
+}
+
+//  leaderboard handler
+async function leaderboardHandler(chatId) {
+  try {
+    if (userStates[chatId]?.leaderTransactionMes) {
+      await bot.deleteMessage(
+        chatId,
+        userStates[chatId]?.leaderTransactionMes?.message_id
+      );
+      userStates[chatId].leaderTransactionMes = null;
+    }
+    const { loaderMessage, interval } = await animateLoader(chatId);
+    await axios
+      .get(`${API_URL}/transactionBoardList`)
+      .then(async (res) => {
+        clearInterval(interval);
+        await bot.deleteMessage(chatId, loaderMessage.message_id);
+        if (res?.data?.status) {
+          let transactionData = res?.data?.userTransactionCount;
+          let message = "";
+          message += `🔝 TOP RANKING :\n
+Rules:
+- The Top Ranking will be updated every hour and will display the rank for the current week.
+- The Top 50 highest volume users will be rewarded.\n\n`;
+          message += `No | Name | Volume
+🥇: ${transactionData[0]?.name} - $${Number(
+            transactionData[0]?.totalTransferToken
+          ).toFixed(2)}
+🥈: ${transactionData[1]?.name} - $${Number(
+            transactionData[1]?.totalTransferToken
+          ).toFixed(2)}
+🥉: ${transactionData[2]?.name} - $${Number(
+            transactionData[2]?.totalTransferToken
+          ).toFixed(2)}\n`;
+          transactionData?.slice(3, 50)?.forEach((balance, index) => {
+            message += `  ${index + 4} : ${balance?.name} - $${Number(
+              balance?.totalTransferToken
+            ).toFixed(2)}\n`;
+          });
+          userStates[chatId].leaderTransactionMes = await bot.sendMessage(
+            chatId,
+            message,
+            {
+              reply_markup: {
+                inline_keyboard: [
+                  [
+                    {
+                      text: `⬅️ Back`,
+                      callback_data: "mainMenuStart",
+                    },
+                  ],
+                ],
+              },
+            }
+          );
+        } else {
+          bot.sendMessage(
+            chatId,
+            "🔴 Somthing has been wrong please try again later!!"
+          );
+        }
+      })
+      .catch(async (err) => {
+        console.log("🚀 ~ awaitaxios.get ~ err:", err?.message);
+        clearInterval(interval);
+        await bot.deleteMessage(chatId, loaderMessage.message_id);
+        bot.sendMessage(
+          chatId,
+          "🔴 Somthing has been wrong please try again later!!"
+        );
+        resetUserState(chatId);
+      });
+  } catch (error) {
+    console.log("🚀 ~ leaderboardHandler ~ error:", error?.message);
   }
 }
 // signup by referral
@@ -10050,9 +10042,9 @@ bot.on("callback_query", async (callbackQuery) => {
 
   //  all buttons handlers
   switch (data) {
-    case "menuButton":
+    case "mainMenuStart":
       resetUserState(chatId);
-      await bot.sendMessage(chatId, "Click Menu Button");
+      await start(chatId);
       break;
     case "SwaptokenButton":
       resetUserState(chatId);
@@ -10063,6 +10055,10 @@ bot.on("callback_query", async (callbackQuery) => {
       userStates[chatId].method = "resetPasswordHandle";
       userStates[chatId].flag = "resetPasswordHandle";
       await handleResetPassword(chatId, "reset");
+      break;
+    case "leaderBoard":
+      resetUserState(chatId);
+      await leaderboardHandler(chatId);
       break;
     case "limitButton":
       resetUserState(chatId);
@@ -10424,6 +10420,7 @@ end of the week to get a boost in your referral rate.`,
         evmTransferMessage: null,
         evmSellMessage: null,
         evmBuyMessage: null,
+        leaderTransactionMes: null,
         buyPrice: null,
         sellPrice: null,
         transferPrice: null,
