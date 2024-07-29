@@ -8182,6 +8182,219 @@ https://dexscreener.com/solana/${
           state.currentStep = "amountTransfer";
           await bot.sendMessage(chatId, "Enter amount");
           break;
+        // evmtransfer verification
+        case "transferVerify":
+          try {
+            if (userStates[chatId]?.otp) {
+              await bot.deleteMessage(chatId, userStates[chatId]?.otp?.message_id);
+              userStates[chatId].otp = null;
+            }
+            const otpForVer = text;
+            await bot.deleteMessage(chatId, msg?.message_id);
+            await axios({
+              url: `${API_URL}/verifyUser`,
+              method: "post",
+              data: {
+                chatId,
+                otp: otpForVer,
+              },
+            })
+              .then(async (res) => {
+                if (res?.data?.status) {
+                  await bot.sendMessage(chatId, "✅ Verified.");
+                  if (
+                    userStates[chatId].selectedSellToken?.balance_formatted <
+                    userStates[chatId]?.transferPrice
+                  ) {
+                    resetUserState(chatId);
+                    await bot.sendMessage(
+                      chatId,
+                      "🔴 You do not have sufficient Balance!!",
+                      {
+                        reply_markup: {
+                          inline_keyboard: [
+                            [
+                              {
+                                text: "⬅️ Back",
+                                callback_data: "withrawButton",
+                              },
+                              { text: "📈 Buy", callback_data: "buyButton" },
+                            ],
+                          ],
+                        },
+                      }
+                    );
+                  } else {
+                    try {
+                      let partAmount = userStates[chatId]?.transferPrice
+                        ?.toString()
+                        ?.split(".");
+                      let finalAmount =
+                        partAmount[0] + "." + partAmount[1]?.slice(0, 5);
+                      let fullFinal =
+                        partAmount[1]?.length > 5
+                          ? finalAmount
+                          : userStates[chatId]?.transferPrice;
+                      const { loaderMessage, interval } = await animateLoader(
+                        chatId
+                      );
+                      await axios({
+                        url: `${API_URL}/transferEvmToken`,
+                        method: "post",
+                        data: {
+                          chatId,
+                          token:
+                            userStates[chatId]?.selectedSellToken
+                              ?.token_address,
+                          toWallet: userStates[chatId]?.toWalletAddress,
+                          chain: userStates[chatId]?.flag,
+                          amount: Number(fullFinal),
+                        },
+                      })
+                        .then(async (res) => {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
+                          resetUserState(chatId);
+                          if (res?.data?.status) {
+                            await bot.sendMessage(
+                              chatId,
+                              `✅ ${res?.data?.message}`
+                            );
+                            await bot.sendMessage(chatId, res?.data?.txUrl);
+                          } else {
+                            await bot.sendMessage(
+                              chatId,
+                              "🔴 somthing has been wrong make sure you have a enough balance!!"
+                            );
+                          }
+                        })
+                        .catch(async (error) => {
+                          clearInterval(interval);
+                          await bot.deleteMessage(
+                            chatId,
+                            loaderMessage.message_id
+                          );
+                          resetUserState(chatId);
+                          await bot.sendMessage(
+                            chatId,
+                            "somthing has been wrong please try again latter!!"
+                          );
+                        });
+                    } catch (error) {
+                      clearInterval(interval);
+                      await bot.deleteMessage(chatId, loaderMessage.message_id);
+                      resetUserState(chatId);
+                      console.log("🚀 ~ bot.on ~ error:", error?.message);
+                    }
+                  }
+                } else {
+                  await bot.sendMessage(
+                    chatId,
+                    "🔴 Something went wrong while verifying otp!"
+                  );
+                }
+              })
+              .catch(async (error) => {
+                console.log("🚀 ~ bot.on ~ error:", error.message);
+                resetUserState(chatId);
+                await bot.sendMessage(
+                  chatId,
+                  "🔴 Something went wrong, Please try again later."
+                );
+              });
+          } catch (error) {
+            console.log("🚀 ~ bot.on ~ error:", error.message);
+          }
+          break;
+        // solTransfer solana
+        case "solTransferVerify":
+          try {
+            if (userStates[chatId]?.otp) {
+              await bot.deleteMessage(chatId, userStates[chatId]?.otp?.message_id);
+              userStates[chatId].otp = null;
+            }
+            const otpForVer = text;
+            await bot.deleteMessage(chatId, msg?.message_id);
+            await axios({
+              url: `${API_URL}/verifyUser`,
+              method: "post",
+              data: {
+                chatId,
+                otp: Number(text)
+              },
+            })
+              .then(async (res) => {
+                if (res?.data?.status) {
+                  await bot.sendMessage(chatId, "✅ Verified.");
+                  if (userStates[chatId]?.flag) {
+                    if (userStates[chatId]?.selectedSellSolanaToken?.amount < userStates[chatId].transferPrice) {
+                      resetUserState(chatId);
+                      await bot.sendMessage(chatId, "🔴 You do not have sufficient Balance!!", {
+                        reply_markup: {
+                          inline_keyboard: [
+                            [
+                              { text: "⬅️ Back", callback_data: "withrawButton" },
+                              { text: "📈 Buy", callback_data: "buyButton" },
+                            ],
+                          ],
+                        },
+                      });
+                    } else {
+                      const { loaderMessage, interval } = await animateLoader(chatId);
+                      await axios({
+                        url: `${API_URL}/transferSolanaToken`,
+                        method: "post",
+                        data: {
+                          chatId,
+                          toWallet: userStates[chatId]?.toWalletAddress,
+                          token: userStates[chatId]?.selectedSellToken?.address,
+                          amount: Number(userStates[chatId]?.transferPrice),
+                        },
+                      })
+                        .then(async (res) => {
+                          resetUserState(chatId);
+                          clearInterval(interval);
+                          await bot.deleteMessage(chatId, loaderMessage?.message_id);
+                          if (res?.data?.status) {
+                            await bot.sendMessage(chatId, `✅ ${res?.data?.message}`);
+                            await bot.sendMessage(chatId, `https://solscan.io/tx/${res?.data?.tx}`);
+                          } else {
+                            await bot.sendMessage(chatId, res?.data?.message);
+                          }
+                        })
+                        .catch(async (error) => {
+                          resetUserState(chatId);
+                          clearInterval(interval);
+                          await bot.deleteMessage(chatId, loaderMessage.message_id);
+                          await bot.sendMessage(
+                            chatId,
+                            "due to high transaction volume in solana you transaction has been faild!!"
+                          );
+                        });
+                    }
+                  } else {
+                    resetUserState(chatId);
+                    withrawStartTokenSelection(chatId);
+                  }
+                } else {
+                  await bot.sendMessage(chatId, "🔴 Something went wrong while verifying otp!");
+                }
+              })
+              .catch(async (error) => {
+                console.log("🚀 ~ bot.on ~ error:", error.message)
+
+                resetUserState(chatId);
+                await bot.sendMessage(chatId, "🔴 Something went wrong, Please try again later.");
+              });
+          } catch (error) {
+            console.log("🚀 ~ bot.on ~ error:", error)
+
+          }
+
+          break;
         // EVM transfer
         case "toWalletTransfer":
           state.toWalletAddress = text;
@@ -11818,77 +12031,38 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       }
       break;
     case "finalTransferEvmWallet":
-      if (
-        userStates[chatId].selectedSellToken?.balance_formatted <
-        userStates[chatId]?.transferPrice
-      ) {
-        resetUserState(chatId);
-        await bot.sendMessage(
+      // send otp then change the currentStep
+      await axios({
+        url: `${API_URL}/sendOtp`,
+        method: "post",
+        data: {
           chatId,
-          "🔴 You do not have sufficient Balance!!",
-          {
-            reply_markup: {
-              inline_keyboard: [
-                [
-                  { text: "⬅️ Back", callback_data: "withrawButton" },
-                  { text: "📈 Buy", callback_data: "buyButton" },
-                ],
-              ],
-            },
-          }
-        );
-      } else {
-        const { loaderMessage, interval } = await animateLoader(chatId);
-        try {
-          let partAmount = userStates[chatId]?.transferPrice
-            ?.toString()
-            ?.split(".");
-          let finalAmount = partAmount[0] + "." + partAmount[1]?.slice(0, 5);
-          let fullFinal =
-            partAmount[1]?.length > 5
-              ? finalAmount
-              : userStates[chatId]?.transferPrice;
-          await axios({
-            url: `${API_URL}/transferEvmToken`,
-            method: "post",
-            data: {
+        },
+      })
+        .then(async (res) => {
+          if (res?.data?.status) {
+            userStates[chatId].method = "transfer";
+            userStates[chatId].currentStep = "transferVerify";
+            userStates[chatId].otp = await bot.sendMessage(
               chatId,
-              token: userStates[chatId]?.selectedSellToken?.token_address,
-              toWallet: userStates[chatId]?.toWalletAddress,
-              chain: userStates[chatId]?.flag,
-              amount: Number(fullFinal),
-            },
-          })
-            .then(async (res) => {
-              clearInterval(interval);
-              await bot.deleteMessage(chatId, loaderMessage.message_id);
-              resetUserState(chatId);
-              if (res?.data?.status) {
-                await bot.sendMessage(chatId, `✅ ${res?.data?.message}`);
-                await bot.sendMessage(chatId, res?.data?.txUrl);
-              } else {
-                await bot.sendMessage(
-                  chatId,
-                  "🔴 somthing has been wrong make sure you have a enough balance!!"
-                );
-              }
-            })
-            .catch(async (error) => {
-              clearInterval(interval);
-              await bot.deleteMessage(chatId, loaderMessage.message_id);
-              resetUserState(chatId);
-              await bot.sendMessage(
-                chatId,
-                "somthing has been wrong please try again latter!!"
-              );
-            });
-        } catch (error) {
-          clearInterval(interval);
-          await bot.deleteMessage(chatId, loaderMessage.message_id);
+              "Check your email and Enter the OTP"
+            );
+          } else {
+            await bot.sendMessage(
+              chatId,
+              "🔴 Something went wrong while sending otp!"
+            );
+          }
+        })
+        .catch(async (error) => {
+          console.log("🚀 ~ bot.on ~ error:", error.message);
+
           resetUserState(chatId);
-          console.log("🚀 ~ bot.on ~ error:", error?.message);
-        }
-      }
+          await bot.sendMessage(
+            chatId,
+            "🔴 Something went wrong, Please try again later."
+          );
+        });
       break;
     // handle  SOL percentage
     case "10SolPerTransfer":
@@ -11956,66 +12130,28 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       }
       break;
     case "finalTransferSolWallet":
-      if (userStates[chatId]?.flag) {
-        if (
-          userStates[chatId]?.selectedSellSolanaToken?.amount <
-          userStates[chatId].transferPrice
-        ) {
+      await axios({
+        url: `${API_URL}/sendOtp`,
+        method: "post",
+        data: {
+          chatId,
+        },
+      })
+        .then(async (res) => {
+          if (res?.data?.status) {
+            userStates[chatId].method = "transfer";
+            userStates[chatId].currentStep = "solTransferVerify";
+            userStates[chatId].otp = await bot.sendMessage(chatId, "Check your email and Enter the OTP");
+          } else {
+            await bot.sendMessage(chatId, "🔴 Something went wrong while sending otp!");
+          }
+        })
+        .catch(async (error) => {
+          console.log("🚀 ~ bot.on ~ error:", error.message);
+
           resetUserState(chatId);
-          await bot.sendMessage(
-            chatId,
-            "🔴 You do not have sufficient Balance!!",
-            {
-              reply_markup: {
-                inline_keyboard: [
-                  [
-                    { text: "⬅️ Back", callback_data: "withrawButton" },
-                    { text: "📈 Buy", callback_data: "buyButton" },
-                  ],
-                ],
-              },
-            }
-          );
-        } else {
-          const { loaderMessage, interval } = await animateLoader(chatId);
-          await axios({
-            url: `${API_URL}/transferSolanaToken`,
-            method: "post",
-            data: {
-              chatId,
-              toWallet: userStates[chatId]?.toWalletAddress,
-              token: userStates[chatId]?.selectedSellToken?.address,
-              amount: Number(userStates[chatId]?.transferPrice),
-            },
-          })
-            .then(async (res) => {
-              resetUserState(chatId);
-              clearInterval(interval);
-              await bot.deleteMessage(chatId, loaderMessage?.message_id);
-              if (res?.data?.status) {
-                await bot.sendMessage(chatId, `✅ ${res?.data?.message}`);
-                await bot.sendMessage(
-                  chatId,
-                  `https://solscan.io/tx/${res?.data?.tx}`
-                );
-              } else {
-                await bot.sendMessage(chatId, res?.data?.message);
-              }
-            })
-            .catch(async (error) => {
-              resetUserState(chatId);
-              clearInterval(interval);
-              await bot.deleteMessage(chatId, loaderMessage.message_id);
-              await bot.sendMessage(
-                chatId,
-                "due to high transaction volume in solana you transaction has been faild!!"
-              );
-            });
-        }
-      } else {
-        resetUserState(chatId);
-        withrawStartTokenSelection(chatId);
-      }
+          await bot.sendMessage(chatId, "🔴 Something went wrong, Please try again later.");
+        });
       break;
     default:
       console.log(`Unknown button clicked meet: ${data}`);
