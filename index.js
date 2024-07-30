@@ -1304,7 +1304,7 @@ async function logoutfunaction(chatId) {
 //Send welcome Msg
 async function sendWelcomeMessage(chatId) {
   const isUser = await getstartBot(chatId);
-  const keyboard = !isUser && [
+  const keyboard = isUser && [
     [{ text: "SignUp", request_contact: false, request_location: false }],
     [{ text: "Login", request_contact: false, request_location: false }],
     [
@@ -9578,7 +9578,7 @@ https://dexscreener.com/solana/${
                   resetUserState(chatId);
                   await bot.sendMessage(
                     chatId,
-                    `${res?.data?.msg} please register again!!`,
+                    `🔴 ${res?.data?.msg} please register again!!`,
                     {
                       reply_markup: {
                         keyboard: [
@@ -9688,7 +9688,7 @@ https://dexscreener.com/solana/${
                   resetUserState(chatId);
                   await bot.sendMessage(
                     chatId,
-                    `${res?.data?.msg} please register again!!`,
+                    `🔴 ${res?.data?.msg} please register again!!`,
                     {
                       reply_markup: {
                         keyboard: [
