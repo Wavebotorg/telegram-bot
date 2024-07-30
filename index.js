@@ -77,6 +77,7 @@ const resetUserState = (chatId) => {
     otp: null,
     transferToken: null,
     swapFromToken: null,
+    leaderBoardData: null,
     allSellSolanaToken: null,
     name: null,
     refId: null,
@@ -123,6 +124,7 @@ const resetUserStateRef = (chatId) => {
     decimalValue: null,
     swapFromToken: null,
     leaderTransactionMes: userStates[chatId]?.leaderTransactionMes,
+    leaderBoardData: null,
     percentageChange: null,
     sellToken: null,
     transferCustomMessage: null,
@@ -864,7 +866,7 @@ const buyKeyboard = {
     ],
     [
       { text: "👨‍👧‍👦 Referrals", callback_data: "totalReferrals" },
-      { text: "🏆 Leaderboaed", callback_data: "leaderBoard" },
+      { text: "🏆 Leaderboard", callback_data: "leaderBoard" },
     ],
     [
       { text: "⚙️ Setting", callback_data: "settingButton" },
@@ -1302,7 +1304,7 @@ async function logoutfunaction(chatId) {
 //Send welcome Msg
 async function sendWelcomeMessage(chatId) {
   const isUser = await getstartBot(chatId);
-  const keyboard = isUser && [
+  const keyboard = !isUser && [
     [{ text: "SignUp", request_contact: false, request_location: false }],
     [{ text: "Login", request_contact: false, request_location: false }],
     [
@@ -1790,7 +1792,7 @@ async function setting(chatId) {
     const messageText = `🌊 Personal Info! 🌊\n
   *Your Email Address : <code>${userInfo?.email}</code> (Tap to copy)\n
   *Your Referral Id : <code>${userInfo?.referralId}</code> (Tap to copy)\n
-  *Your Bot Invite Link : <code>https://t.me/onchain_wavebot?start=${userInfo?.referralId}</code> (Tap to copy)\n
+  *Your Bot Invite Link : <code>${process.env.REFLINK}?start=${userInfo?.referralId}</code> (Tap to copy)\n
   *Your Wallet Address (EVM) : <code>${userInfo?.EVMwallet}</code> (Tap to copy)\n
   *Your Wallet Address (Solana) : <code>${userInfo?.solanaWallets}</code> (Tap to copy)`;
     await bot.sendMessage(chatId, messageText, {
@@ -4630,12 +4632,12 @@ async function handleSolSwapPercentage(chatId, percentage) {
 🛒 You Swap : ${Number(
         (userStates[chatId]?.selectedSellToken?.price *
           userStates[chatId]?.swapPrice) /
-          userStates[chatId].nativeBalance
+          userStates[chatId].selectedSellToken?.nativePrice
       ).toFixed(5)} SOL ($${Number(
         ((userStates[chatId]?.selectedSellToken?.price *
           userStates[chatId]?.swapPrice) /
-          userStates[chatId].nativeBalance) *
-          userStates[chatId].nativeBalance
+          userStates[chatId].selectedSellToken?.nativePrice) *
+          userStates[chatId].selectedSellToken?.nativePrice
       ).toFixed(2)}) ⇄ ${Number(userStates[chatId]?.swapPrice).toFixed(5)} ${
         userStates[chatId]?.selectedSellToken?.symbol
       } ($${Number(
@@ -4974,33 +4976,62 @@ async function leaderboardHandler(chatId) {
         clearInterval(interval);
         await bot.deleteMessage(chatId, loaderMessage.message_id);
         if (res?.data?.status) {
-          let transactionData = res?.data?.userTransactionCount;
+          userStates[chatId].leaderBoardData = res?.data?.data;
+          let transactionData = res?.data?.data?.daily;
           let message = "";
-          message += `🔝 TOP RANKING :\n
-Rules:
-- The Top Ranking will be updated every hour and will display the rank for the current week.
-- The Top 50 highest volume users will be rewarded.\n\n`;
-          message += `No | Name | Volume
-🥇: ${transactionData[0]?.name} - $${Number(
-            transactionData[0]?.totalTransferToken
-          ).toFixed(2)}
-🥈: ${transactionData[1]?.name} - $${Number(
-            transactionData[1]?.totalTransferToken
-          ).toFixed(2)}
-🥉: ${transactionData[2]?.name} - $${Number(
-            transactionData[2]?.totalTransferToken
-          ).toFixed(2)}\n`;
-          transactionData?.slice(3, 50)?.forEach((balance, index) => {
-            message += `  ${index + 4} : ${balance?.name} - $${Number(
-              balance?.totalTransferToken
-            ).toFixed(2)}\n`;
-          });
+          message += `🏆 <b>TOP VOLUME TRADER</b> :\n
+<b>Rules:</b>
+🏆 The Top Ranking will be updated every hour and will display the rank for the current week.\n\n`;
+          if (transactionData?.length > 0) {
+            message += `<b>No</b> | <b>Name</b> | <b>Points</b>
+🥇: ${transactionData[0]?.name} - ${Number(
+        transactionData[0]?.totalTransferToken
+      ).toFixed()}
+🥈: ${transactionData[1]?.name ? transactionData[1]?.name : "---"} - ${
+        transactionData[1]?.totalTransferToken
+          ? Number(transactionData[1]?.totalTransferToken).toFixed()
+          : "---"
+      }
+🥉: ${transactionData[2]?.name ? transactionData[2]?.name : "---"} - ${
+        transactionData[2]?.totalTransferToken
+          ? Number(transactionData[2]?.totalTransferToken).toFixed()
+          : "---"
+      }\n`;
+            transactionData
+              ?.slice(3, transactionData?.length)
+              ?.forEach((balance, index) => {
+                message += `  ${index + 4} : ${balance?.name} - ${Number(
+                  balance?.totalTransferToken
+                ).toFixed()}\n`;
+              });
+          } else {
+            message += `🔴<b> No data available</b>`;
+          }
           userStates[chatId].leaderTransactionMes = await bot.sendMessage(
             chatId,
             message,
             {
+              parse_mode: "HTML",
               reply_markup: {
                 inline_keyboard: [
+                  [
+                    {
+                      text: `✅ Daily`,
+                      callback_data: "daily+leaderBoard",
+                    },
+                    {
+                      text: `Weekly`,
+                      callback_data: "weekly+leaderBoard",
+                    },
+                    {
+                      text: `Monthly`,
+                      callback_data: "monthly+leaderBoard",
+                    },
+                    {
+                      text: `All time`,
+                      callback_data: "allTime+leaderBoard",
+                    },
+                  ],
                   [
                     {
                       text: `⬅️ Back`,
@@ -5032,6 +5063,76 @@ Rules:
     console.log("🚀 ~ leaderboardHandler ~ error:", error?.message);
   }
 }
+
+async function leaderboardDateWiseChnages(chatId, date) {
+  console.log("🚀 ~ leaderboardDateWiseChnages ~ date:", date);
+  try {
+    let transactionData = userStates[chatId].leaderBoardData[date];
+    let message = "";
+    message += `🏆 <b>TOP VOLUME TRADER</b> :\n
+<b>Rules:</b>
+🏆 The Top Ranking will be updated every hour and will display the rank for the current week.\n\n`;
+    if (transactionData?.length > 0) {
+      message += `<b>No</b> | <b>Name</b> | <b>Points</b>
+🥇: ${transactionData[0]?.name} - ${Number(
+        transactionData[0]?.totalTransferToken
+      ).toFixed()}
+🥈: ${transactionData[1]?.name ? transactionData[1]?.name : "---"} - ${
+        transactionData[1]?.totalTransferToken
+          ? Number(transactionData[1]?.totalTransferToken).toFixed()
+          : "---"
+      }
+🥉: ${transactionData[2]?.name ? transactionData[2]?.name : "---"} - ${
+        transactionData[2]?.totalTransferToken
+          ? Number(transactionData[2]?.totalTransferToken).toFixed()
+          : "---"
+      }\n`;
+      transactionData?.slice(3, 50)?.forEach((balance, index) => {
+        message += `  ${index + 4} : ${balance?.name} - ${Number(
+          balance?.totalTransferToken
+        ).toFixed()}\n`;
+      });
+    } else {
+      message += `🔴<b> No data available</b>`;
+    }
+    await bot.editMessageText(message, {
+      chat_id: chatId,
+      message_id: userStates[chatId]?.leaderTransactionMes?.message_id,
+      parse_mode: "HTML",
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: `${date == "daily" ? "✅" : ""} Daily`,
+              callback_data: "daily+leaderBoard",
+            },
+            {
+              text: `${date == "weekly" ? "✅" : ""} Weekly`,
+              callback_data: "weekly+leaderBoard",
+            },
+            {
+              text: `${date == "monthly" ? "✅" : ""} Monthly`,
+              callback_data: "monthly+leaderBoard",
+            },
+            {
+              text: `${date == "allTime" ? "✅" : ""} All time`,
+              callback_data: "allTime+leaderBoard",
+            },
+          ],
+          [
+            {
+              text: `⬅️ Back`,
+              callback_data: "mainMenuStart",
+            },
+          ],
+        ],
+      },
+    });
+  } catch (error) {
+    console.log("🚀 ~ leaderboardDateWiseChnages ~ error:", error?.message);
+  }
+}
+
 // signup by referral
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
@@ -5261,14 +5362,14 @@ bot.on("message", async (msg) => {
                         userStates[chatId].decimalValue
                       }
 📊 5M : ${Number(userStates[chatId]?.selectedSellToken?.variation5m)?.toFixed(
-                        3
+                        2
                       )}% || 1H : ${Number(
                         userStates[chatId]?.selectedSellToken?.variation1h
-                      )?.toFixed(3)}% || 6H : ${Number(
+                      )?.toFixed(2)}% || 6H : ${Number(
                         userStates[chatId]?.selectedSellToken?.variation6h
-                      )?.toFixed(3)}% || 24H : ${Number(
+                      )?.toFixed(2)}% || 24H : ${Number(
                         userStates[chatId]?.selectedSellToken?.variation24h
-                      )?.toFixed(3)}%
+                      )?.toFixed(2)}%
 🗃 MKT Cap : ${
                         userStates[chatId].market_cap
                           ? userStates[chatId].market_cap
@@ -5277,15 +5378,15 @@ bot.on("message", async (msg) => {
 💰 ${userStates[chatId]?.selectedSellToken?.symbol} Balance : ${Number(
                         userStates[chatId]?.selectedSellSolanaToken?.amount
                       ).toFixed(5)} ($${Number(balanceInUSD).toFixed(2)})
-🛒 You Swap :${Number(
+🛒 You Swap : ${Number(
                         (userStates[chatId]?.selectedSellToken?.price *
                           userStates[chatId]?.swapPrice) /
-                          userStates[chatId].nativeBalance
+                          userStates[chatId].selectedSellToken?.nativePrice
                       ).toFixed(5)} SOL ($${Number(
                         ((userStates[chatId]?.selectedSellToken?.price *
                           userStates[chatId]?.swapPrice) /
-                          userStates[chatId].nativeBalance) *
-                          userStates[chatId].nativeBalance
+                          userStates[chatId].selectedSellToken?.nativePrice) *
+                          userStates[chatId].selectedSellToken?.nativePrice
                       ).toFixed(2)}) ⇄ ${Number(
                         userStates[chatId]?.swapPrice
                       ).toFixed(5)} ${
@@ -5434,12 +5535,12 @@ https://dexscreener.com/solana/${
 🛒 You Swap : ${Number(
                 (userStates[chatId]?.selectedSellToken?.price *
                   userStates[chatId]?.swapPrice) /
-                  userStates[chatId].nativeBalance
+                  userStates[chatId].selectedSellToken?.nativePrice
               ).toFixed(5)} SOL ($${Number(
                 ((userStates[chatId]?.selectedSellToken?.price *
                   userStates[chatId]?.swapPrice) /
-                  userStates[chatId].nativeBalance) *
-                  userStates[chatId].nativeBalance
+                  userStates[chatId].selectedSellToken?.nativePrice) *
+                  userStates[chatId].selectedSellToken?.nativePrice
               ).toFixed(2)}) ⇄ ${Number(userStates[chatId]?.swapPrice).toFixed(
                 5
               )} ${userStates[chatId]?.selectedSellToken?.symbol} ($${Number(
@@ -5566,12 +5667,12 @@ https://dexscreener.com/solana/${
 🛒 You Swap : ${Number(
                 (userStates[chatId]?.selectedSellToken?.price *
                   userStates[chatId]?.swapPrice) /
-                  userStates[chatId].nativeBalance
+                 userStates[chatId].selectedSellToken?.nativePrice
               ).toFixed(5)} SOL ($${Number(
                 ((userStates[chatId]?.selectedSellToken?.price *
                   userStates[chatId]?.swapPrice) /
-                  userStates[chatId].nativeBalance) *
-                  userStates[chatId].nativeBalance
+                  userStates[chatId].selectedSellToken?.nativePrice) *
+                  userStates[chatId].selectedSellToken?.nativePrice
               ).toFixed(2)}) ⇄ ${Number(userStates[chatId]?.swapPrice).toFixed(
                 5
               )} ${userStates[chatId]?.selectedSellToken?.symbol} ($${Number(
@@ -5699,12 +5800,12 @@ https://dexscreener.com/solana/${
 🛒 You Swap : ${Number(
                 (userStates[chatId]?.selectedSellToken?.price *
                   userStates[chatId]?.swapPrice) /
-                  userStates[chatId].nativeBalance
+                  userStates[chatId].selectedSellToken?.nativePrice
               ).toFixed(5)} SOL ($${Number(
                 ((userStates[chatId]?.selectedSellToken?.price *
                   userStates[chatId]?.swapPrice) /
-                  userStates[chatId].nativeBalance) *
-                  userStates[chatId].nativeBalance
+                  userStates[chatId].selectedSellToken?.nativePrice) *
+                  userStates[chatId].selectedSellToken?.nativePrice
               ).toFixed(2)}) ⇄ ${Number(userStates[chatId]?.swapPrice).toFixed(
                 5
               )} ${userStates[chatId]?.selectedSellToken?.symbol} ($${Number(
@@ -10040,6 +10141,12 @@ bot.on("callback_query", async (callbackQuery) => {
     userStates[chatId].currentStep = "infoEvmSwap";
   }
 
+  // all about leaderboard
+  if (data?.slice(-11) == "leaderBoard") {
+    let part = data.split("+");
+    await leaderboardDateWiseChnages(chatId, part[0]);
+  }
+
   //  all buttons handlers
   switch (data) {
     case "mainMenuStart":
@@ -10124,7 +10231,7 @@ Join our https://t.me/WaveUsers and one of our admins will assist you.
     case "totalReferrals":
       try {
         await axios({
-          url: `${API_URL}/getUserReferals`,
+          url: `${API_URL}/fristLevelReferral`,
           method: "post",
           data: {
             email: isUser?.isLogin?.email,
@@ -10135,8 +10242,7 @@ Join our https://t.me/WaveUsers and one of our admins will assist you.
               chatId,
               `💰 Referral Rewards💰\n
 🔗<code>https://t.me/onchain_wavebot?start=${isUser?.isLogin?.referralId}</code> (Tap to Copy)\n
-Net Referral Rate : 25%
-Active Referrals : 0\n
+Active Referrals : ${res?.data?.data?.refferalCount}\n
 Total Unclaimed : <code>$0</code>
 *ETH : <code>0.000 ($0)</code>
 *SOL : <code>0.000 ($0)</code>
@@ -10159,7 +10265,7 @@ Lifetime Rewards : <code>$0</code>
 *MATIC : <code>0.000 ($0)</code>
 *BLAST : <code>0.000 ($0)</code>\n
 📅 Weekly Stats
-Total Traded Volume USD: $0
+Total Traded Volume USD: <code>$${Number(res?.data?.data?.totalTradeValue).toFixed()}</code>
 Volume Left : $10,000\n
 You need to trade at least $10,000 USD by the
 end of the week to get a boost in your referral rate.`,
@@ -10392,6 +10498,7 @@ end of the week to get a boost in your referral rate.`,
         percentageChange: null,
         password: null,
         sellTokensList: null,
+        leaderBoardData: null,
         sellSolanaTokensList: null,
         positionList: null,
         back: null,
