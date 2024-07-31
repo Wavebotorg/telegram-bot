@@ -4981,22 +4981,22 @@ async function leaderboardHandler(chatId) {
           let message = "";
           message += `🏆 <b>TOP VOLUME TRADER</b> :\n
 <b>Rules:</b>
-🏆 The Top Ranking will be updated every hour and will display the rank for the current week.\n\n`;
+🏆 The Top Ranking will be updated in real-time and will display the rank for the current day.\n\n`;
           if (transactionData?.length > 0) {
             message += `<b>No</b> | <b>Name</b> | <b>Points</b>
 🥇: ${transactionData[0]?.name} - ${Number(
-        transactionData[0]?.totalTransferToken
-      ).toFixed()}
+              transactionData[0]?.totalTransferToken
+            ).toFixed()}
 🥈: ${transactionData[1]?.name ? transactionData[1]?.name : "---"} - ${
-        transactionData[1]?.totalTransferToken
-          ? Number(transactionData[1]?.totalTransferToken).toFixed()
-          : "---"
-      }
+              transactionData[1]?.totalTransferToken
+                ? Number(transactionData[1]?.totalTransferToken).toFixed()
+                : "---"
+            }
 🥉: ${transactionData[2]?.name ? transactionData[2]?.name : "---"} - ${
-        transactionData[2]?.totalTransferToken
-          ? Number(transactionData[2]?.totalTransferToken).toFixed()
-          : "---"
-      }\n`;
+              transactionData[2]?.totalTransferToken
+                ? Number(transactionData[2]?.totalTransferToken).toFixed()
+                : "---"
+            }\n`;
             transactionData
               ?.slice(3, transactionData?.length)
               ?.forEach((balance, index) => {
@@ -5066,12 +5066,27 @@ async function leaderboardHandler(chatId) {
 
 async function leaderboardDateWiseChnages(chatId, date) {
   console.log("🚀 ~ leaderboardDateWiseChnages ~ date:", date);
+  let formateData = {
+    daily: {
+      duration: "day",
+    },
+    weekly: {
+      duration: "week",
+    },
+    monthly: {
+      duration: "month",
+    },
+  };
   try {
     let transactionData = userStates[chatId].leaderBoardData[date];
     let message = "";
     message += `🏆 <b>TOP VOLUME TRADER</b> :\n
 <b>Rules:</b>
-🏆 The Top Ranking will be updated every hour and will display the rank for the current week.\n\n`;
+🏆 The Top Ranking will be updated every hour and will display the rank for ${
+      date == "allTime"
+        ? "allTime"
+        : `the current ${formateData[date].duration}`
+    }.\n\n`;
     if (transactionData?.length > 0) {
       message += `<b>No</b> | <b>Name</b> | <b>Points</b>
 🥇: ${transactionData[0]?.name} - ${Number(
@@ -5667,7 +5682,7 @@ https://dexscreener.com/solana/${
 🛒 You Swap : ${Number(
                 (userStates[chatId]?.selectedSellToken?.price *
                   userStates[chatId]?.swapPrice) /
-                 userStates[chatId].selectedSellToken?.nativePrice
+                  userStates[chatId].selectedSellToken?.nativePrice
               ).toFixed(5)} SOL ($${Number(
                 ((userStates[chatId]?.selectedSellToken?.price *
                   userStates[chatId]?.swapPrice) /
@@ -10238,11 +10253,32 @@ Join our https://t.me/WaveUsers and one of our admins will assist you.
           },
         }).then(async (res) => {
           if (res?.data?.status) {
+            const refferalCount = res?.data?.data?.refferalCount;
+            let count = 0;
+            for (const level in refferalCount) {
+              if (refferalCount.hasOwnProperty(level)) {
+                count += refferalCount[level]?.length;
+              }
+            }
+            const indirectRef = count - refferalCount?.level1?.length 
             await bot.sendMessage(
               chatId,
               `💰 Referral Rewards💰\n
-🔗<code>https://t.me/onchain_wavebot?start=${isUser?.isLogin?.referralId}</code> (Tap to Copy)\n
-Active Referrals : ${res?.data?.data?.refferalCount}\n
+🔗<code>${process.env.REFLINK}?start=${
+                isUser?.isLogin?.referralId
+              }</code> (Tap to Copy)\n
+Active Referrals : ${
+                refferalCount?.level1?.length
+                  ? refferalCount?.level1?.length
+                  : 0
+              }
+Direct : ${
+                refferalCount?.level1?.length
+                  ? refferalCount?.level1?.length
+                  : 0
+              } || Indirect : ${
+              indirectRef ? indirectRef:0
+              }\n
 Total Unclaimed : <code>$0</code>
 *ETH : <code>0.000 ($0)</code>
 *SOL : <code>0.000 ($0)</code>
@@ -10265,7 +10301,9 @@ Lifetime Rewards : <code>$0</code>
 *MATIC : <code>0.000 ($0)</code>
 *BLAST : <code>0.000 ($0)</code>\n
 📅 Weekly Stats
-Total Traded Volume USD: <code>$${Number(res?.data?.data?.totalTradeValue).toFixed()}</code>
+Total Traded Volume USD: <code>$${Number(
+                res?.data?.data?.totalTradeValue
+              ).toFixed()}</code>
 Volume Left : $10,000\n
 You need to trade at least $10,000 USD by the
 end of the week to get a boost in your referral rate.`,
@@ -10276,6 +10314,7 @@ end of the week to get a boost in your referral rate.`,
           }
         });
       } catch (error) {
+        console.log("🚀 ~ bot.on ~ error:", error?.message);
         await bot.sendMessage(chatId, "🔴 something went wrong!!");
       }
       break;
