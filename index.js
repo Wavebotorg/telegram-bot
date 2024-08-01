@@ -274,15 +274,20 @@ async function transferHoldingsEvm(chatId, chainId, network) {
       );
       userStates[chatId].evmTransferMessage = null;
     }
-    const { loaderMessage, interval } = await animateLoader(chatId);
+    await animateLoader(chatId);
     try {
       const response = await axios.post(`${API_URL}/fetchbalance`, {
         chatId: chatId,
         chainId: chainId,
         network,
       });
-      clearInterval(interval);
-      await bot.deleteMessage(chatId, loaderMessage?.message_id);
+      if (userStates[chatId]?.loaderMessage) {
+        await bot.deleteMessage(
+          chatId,
+          userStates[chatId]?.loaderMessage?.message_id
+        );
+        userStates[chatId].loaderMessage = null;
+      }
 
       const balances = response?.data?.data;
       const tokens = await balances
@@ -348,8 +353,13 @@ async function transferHoldingsEvm(chatId, chainId, network) {
         );
       }
     } catch (error) {
-      clearInterval(interval);
-      await bot.deleteMessage(chatId, loaderMessage.message_id);
+      if (userStates[chatId]?.loaderMessage) {
+        await bot.deleteMessage(
+          chatId,
+          userStates[chatId]?.loaderMessage?.message_id
+        );
+        userStates[chatId].loaderMessage = null;
+      }
       console.error("Error fetching balance:", error.message);
       await bot.sendMessage(
         chatId,
@@ -394,14 +404,19 @@ async function transferHoldingsSol(chatId) {
       );
       userStates[chatId].evmTransferMessage = null;
     }
-    const { loaderMessage, interval } = await animateLoader(chatId);
+    await animateLoader(chatId);
     await axios
       .post(`${API_URL}/solanaBalance`, {
         chatId: chatId,
       })
       .then(async (res) => {
-        clearInterval(interval);
-        await bot.deleteMessage(chatId, loaderMessage?.message_id);
+        if (userStates[chatId]?.loaderMessage) {
+          await bot.deleteMessage(
+            chatId,
+            userStates[chatId]?.loaderMessage?.message_id
+          );
+          userStates[chatId].loaderMessage = null;
+        }
         userStates[chatId].allSellSolanaToken = res?.data?.data;
         await userStates[chatId].allSellSolanaToken.unshift({
           mint: "So11111111111111111111111111111111111111112",
@@ -467,8 +482,13 @@ async function transferHoldingsSol(chatId) {
         }
       })
       .catch(async (err) => {
-        clearInterval(interval);
-        await bot.deleteMessage(chatId, loaderMessage?.message_id);
+        if (userStates[chatId]?.loaderMessage) {
+          await bot.deleteMessage(
+            chatId,
+            userStates[chatId]?.loaderMessage?.message_id
+          );
+          userStates[chatId].loaderMessage = null;
+        }
         console.log("🚀 ~ .then ~ err:", err?.message);
         await bot.sendMessage(
           chatId,
@@ -520,14 +540,19 @@ const handleToSellSolana = async (chatId) => {
       );
       userStates[chatId].sellTokensList = null;
     }
-    const { loaderMessage, interval } = await animateLoader(chatId);
+    await animateLoader(chatId);
     await axios
       .post(`${API_URL}/solanaBalance`, {
         chatId: chatId,
       })
       .then(async (res) => {
-        clearInterval(interval);
-        await bot.deleteMessage(chatId, loaderMessage.message_id);
+        if (userStates[chatId]?.loaderMessage) {
+          await bot.deleteMessage(
+            chatId,
+            userStates[chatId]?.loaderMessage?.message_id
+          );
+          userStates[chatId].loaderMessage = null;
+        }
         let message = "Your Tokens :\n\n";
         let allSellSolanaToken = await res?.data?.data?.filter(
           (item) => item?.amount * item?.price > 0.5
@@ -587,8 +612,13 @@ const handleToSellSolana = async (chatId) => {
         }
       })
       .catch(async (err) => {
-        clearInterval(interval);
-        await bot.deleteMessage(chatId, loaderMessage.message_id);
+        if (userStates[chatId]?.loaderMessage) {
+          await bot.deleteMessage(
+            chatId,
+            userStates[chatId]?.loaderMessage?.message_id
+          );
+          userStates[chatId].loaderMessage = null;
+        }
         console.log("🚀 ~ handleToSellSolana ~ err:", err?.message);
         await bot.sendMessage(
           chatId,
@@ -621,7 +651,7 @@ async function handleEvmSwap(chatId, chainId, network) {
       );
       userStates[chatId].evmSwapMessage = null;
     }
-    const { loaderMessage, interval } = await animateLoader(chatId);
+    await animateLoader(chatId);
     try {
       await axios
         .post(`${API_URL}/fetchbalance`, {
@@ -630,8 +660,13 @@ async function handleEvmSwap(chatId, chainId, network) {
           network,
         })
         .then(async (response) => {
-          clearInterval(interval);
-          await bot.deleteMessage(chatId, loaderMessage?.message_id);
+          if (userStates[chatId]?.loaderMessage) {
+            await bot.deleteMessage(
+              chatId,
+              userStates[chatId]?.loaderMessage?.message_id
+            );
+            userStates[chatId].loaderMessage = null;
+          }
           if (response?.data?.status) {
             userStates[chatId].nativeBalance = response.data.data[0];
             console.log("🚀 ~ .then ~", userStates[chatId].nativeBalance);
@@ -708,8 +743,13 @@ async function handleEvmSwap(chatId, chainId, network) {
           console.log("🚀 ~ handleEvmSwap ~ error:", error?.message);
         });
     } catch (error) {
-      clearInterval(interval);
-      await bot.deleteMessage(chatId, loaderMessage.message_id);
+      if (userStates[chatId]?.loaderMessage) {
+        await bot.deleteMessage(
+          chatId,
+          userStates[chatId]?.loaderMessage?.message_id
+        );
+        userStates[chatId].loaderMessage = null;
+      }
       console.error("Error fetching balance:", error.message);
       await bot.sendMessage(
         chatId,
@@ -736,14 +776,19 @@ async function handleSolanaSwap(chatId) {
       );
       userStates[chatId].sellTokensList = null;
     }
-    const { loaderMessage, interval } = await animateLoader(chatId);
+    await animateLoader(chatId);
     await axios
       .post(`${API_URL}/solanaBalance`, {
         chatId: chatId,
       })
       .then(async (res) => {
-        clearInterval(interval);
-        await bot.deleteMessage(chatId, loaderMessage.message_id);
+        if (userStates[chatId]?.loaderMessage) {
+          await bot.deleteMessage(
+            chatId,
+            userStates[chatId]?.loaderMessage?.message_id
+          );
+          userStates[chatId].loaderMessage = null;
+        }
         userStates[chatId].allSellSolanaToken = res?.data?.data;
         userStates[chatId].allSellSolanaToken.unshift({
           mint: "So11111111111111111111111111111111111111112",
@@ -1056,29 +1101,42 @@ const withrawblockchainKeyboard = {
   ],
 };
 // animation function
+// const animateLoader = async (chatId) => {
+//   try {
+//     const frames = ["⏳", "⌛", "⏳", "⌛"];
+//     let index = 0;
+//     const loaderMessage = await bot.sendMessage(
+//       chatId,
+//       frames[index % frames.length]
+//     );
+//     const interval = setInterval(async () => {
+//       index++;
+//       try {
+//         await bot.editMessageText(frames[index % frames.length], {
+//           chat_id: chatId,
+//           message_id: loaderMessage.message_id,
+//         });
+//       } catch (error) {
+//         console.error("Error updating loader message:", error);
+//       }
+//     }, 500);
+//     return { loaderMessage, interval };
+//   } catch (error) {}
+// };
 const animateLoader = async (chatId) => {
   try {
-    const frames = ["⏳", "⌛", "⏳", "⌛"];
-    let index = 0;
-    const loaderMessage = await bot.sendMessage(
+    const animationPath = "./animation.tgs"; // Path to your animated sticker file in TGS format
+
+    // Send the animated sticker
+    userStates[chatId].loaderMessage = await bot.sendSticker(
       chatId,
-      frames[index % frames.length]
+      animationPath
     );
-    const interval = setInterval(async () => {
-      index++;
-      try {
-        await bot.editMessageText(frames[index % frames.length], {
-          chat_id: chatId,
-          message_id: loaderMessage.message_id,
-        });
-      } catch (error) {
-        clearInterval(interval); // Ensure the interval is cleared on error
-        console.error("Error updating loader message:", error);
-      }
-    }, 500);
-    return { loaderMessage, interval };
-  } catch (error) {}
+  } catch (error) {
+    console.error("Error sending loader animation:", error);
+  }
 };
+
 // Email Validation
 const isValidEmail = (email) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -1389,7 +1447,7 @@ async function solanaSwapHandle(chatId, input, output, amount, method, desBot) {
     );
   } else {
     try {
-      const { loaderMessage, interval } = await animateLoader(chatId);
+      await animateLoader(chatId);
       await axios
         .post(`${API_URL}/solanaSwap`, {
           input,
@@ -1400,9 +1458,14 @@ async function solanaSwapHandle(chatId, input, output, amount, method, desBot) {
           method,
         })
         .then(async (response) => {
+          if (userStates[chatId]?.loaderMessage) {
+            await bot.deleteMessage(
+              chatId,
+              userStates[chatId]?.loaderMessage?.message_id
+            );
+            userStates[chatId].loaderMessage = null;
+          }
           resetUserState(chatId);
-          clearInterval(interval);
-          await bot.deleteMessage(chatId, loaderMessage.message_id);
           if (response?.data?.status) {
             await bot.sendMessage(chatId, `✅ Transaction successful!`);
             await bot.sendMessage(
@@ -1418,9 +1481,14 @@ async function solanaSwapHandle(chatId, input, output, amount, method, desBot) {
           }
         })
         .catch(async (err) => {
+          if (userStates[chatId]?.loaderMessage) {
+            await bot.deleteMessage(
+              chatId,
+              userStates[chatId]?.loaderMessage?.message_id
+            );
+            userStates[chatId].loaderMessage = null;
+          }
           resetUserState(chatId);
-          clearInterval(interval);
-          await bot.deleteMessage(chatId, loaderMessage.message_id);
           await bot.sendMessage(
             chatId,
             `🔴due to some reason you transaction failed please try again later!!`
@@ -1466,7 +1534,7 @@ async function evmSwapHandle(amount, chatId, method) {
     );
   } else {
     try {
-      const { loaderMessage, interval } = await animateLoader(chatId);
+      await animateLoader(chatId);
       const chainName =
         userStates[chatId]?.network == "ether"
           ? "ethereum"
@@ -1485,9 +1553,14 @@ async function evmSwapHandle(amount, chatId, method) {
         },
       })
         .then(async (response) => {
+          if (userStates[chatId]?.loaderMessage) {
+            await bot.deleteMessage(
+              chatId,
+              userStates[chatId]?.loaderMessage?.message_id
+            );
+            userStates[chatId].loaderMessage = null;
+          }
           resetUserState(chatId);
-          clearInterval(interval);
-          await bot.deleteMessage(chatId, loaderMessage.message_id);
           if (response?.data?.status) {
             await bot.sendMessage(chatId, `✅ ${response?.data?.message}`);
             return await bot.sendMessage(chatId, response?.data?.txUrl);
@@ -1496,9 +1569,14 @@ async function evmSwapHandle(amount, chatId, method) {
           }
         })
         .catch(async (error) => {
+          if (userStates[chatId]?.loaderMessage) {
+            await bot.deleteMessage(
+              chatId,
+              userStates[chatId]?.loaderMessage?.message_id
+            );
+            userStates[chatId].loaderMessage = null;
+          }
           resetUserState(chatId);
-          clearInterval(interval);
-          await bot.deleteMessage(chatId, loaderMessage.message_id);
           await bot.sendMessage(
             chatId,
             `🔴 due to some reason you transaction failed!!`
@@ -1537,7 +1615,7 @@ async function evmSellHandle(amount, chatId) {
       }
     );
   } else {
-    const { loaderMessage, interval } = await animateLoader(chatId);
+    await animateLoader(chatId);
     const chainName =
       userStates[chatId]?.network == "ether"
         ? "ethereum"
@@ -1553,8 +1631,13 @@ async function evmSellHandle(amount, chatId) {
         method: "sell",
       })
       .then(async (res) => {
-        clearInterval(interval);
-        await bot.deleteMessage(chatId, loaderMessage.message_id);
+        if (userStates[chatId]?.loaderMessage) {
+          await bot.deleteMessage(
+            chatId,
+            userStates[chatId]?.loaderMessage?.message_id
+          );
+          userStates[chatId].loaderMessage = null;
+        }
         resetUserState(chatId);
         if (res?.data?.status) {
           await bot.sendMessage(chatId, `✅ ${res?.data?.message}`);
@@ -1564,9 +1647,14 @@ async function evmSellHandle(amount, chatId) {
         }
       })
       .catch(async (err) => {
+        if (userStates[chatId]?.loaderMessage) {
+          await bot.deleteMessage(
+            chatId,
+            userStates[chatId]?.loaderMessage?.message_id
+          );
+          userStates[chatId].loaderMessage = null;
+        }
         resetUserState(chatId);
-        clearInterval(interval);
-        await bot.deleteMessage(chatId, loaderMessage.message_id);
         return await bot.sendMessage(chatId, `🔴 ${err?.message}`);
       });
   }
@@ -1600,7 +1688,7 @@ async function evmSellHandlePercentage(amount, chatId) {
       }
     );
   } else {
-    const { loaderMessage, interval } = await animateLoader(chatId);
+    await animateLoader(chatId);
     await axios
       .post(`${API_URL}/EVMswap`, {
         tokenIn: userStates[chatId]?.selectedSellToken?.tokenAddress,
@@ -1612,8 +1700,13 @@ async function evmSellHandlePercentage(amount, chatId) {
         method: "sell",
       })
       .then(async (res) => {
-        clearInterval(interval);
-        await bot.deleteMessage(chatId, loaderMessage.message_id);
+        if (userStates[chatId]?.loaderMessage) {
+          await bot.deleteMessage(
+            chatId,
+            userStates[chatId]?.loaderMessage?.message_id
+          );
+          userStates[chatId].loaderMessage = null;
+        }
         resetUserState(chatId);
         if (res?.data?.status) {
           await bot.sendMessage(chatId, `✅ ${res?.data?.message}`);
@@ -1623,9 +1716,14 @@ async function evmSellHandlePercentage(amount, chatId) {
         }
       })
       .catch(async (err) => {
+        if (userStates[chatId]?.loaderMessage) {
+          await bot.deleteMessage(
+            chatId,
+            userStates[chatId]?.loaderMessage?.message_id
+          );
+          userStates[chatId].loaderMessage = null;
+        }
         resetUserState(chatId);
-        clearInterval(interval);
-        await bot.deleteMessage(chatId, loaderMessage.message_id);
         return await bot.sendMessage(chatId, `🔴 ${err?.message}`);
       });
   }
@@ -1666,7 +1764,7 @@ async function solanaSellHandle(chatId) {
       }
     );
   } else {
-    const { loaderMessage, interval } = await animateLoader(chatId);
+    await animateLoader(chatId);
     try {
       await axios
         .post(`${API_URL}/solanaSwap`, {
@@ -1677,8 +1775,13 @@ async function solanaSellHandle(chatId) {
           method: "sell",
         })
         .then(async (res) => {
-          clearInterval(interval);
-          await bot.deleteMessage(chatId, loaderMessage.message_id);
+          if (userStates[chatId]?.loaderMessage) {
+            await bot.deleteMessage(
+              chatId,
+              userStates[chatId]?.loaderMessage?.message_id
+            );
+            userStates[chatId].loaderMessage = null;
+          }
           if (res?.data?.status) {
             resetUserState(chatId);
             await bot.sendMessage(chatId, "✅ Transaction Successfull!!");
@@ -1692,15 +1795,25 @@ async function solanaSellHandle(chatId) {
           }
         })
         .catch(async (err) => {
+          if (userStates[chatId]?.loaderMessage) {
+            await bot.deleteMessage(
+              chatId,
+              userStates[chatId]?.loaderMessage?.message_id
+            );
+            userStates[chatId].loaderMessage = null;
+          }
           resetUserState(chatId);
-          clearInterval(interval);
-          await bot.deleteMessage(chatId, loaderMessage.message_id);
           return await bot.sendMessage(chatId, err?.message);
         });
     } catch (error) {
+      if (userStates[chatId]?.loaderMessage) {
+        await bot.deleteMessage(
+          chatId,
+          userStates[chatId]?.loaderMessage?.message_id
+        );
+        userStates[chatId].loaderMessage = null;
+      }
       resetUserState(chatId);
-      clearInterval(interval);
-      await bot.deleteMessage(chatId, loaderMessage.message_id);
       console.log("🚀 ~ solanaSellHandle ~ error:", error);
       await bot.sendMessage(
         chatId,
@@ -1741,7 +1854,7 @@ async function solanaSellHandlePosition(chatId) {
       }
     );
   } else {
-    const { loaderMessage, interval } = await animateLoader(chatId);
+    await animateLoader(chatId);
     try {
       await axios
         .post(`${API_URL}/solanaSwap`, {
@@ -1752,8 +1865,13 @@ async function solanaSellHandlePosition(chatId) {
           method: "sell",
         })
         .then(async (res) => {
-          clearInterval(interval);
-          await bot.deleteMessage(chatId, loaderMessage.message_id);
+          if (userStates[chatId]?.loaderMessage) {
+            await bot.deleteMessage(
+              chatId,
+              userStates[chatId]?.loaderMessage?.message_id
+            );
+            userStates[chatId].loaderMessage = null;
+          }
           if (res?.data?.status) {
             resetUserState(chatId);
             await bot.sendMessage(chatId, "✅ Transaction Successfull!!");
@@ -1767,15 +1885,25 @@ async function solanaSellHandlePosition(chatId) {
           }
         })
         .catch(async (err) => {
+          if (userStates[chatId]?.loaderMessage) {
+            await bot.deleteMessage(
+              chatId,
+              userStates[chatId]?.loaderMessage?.message_id
+            );
+            userStates[chatId].loaderMessage = null;
+          }
           resetUserState(chatId);
-          clearInterval(interval);
-          await bot.deleteMessage(chatId, loaderMessage.message_id);
           return await bot.sendMessage(chatId, err?.message);
         });
     } catch (error) {
+      if (userStates[chatId]?.loaderMessage) {
+        await bot.deleteMessage(
+          chatId,
+          userStates[chatId]?.loaderMessage?.message_id
+        );
+        userStates[chatId].loaderMessage = null;
+      }
       resetUserState(chatId);
-      clearInterval(interval);
-      await bot.deleteMessage(chatId, loaderMessage.message_id);
       console.log("🚀 ~ solanaSellHandle ~ error:", error);
       await bot.sendMessage(
         chatId,
@@ -1926,15 +2054,20 @@ async function fetchTokenBalances(chatId, chainId, chain, isUser) {
 
 // Function to fetch wallet balances
 async function fetchWalletTokenBalances(chatId, chainId, network) {
-  const { loaderMessage, interval } = await animateLoader(chatId);
+  await animateLoader(chatId);
   try {
     const response = await axios.post(`${API_URL}/fetchbalance`, {
       chatId: chatId,
       chainId: chainId,
       network,
     });
-    clearInterval(interval);
-    await bot.deleteMessage(chatId, loaderMessage?.message_id);
+    if (userStates[chatId]?.loaderMessage) {
+      await bot.deleteMessage(
+        chatId,
+        userStates[chatId]?.loaderMessage?.message_id
+      );
+      userStates[chatId].loaderMessage = null;
+    }
 
     const balances = response?.data?.data;
     const tokens = await balances
@@ -1997,8 +2130,13 @@ async function fetchWalletTokenBalances(chatId, chainId, network) {
       });
     }
   } catch (error) {
-    clearInterval(interval);
-    await bot.deleteMessage(chatId, loaderMessage.message_id);
+    if (userStates[chatId]?.loaderMessage) {
+      await bot.deleteMessage(
+        chatId,
+        userStates[chatId]?.loaderMessage?.message_id
+      );
+      userStates[chatId].loaderMessage = null;
+    }
     console.error("Error fetching balance:", error.message);
     await bot.sendMessage(
       chatId,
@@ -2623,7 +2761,7 @@ https://dexscreener.com/${userStates[chatId]?.network}/${
 
 async function handleDynamicSellSolana(chatId, token) {
   console.log("🚀 ~ handleDynamicSellSolana ~ token:", token);
-  const { loaderMessage, interval } = await animateLoader(chatId);
+  await animateLoader(chatId);
   try {
     if (userStates[chatId]?.sellTokensList) {
       await bot.deleteMessage(
@@ -2651,8 +2789,13 @@ async function handleDynamicSellSolana(chatId, token) {
           chatId,
         })
         .then(async (res) => {
-          clearInterval(interval);
-          await bot.deleteMessage(chatId, loaderMessage.message_id);
+          if (userStates[chatId]?.loaderMessage) {
+            await bot.deleteMessage(
+              chatId,
+              userStates[chatId]?.loaderMessage?.message_id
+            );
+            userStates[chatId].loaderMessage = null;
+          }
           userStates[chatId].sellSolanaTokensDex = res?.data?.data;
           const market_cap =
             res?.data?.data?.mcap &&
@@ -2835,8 +2978,13 @@ https://dexscreener.com/solana/${
         })
         .catch(async (err) => {
           console.log("🚀 ~ .then ~ err:", err?.message);
-          clearInterval(interval);
-          await bot.deleteMessage(chatId, loaderMessage.message_id);
+          if (userStates[chatId]?.loaderMessage) {
+            await bot.deleteMessage(
+              chatId,
+              userStates[chatId]?.loaderMessage?.message_id
+            );
+            userStates[chatId].loaderMessage = null;
+          }
           await bot.sendMessage(
             chatId,
             "🔴 somthing wen wrong please try again later!!"
@@ -3232,7 +3380,7 @@ async function handlePositions(chatId, chainId, network) {
     );
     userStates[chatId].evmSellMessage = null;
   }
-  const { loaderMessage, interval } = await animateLoader(chatId);
+  await animateLoader(chatId);
   try {
     userStates[chatId].network = network;
     userStates[chatId].flag = chainId;
@@ -3240,8 +3388,13 @@ async function handlePositions(chatId, chainId, network) {
       chatId: chatId,
       chainId: chainId,
     });
-    clearInterval(interval);
-    await bot.deleteMessage(chatId, loaderMessage?.message_id);
+    if (userStates[chatId]?.loaderMessage) {
+      await bot.deleteMessage(
+        chatId,
+        userStates[chatId]?.loaderMessage?.message_id
+      );
+      userStates[chatId].loaderMessage = null;
+    }
 
     if (response?.data?.status) {
       const balances = response?.data?.data;
@@ -3355,15 +3508,20 @@ async function handleSolanaPosition(chatId) {
       );
       userStates[chatId].evmSellMessage = null;
     }
-    const { loaderMessage, interval } = await animateLoader(chatId);
+    await animateLoader(chatId);
     try {
       await axios
         .post(`${API_URL}/getSolanaPositions`, {
           chatId: chatId,
         })
         .then(async (response) => {
-          clearInterval(interval);
-          await bot.deleteMessage(chatId, loaderMessage?.message_id);
+          if (userStates[chatId]?.loaderMessage) {
+            await bot.deleteMessage(
+              chatId,
+              userStates[chatId]?.loaderMessage?.message_id
+            );
+            userStates[chatId].loaderMessage = null;
+          }
           if (response?.data?.status && response?.data?.data) {
             const balances = response?.data?.data?.allTokenPrice;
             userStates[chatId].nativeBalance = response?.data?.data?.solanaInfo;
@@ -3468,8 +3626,13 @@ ${balance?.price_at_invested < balance?.price ? "🟩" : "🟥"} PNL SOL : ${
           }
         });
     } catch (error) {
-      // clearInterval(interval);
-      //   await bot.deleteMessage(chatId, loaderMessage.message_id);
+      if (userStates[chatId]?.loaderMessage) {
+        await bot.deleteMessage(
+          chatId,
+          userStates[chatId]?.loaderMessage?.message_id
+        );
+        userStates[chatId].loaderMessage = null;
+      }
       console.error("Error fetching balance:", error.message);
     }
   } catch (error) {
@@ -4969,19 +5132,24 @@ async function leaderboardHandler(chatId) {
       );
       userStates[chatId].leaderTransactionMes = null;
     }
-    const { loaderMessage, interval } = await animateLoader(chatId);
+    await animateLoader(chatId);
     await axios
       .get(`${API_URL}/transactionBoardList`)
       .then(async (res) => {
-        clearInterval(interval);
-        await bot.deleteMessage(chatId, loaderMessage.message_id);
+        if (userStates[chatId]?.loaderMessage) {
+          await bot.deleteMessage(
+            chatId,
+            userStates[chatId]?.loaderMessage?.message_id
+          );
+          userStates[chatId].loaderMessage = null;
+        }
         if (res?.data?.status) {
           userStates[chatId].leaderBoardData = res?.data?.data;
           let transactionData = res?.data?.data?.daily;
           let message = "";
           message += `🏆 <b>TOP VOLUME TRADER</b> :\n
 <b>Rules:</b>
-🏆 The Top Ranking will be updated in real-time and will display the rank for the current day.\n\n`;
+🏆 Real-time Rankings: Stay in the loop and see your rank soar throughout the day! 💹\n\n`;
           if (transactionData?.length > 0) {
             message += `<b>No</b> | <b>Name</b> | <b>Points</b>
 🥇: ${transactionData[0]?.name} - ${Number(
@@ -5051,8 +5219,13 @@ async function leaderboardHandler(chatId) {
       })
       .catch(async (err) => {
         console.log("🚀 ~ awaitaxios.get ~ err:", err?.message);
-        clearInterval(interval);
-        await bot.deleteMessage(chatId, loaderMessage.message_id);
+        if (userStates[chatId]?.loaderMessage) {
+          await bot.deleteMessage(
+            chatId,
+            userStates[chatId]?.loaderMessage?.message_id
+          );
+          userStates[chatId].loaderMessage = null;
+        }
         bot.sendMessage(
           chatId,
           "🔴 Somthing has been wrong please try again later!!"
@@ -5082,11 +5255,7 @@ async function leaderboardDateWiseChnages(chatId, date) {
     let message = "";
     message += `🏆 <b>TOP VOLUME TRADER</b> :\n
 <b>Rules:</b>
-🏆 The Top Ranking will be updated every hour and will display the rank for ${
-      date == "allTime"
-        ? "allTime"
-        : `the current ${formateData[date].duration}`
-    }.\n\n`;
+🏆 Real-time Rankings: Stay in the loop and see your rank soar throughout the day! 💹\n\n`;
     if (transactionData?.length > 0) {
       message += `<b>No</b> | <b>Name</b> | <b>Points</b>
 🥇: ${transactionData[0]?.name} - ${Number(
@@ -5306,7 +5475,7 @@ bot.on("message", async (msg) => {
               userStates[chatId]?.swapToTokenMessage?.message_id
             );
             await bot.deleteMessage(chatId, msg.message_id);
-            const { loaderMessage, interval } = await animateLoader(chatId);
+            await animateLoader(chatId);
             try {
               const tokenDetails = await userStates[
                 chatId
@@ -5325,8 +5494,13 @@ bot.on("message", async (msg) => {
                     chatId,
                   })
                   .then(async (res) => {
-                    clearInterval(interval);
-                    await bot.deleteMessage(chatId, loaderMessage.message_id);
+                    if (userStates[chatId]?.loaderMessage) {
+                      await bot.deleteMessage(
+                        chatId,
+                        userStates[chatId]?.loaderMessage?.message_id
+                      );
+                      userStates[chatId].loaderMessage = null;
+                    }
                     userStates[chatId].selectedSellToken = res?.data?.data;
                     const market_cap =
                       res?.data?.data?.mcap &&
@@ -5480,8 +5654,13 @@ https://dexscreener.com/solana/${
                   })
                   .catch(async (err) => {
                     console.log("🚀 ~ .then ~ err:", err?.message);
-                    clearInterval(interval);
-                    await bot.deleteMessage(chatId, loaderMessage.message_id);
+                    if (userStates[chatId]?.loaderMessage) {
+                      await bot.deleteMessage(
+                        chatId,
+                        userStates[chatId]?.loaderMessage?.message_id
+                      );
+                      userStates[chatId].loaderMessage = null;
+                    }
                     await bot.sendMessage(
                       chatId,
                       "🔴 somthing wen wrong please try again later!!"
@@ -5489,8 +5668,13 @@ https://dexscreener.com/solana/${
                   });
               }
             } catch (error) {
-              clearInterval(interval);
-              await bot.deleteMessage(chatId, loaderMessage.message_id);
+              if (userStates[chatId]?.loaderMessage) {
+                await bot.deleteMessage(
+                  chatId,
+                  userStates[chatId]?.loaderMessage?.message_id
+                );
+                userStates[chatId].loaderMessage = null;
+              }
               console.log(
                 "🚀 ~ handleDynamicSellToken ~ error:",
                 error?.message
@@ -6556,7 +6740,7 @@ ${
             resetUserState(chatId);
           } else {
             state.amount = Number(text);
-            const { loaderMessage, interval } = await animateLoader(chatId);
+            await animateLoader(chatId);
             if (state.flag == 19999) {
               await axios
                 .post(`${API_URL}/solanaSwap`, {
@@ -6567,8 +6751,13 @@ ${
                   method: "swap",
                 })
                 .then(async (res) => {
-                  clearInterval(interval);
-                  await bot.deleteMessage(chatId, loaderMessage.message_id);
+                  if (userStates[chatId]?.loaderMessage) {
+                    await bot.deleteMessage(
+                      chatId,
+                      userStates[chatId]?.loaderMessage?.message_id
+                    );
+                    userStates[chatId].loaderMessage = null;
+                  }
                   if (res?.data?.status) {
                     resetUserState(chatId);
                     await bot.sendMessage(
@@ -6589,9 +6778,14 @@ ${
                 })
                 .catch(async (err) => {
                   console.log("🚀 ~ bot.on ~ err:", err?.message);
+                  if (userStates[chatId]?.loaderMessage) {
+                    await bot.deleteMessage(
+                      chatId,
+                      userStates[chatId]?.loaderMessage?.message_id
+                    );
+                    userStates[chatId].loaderMessage = null;
+                  }
                   resetUserState(chatId);
-                  clearInterval(interval);
-                  await bot.deleteMessage(chatId, loaderMessage.message_id);
                   await bot.sendMessage(
                     chatId,
                     "🔴 somthing has been wrong please try again later!!!"
@@ -6610,8 +6804,13 @@ ${
                 })
                 .then(async (res) => {
                   // await deleteAllmessages(chatId);
-                  clearInterval(interval);
-                  await bot.deleteMessage(chatId, loaderMessage.message_id);
+                  if (userStates[chatId]?.loaderMessage) {
+                    await bot.deleteMessage(
+                      chatId,
+                      userStates[chatId]?.loaderMessage?.message_id
+                    );
+                    userStates[chatId].loaderMessage = null;
+                  }
                   resetUserState(chatId);
                   if (res?.data?.status) {
                     await bot.sendMessage(chatId, `✅ ${res?.data?.message}`);
@@ -6624,10 +6823,14 @@ ${
                   }
                 })
                 .catch(async (err) => {
-                  // await deleteAllmessages(chatId);
+                  if (userStates[chatId]?.loaderMessage) {
+                    await bot.deleteMessage(
+                      chatId,
+                      userStates[chatId]?.loaderMessage?.message_id
+                    );
+                    userStates[chatId].loaderMessage = null;
+                  }
                   resetUserState(chatId);
-                  clearInterval(interval);
-                  await bot.deleteMessage(chatId, loaderMessage.message_id);
                   return await bot.sendMessage(chatId, err?.message);
                 });
             }
@@ -6654,7 +6857,7 @@ ${
           ) {
             resetUserState(chatId);
           } else {
-            const { loaderMessage, interval } = await animateLoader(chatId);
+            await animateLoader(chatId);
             try {
               if (state?.flag == 19999) {
                 if (userStates[chatId]?.solanaBuyMessage) {
@@ -6677,8 +6880,13 @@ ${
                     chatId,
                   })
                   .then(async (res) => {
-                    clearInterval(interval);
-                    await bot.deleteMessage(chatId, loaderMessage.message_id);
+                    if (userStates[chatId]?.loaderMessage) {
+                      await bot.deleteMessage(
+                        chatId,
+                        userStates[chatId]?.loaderMessage?.message_id
+                      );
+                      userStates[chatId].loaderMessage = null;
+                    }
                     if (res?.data?.status) {
                       state.buyTokenData = res?.data?.data;
                       state.toBuyAddresName = res?.data?.data?.name;
@@ -6806,8 +7014,13 @@ https://dexscreener.com/solana/${state.toToken}`,
                         }
                       );
                     } else {
-                      clearInterval(interval);
-                      await bot.deleteMessage(chatId, loaderMessage.message_id);
+                      if (userStates[chatId]?.loaderMessage) {
+                        await bot.deleteMessage(
+                          chatId,
+                          userStates[chatId]?.loaderMessage?.message_id
+                        );
+                        userStates[chatId].loaderMessage = null;
+                      }
                       resetUserState(chatId);
                       await bot.sendMessage(
                         chatId,
@@ -6829,8 +7042,13 @@ https://dexscreener.com/solana/${state.toToken}`,
                   })
                   .catch(async (error) => {
                     console.log("🚀 ~ bot.on ~ error:", error?.message);
-                    clearInterval(interval);
-                    await bot.deleteMessage(chatId, loaderMessage.message_id);
+                    if (userStates[chatId]?.loaderMessage) {
+                      await bot.deleteMessage(
+                        chatId,
+                        userStates[chatId]?.loaderMessage?.message_id
+                      );
+                      userStates[chatId].loaderMessage = null;
+                    }
                     await bot.sendMessage(
                       chatId,
                       "🔴 somthing has been wrong while fetching token price!!"
@@ -6860,8 +7078,13 @@ https://dexscreener.com/solana/${state.toToken}`,
                     network: state?.network,
                   })
                   .then(async (res) => {
-                    clearInterval(interval);
-                    await bot.deleteMessage(chatId, loaderMessage.message_id);
+                    if (userStates[chatId]?.loaderMessage) {
+                      await bot.deleteMessage(
+                        chatId,
+                        userStates[chatId]?.loaderMessage?.message_id
+                      );
+                      userStates[chatId].loaderMessage = null;
+                    }
                     if (res?.data?.status) {
                       state.evmBuyMessageDetail = res?.data?.data;
                       state.toBuyAddresName = res?.data?.data?.symbol;
@@ -7033,8 +7256,13 @@ https://dexscreener.com/${
                         }
                       );
                     } else {
-                      clearInterval(interval);
-                      await bot.deleteMessage(chatId, loaderMessage.message_id);
+                      if (userStates[chatId]?.loaderMessage) {
+                        await bot.deleteMessage(
+                          chatId,
+                          userStates[chatId]?.loaderMessage?.message_id
+                        );
+                        userStates[chatId].loaderMessage = null;
+                      }
                       resetUserState(chatId);
                       await bot.sendMessage(
                         chatId,
@@ -8212,7 +8440,7 @@ https://dexscreener.com/solana/${
             resetUserState(chatId);
           } else {
             state.amount = Number(text);
-            const { loaderMessage, interval } = await animateLoader(chatId);
+            await animateLoader(chatId);
             if (state.flag == 19999) {
               response = await axios
                 .post(`${API_URL}/solanaSwap`, {
@@ -8223,8 +8451,13 @@ https://dexscreener.com/solana/${
                   method: "sell",
                 })
                 .then(async (res) => {
-                  clearInterval(interval);
-                  await bot.deleteMessage(chatId, loaderMessage.message_id);
+                  if (userStates[chatId]?.loaderMessage) {
+                    await bot.deleteMessage(
+                      chatId,
+                      userStates[chatId]?.loaderMessage?.message_id
+                    );
+                    userStates[chatId].loaderMessage = null;
+                  }
                   if (res?.data?.status) {
                     resetUserState(chatId);
                     await bot.sendMessage(
@@ -8241,9 +8474,14 @@ https://dexscreener.com/solana/${
                   }
                 })
                 .catch(async (err) => {
+                  if (userStates[chatId]?.loaderMessage) {
+                    await bot.deleteMessage(
+                      chatId,
+                      userStates[chatId]?.loaderMessage?.message_id
+                    );
+                    userStates[chatId].loaderMessage = null;
+                  }
                   resetUserState(chatId);
-                  clearInterval(interval);
-                  await bot.deleteMessage(chatId, loaderMessage.message_id);
                   return await bot.sendMessage(chatId, err?.message);
                 });
             } else {
@@ -8258,8 +8496,13 @@ https://dexscreener.com/solana/${
                   method: "sell",
                 })
                 .then(async (res) => {
-                  clearInterval(interval);
-                  await bot.deleteMessage(chatId, loaderMessage.message_id);
+                  if (userStates[chatId]?.loaderMessage) {
+                    await bot.deleteMessage(
+                      chatId,
+                      userStates[chatId]?.loaderMessage?.message_id
+                    );
+                    userStates[chatId].loaderMessage = null;
+                  }
                   resetUserState(chatId);
                   if (res?.data?.status) {
                     await bot.sendMessage(chatId, `✅ ${res?.data?.message}`);
@@ -8272,9 +8515,14 @@ https://dexscreener.com/solana/${
                   }
                 })
                 .catch(async (err) => {
+                  if (userStates[chatId]?.loaderMessage) {
+                    await bot.deleteMessage(
+                      chatId,
+                      userStates[chatId]?.loaderMessage?.message_id
+                    );
+                    userStates[chatId].loaderMessage = null;
+                  }
                   resetUserState(chatId);
-                  clearInterval(interval);
-                  await bot.deleteMessage(chatId, loaderMessage.message_id);
                   return await bot.sendMessage(chatId, err?.message);
                 });
             }
@@ -8774,7 +9022,7 @@ https://dexscreener.com/${
               userStates[chatId]?.customAmountTransfer?.message_id
             );
             await bot.deleteMessage(chatId, msg.message_id);
-            const { loaderMessage, interval } = await animateLoader(chatId);
+            await animateLoader(chatId);
             try {
               if (userStates[chatId]?.sellTokensList) {
                 await bot.deleteMessage(
@@ -8800,8 +9048,13 @@ https://dexscreener.com/${
                     chatId,
                   })
                   .then(async (res) => {
-                    clearInterval(interval);
-                    await bot.deleteMessage(chatId, loaderMessage.message_id);
+                    if (userStates[chatId]?.loaderMessage) {
+                      await bot.deleteMessage(
+                        chatId,
+                        userStates[chatId]?.loaderMessage?.message_id
+                      );
+                      userStates[chatId].loaderMessage = null;
+                    }
                     userStates[chatId].selectedSellToken = res?.data?.data;
                     const market_cap =
                       res?.data?.data?.mcap &&
@@ -8926,8 +9179,13 @@ https://dexscreener.com/solana/${
                   })
                   .catch(async (err) => {
                     console.log("🚀 ~ .then ~ err:", err?.message);
-                    clearInterval(interval);
-                    await bot.deleteMessage(chatId, loaderMessage.message_id);
+                    if (userStates[chatId]?.loaderMessage) {
+                      await bot.deleteMessage(
+                        chatId,
+                        userStates[chatId]?.loaderMessage?.message_id
+                      );
+                      userStates[chatId].loaderMessage = null;
+                    }
                     await bot.sendMessage(
                       chatId,
                       "🔴 somthing wen wrong please try again later!!"
@@ -8935,8 +9193,13 @@ https://dexscreener.com/solana/${
                   });
               }
             } catch (error) {
-              clearInterval(interval);
-              await bot.deleteMessage(chatId, loaderMessage.message_id);
+              if (userStates[chatId]?.loaderMessage) {
+                await bot.deleteMessage(
+                  chatId,
+                  userStates[chatId]?.loaderMessage?.message_id
+                );
+                userStates[chatId].loaderMessage = null;
+              }
               console.log(
                 "🚀 ~ handleDynamicSellToken ~ error:",
                 error?.message
@@ -9279,7 +9542,7 @@ https://dexscreener.com/solana/${
             resetUserState(chatId);
           } else {
             state.amount = Number(text);
-            const { loaderMessage, interval } = await animateLoader(chatId);
+            await animateLoader(chatId);
             if (state.flag == 19999) {
               await axios({
                 url: `${API_URL}/transferSolanaToken`,
@@ -9292,9 +9555,14 @@ https://dexscreener.com/solana/${
                 },
               })
                 .then(async (res) => {
+                  if (userStates[chatId]?.loaderMessage) {
+                    await bot.deleteMessage(
+                      chatId,
+                      userStates[chatId]?.loaderMessage?.message_id
+                    );
+                    userStates[chatId].loaderMessage = null;
+                  }
                   resetUserState(chatId);
-                  clearInterval(interval);
-                  await bot.deleteMessage(chatId, loaderMessage.message_id);
                   if (res?.data?.status) {
                     await bot.sendMessage(chatId, `✅ ${res?.data?.message}`);
                     await bot.sendMessage(
@@ -9306,9 +9574,14 @@ https://dexscreener.com/solana/${
                   }
                 })
                 .catch(async (error) => {
+                  if (userStates[chatId]?.loaderMessage) {
+                    await bot.deleteMessage(
+                      chatId,
+                      userStates[chatId]?.loaderMessage?.message_id
+                    );
+                    userStates[chatId].loaderMessage = null;
+                  }
                   resetUserState(chatId);
-                  clearInterval(interval);
-                  await bot.deleteMessage(chatId, loaderMessage.message_id);
                   await bot.sendMessage(
                     chatId,
                     "due to high transaction volume in solana you transaction has been faild!!"
@@ -9327,8 +9600,13 @@ https://dexscreener.com/solana/${
                 },
               })
                 .then(async (res) => {
-                  clearInterval(interval);
-                  await bot.deleteMessage(chatId, loaderMessage.message_id);
+                  if (userStates[chatId]?.loaderMessage) {
+                    await bot.deleteMessage(
+                      chatId,
+                      userStates[chatId]?.loaderMessage?.message_id
+                    );
+                    userStates[chatId].loaderMessage = null;
+                  }
                   if (res?.data?.status) {
                     await bot.sendMessage(chatId, `✅ ${res?.data?.message}`);
                     await bot.sendMessage(chatId, res?.data?.txUrl);
@@ -9340,8 +9618,13 @@ https://dexscreener.com/solana/${
                   }
                 })
                 .catch(async (error) => {
-                  clearInterval(interval);
-                  await bot.deleteMessage(chatId, loaderMessage.message_id);
+                  if (userStates[chatId]?.loaderMessage) {
+                    await bot.deleteMessage(
+                      chatId,
+                      userStates[chatId]?.loaderMessage?.message_id
+                    );
+                    userStates[chatId].loaderMessage = null;
+                  }
                   await bot.sendMessage(
                     chatId,
                     "somthing has been wrong please try again latter!!"
@@ -9387,7 +9670,7 @@ https://dexscreener.com/solana/${
             resetUserState(chatId);
           } else {
             state.password = text;
-            const { loaderMessage, interval } = await animateLoader(chatId);
+            await animateLoader(chatId);
             await axios
               .post(`${API_URL}/login`, {
                 email: state?.email,
@@ -9395,9 +9678,14 @@ https://dexscreener.com/solana/${
                 chatId,
               })
               .then(async (response) => {
+                if (userStates[chatId]?.loaderMessage) {
+                  await bot.deleteMessage(
+                    chatId,
+                    userStates[chatId]?.loaderMessage?.message_id
+                  );
+                  userStates[chatId].loaderMessage = null;
+                }
                 resetUserState(chatId);
-                clearInterval(interval);
-                await bot.deleteMessage(chatId, loaderMessage.message_id);
                 if (response.data.status === true) {
                   await bot.sendMessage(chatId, `✅ Login successfull!`, {
                     reply_markup: {
@@ -9442,9 +9730,14 @@ https://dexscreener.com/solana/${
                 }
               })
               .catch(async (error) => {
+                if (userStates[chatId]?.loaderMessage) {
+                  await bot.deleteMessage(
+                    chatId,
+                    userStates[chatId]?.loaderMessage?.message_id
+                  );
+                  userStates[chatId].loaderMessage = null;
+                }
                 resetUserState(chatId);
-                clearInterval(interval);
-                await bot.deleteMessage(chatId, loaderMessage.message_id);
                 console.error("Error:", error.message);
                 await bot.sendMessage(
                   chatId,
@@ -9789,7 +10082,7 @@ https://dexscreener.com/solana/${
             resetUserState(chatId);
           } else {
             state.otp = text;
-            const { loaderMessage, interval } = await animateLoader(chatId);
+            await animateLoader(chatId);
             await axios
               .post(`${API_URL}/verify`, {
                 email: state?.email,
@@ -9797,8 +10090,13 @@ https://dexscreener.com/solana/${
                 chatId,
               })
               .then(async (res) => {
-                clearInterval(interval);
-                await bot.deleteMessage(chatId, loaderMessage.message_id);
+                if (userStates[chatId]?.loaderMessage) {
+                  await bot.deleteMessage(
+                    chatId,
+                    userStates[chatId]?.loaderMessage?.message_id
+                  );
+                  userStates[chatId].loaderMessage = null;
+                }
                 if (res?.data?.status) {
                   await bot.sendMessage(
                     chatId,
@@ -9939,7 +10237,7 @@ https://dexscreener.com/solana/${
               "password and confirmPassword does not match. Please Re-enter your password"
             );
           }
-          const { loaderMessage, interval } = await animateLoader(chatId);
+          await animateLoader(chatId);
           await axios({
             url: `${API_URL}/resetPassword`,
             method: "post",
@@ -9955,8 +10253,13 @@ https://dexscreener.com/solana/${
             },
           })
             .then(async (res) => {
-              clearInterval(interval);
-              await bot.deleteMessage(chatId, loaderMessage.message_id);
+              if (userStates[chatId]?.loaderMessage) {
+                await bot.deleteMessage(
+                  chatId,
+                  userStates[chatId]?.loaderMessage?.message_id
+                );
+                userStates[chatId].loaderMessage = null;
+              }
               if (res.data.status) {
                 if (state.passwordAction == "forgot") {
                   await bot.sendMessage(chatId, "Reset Password Successfully", {
@@ -10001,8 +10304,13 @@ https://dexscreener.com/solana/${
               }
             })
             .catch(async (e) => {
-              clearInterval(interval);
-              await bot.deleteMessage(chatId, loaderMessage.message_id);
+              if (userStates[chatId]?.loaderMessage) {
+                await bot.deleteMessage(
+                  chatId,
+                  userStates[chatId]?.loaderMessage?.message_id
+                );
+                userStates[chatId].loaderMessage = null;
+              }
               console.log("🚀 ~ bot.on ~ e:", e?.message);
               await bot.sendMessage(chatId, "❌ Something went wrong");
             });
@@ -10260,7 +10568,7 @@ Join our https://t.me/WaveUsers and one of our admins will assist you.
                 count += refferalCount[level]?.length;
               }
             }
-            const indirectRef = count - refferalCount?.level1?.length 
+            const indirectRef = count - refferalCount?.level1?.length;
             await bot.sendMessage(
               chatId,
               `💰 Referral Rewards💰\n
@@ -10276,9 +10584,7 @@ Direct : ${
                 refferalCount?.level1?.length
                   ? refferalCount?.level1?.length
                   : 0
-              } || Indirect : ${
-              indirectRef ? indirectRef:0
-              }\n
+              } || Indirect : ${indirectRef ? indirectRef : 0}\n
 Total Unclaimed : <code>$0</code>
 *ETH : <code>0.000 ($0)</code>
 *SOL : <code>0.000 ($0)</code>
@@ -10301,8 +10607,10 @@ Lifetime Rewards : <code>$0</code>
 *MATIC : <code>0.000 ($0)</code>
 *BLAST : <code>0.000 ($0)</code>\n
 📅 Weekly Stats
-Total Traded Volume USD: <code>$${Number(
+Total Traded Volume USD : <code>$${Number(
                 res?.data?.data?.totalTradeValue
+                  ? res?.data?.data?.totalTradeValue
+                  : 0
               ).toFixed()}</code>
 Volume Left : $10,000\n
 You need to trade at least $10,000 USD by the
@@ -10582,7 +10890,7 @@ end of the week to get a boost in your referral rate.`,
     // -------------------------------------------------- buy referash button solana ------------------------------------------------------
     case "refreshEvmButton":
       try {
-        const { loaderMessage, interval } = await animateLoader(chatId);
+        await animateLoader(chatId);
         if (userStates[chatId]?.flag) {
           if (userStates[chatId]?.solanaBuyMessage) {
             await bot.deleteMessage(
@@ -10607,8 +10915,13 @@ end of the week to get a boost in your referral rate.`,
               network: userStates[chatId]?.network,
             })
             .then(async (res) => {
-              clearInterval(interval);
-              await bot.deleteMessage(chatId, loaderMessage.message_id);
+              if (userStates[chatId]?.loaderMessage) {
+                await bot.deleteMessage(
+                  chatId,
+                  userStates[chatId]?.loaderMessage?.message_id
+                );
+                userStates[chatId].loaderMessage = null;
+              }
               if (res?.data?.status) {
                 userStates[chatId].evmBuyMessageDetail = res?.data?.data;
                 userStates[chatId].toBuyAddresName = res?.data?.data?.symbol;
@@ -10772,8 +11085,13 @@ https://dexscreener.com/${
                   }
                 );
               } else {
-                clearInterval(interval);
-                await bot.deleteMessage(chatId, loaderMessage.message_id);
+                if (userStates[chatId]?.loaderMessage) {
+                  await bot.deleteMessage(
+                    chatId,
+                    userStates[chatId]?.loaderMessage?.message_id
+                  );
+                  userStates[chatId].loaderMessage = null;
+                }
                 resetUserState(chatId);
                 await bot.sendMessage(
                   chatId,
@@ -10783,8 +11101,13 @@ https://dexscreener.com/${
             })
             .catch(async (error) => {
               console.log("🚀 ~ bot.on ~ error:", error?.message);
-              clearInterval(interval);
-              await bot.deleteMessage(chatId, loaderMessage.message_id);
+              if (userStates[chatId]?.loaderMessage) {
+                await bot.deleteMessage(
+                  chatId,
+                  userStates[chatId]?.loaderMessage?.message_id
+                );
+                userStates[chatId].loaderMessage = null;
+              }
               await bot.sendMessage(
                 chatId,
                 "🔴somthing has been wrong while fetching token price!!"
@@ -10801,7 +11124,7 @@ https://dexscreener.com/${
 
     case "refreshButtonBuySolana":
       try {
-        const { loaderMessage, interval } = await animateLoader(chatId);
+        await animateLoader(chatId);
         if (userStates[chatId]?.flag == 19999) {
           if (userStates[chatId]?.solanaBuyMessage) {
             await bot.deleteMessage(
@@ -10823,8 +11146,13 @@ https://dexscreener.com/${
               chatId,
             })
             .then(async (res) => {
-              clearInterval(interval);
-              await bot.deleteMessage(chatId, loaderMessage.message_id);
+              if (userStates[chatId]?.loaderMessage) {
+                await bot.deleteMessage(
+                  chatId,
+                  userStates[chatId]?.loaderMessage?.message_id
+                );
+                userStates[chatId].loaderMessage = null;
+              }
               if (res?.data?.status) {
                 userStates[chatId].buyTokenData = res?.data?.data;
                 userStates[chatId].toBuyAddresName = res?.data?.data?.name;
@@ -10944,8 +11272,13 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
                   }
                 );
               } else {
-                clearInterval(interval);
-                await bot.deleteMessage(chatId, loaderMessage.message_id);
+                if (userStates[chatId]?.loaderMessage) {
+                  await bot.deleteMessage(
+                    chatId,
+                    userStates[chatId]?.loaderMessage?.message_id
+                  );
+                  userStates[chatId].loaderMessage = null;
+                }
                 resetUserState(chatId);
                 await bot.sendMessage(
                   chatId,
@@ -10967,8 +11300,13 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
             })
             .catch(async (error) => {
               console.log("🚀 ~ bot.on ~ error:", error?.message);
-              clearInterval(interval);
-              await bot.deleteMessage(chatId, loaderMessage.message_id);
+              if (userStates[chatId]?.loaderMessage) {
+                await bot.deleteMessage(
+                  chatId,
+                  userStates[chatId]?.loaderMessage?.message_id
+                );
+                userStates[chatId].loaderMessage = null;
+              }
               await bot.sendMessage(
                 chatId,
                 "🔴 somthing has been wrong while fetching token price!!"
@@ -11375,7 +11713,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
           console.log(
             "-------------------------- solana swap-------------------------"
           );
-          const { loaderMessage, interval } = await animateLoader(chatId);
+          await animateLoader(chatId);
           await axios
             .post(`${API_URL}/solanaSwap`, {
               input: userStates[chatId]?.selectedSellToken?.address,
@@ -11385,8 +11723,13 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
               method: "swap",
             })
             .then(async (res) => {
-              clearInterval(interval);
-              await bot.deleteMessage(chatId, loaderMessage.message_id);
+              if (userStates[chatId]?.loaderMessage) {
+                await bot.deleteMessage(
+                  chatId,
+                  userStates[chatId]?.loaderMessage?.message_id
+                );
+                userStates[chatId].loaderMessage = null;
+              }
               if (res?.data?.status) {
                 resetUserState(chatId);
                 await bot.sendMessage(chatId, "✅ Transaction successfull!!");
@@ -11401,9 +11744,14 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
             })
             .catch(async (err) => {
               console.log("🚀 ~ bot.on ~ err:", err?.message);
+              if (userStates[chatId]?.loaderMessage) {
+                await bot.deleteMessage(
+                  chatId,
+                  userStates[chatId]?.loaderMessage?.message_id
+                );
+                userStates[chatId].loaderMessage = null;
+              }
               resetUserState(chatId);
-              clearInterval(interval);
-              await bot.deleteMessage(chatId, loaderMessage.message_id);
               await bot.sendMessage(
                 chatId,
                 "🔴 somthing has been wrong please try again later!!!"
@@ -11507,7 +11855,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
             "-------------------------- EVM swap-------------------------"
           );
           try {
-            const { loaderMessage, interval } = await animateLoader(chatId);
+            await animateLoader(chatId);
             let finalAmount;
             let partAmount = userStates[chatId]?.swapPrice
               ?.toString()
@@ -11539,9 +11887,14 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
                 },
               })
                 .then(async (response) => {
+                  if (userStates[chatId]?.loaderMessage) {
+                    await bot.deleteMessage(
+                      chatId,
+                      userStates[chatId]?.loaderMessage?.message_id
+                    );
+                    userStates[chatId].loaderMessage = null;
+                  }
                   resetUserState(chatId);
-                  clearInterval(interval);
-                  await bot.deleteMessage(chatId, loaderMessage.message_id);
                   if (response?.data?.status) {
                     await bot.sendMessage(
                       chatId,
@@ -11556,9 +11909,14 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
                   }
                 })
                 .catch(async (error) => {
+                  if (userStates[chatId]?.loaderMessage) {
+                    await bot.deleteMessage(
+                      chatId,
+                      userStates[chatId]?.loaderMessage?.message_id
+                    );
+                    userStates[chatId].loaderMessage = null;
+                  }
                   resetUserState(chatId);
-                  clearInterval(interval);
-                  await bot.deleteMessage(chatId, loaderMessage.message_id);
                   await bot.sendMessage(
                     chatId,
                     `🔴 due to some reason you transaction failed!!`
@@ -11576,9 +11934,13 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
                   method: "swap",
                 })
                 .then(async (res) => {
-                  // await deleteAllmessages(chatId);
-                  clearInterval(interval);
-                  await bot.deleteMessage(chatId, loaderMessage.message_id);
+                  if (userStates[chatId]?.loaderMessage) {
+                    await bot.deleteMessage(
+                      chatId,
+                      userStates[chatId]?.loaderMessage?.message_id
+                    );
+                    userStates[chatId].loaderMessage = null;
+                  }
                   resetUserState(chatId);
                   if (res?.data?.status) {
                     await bot.sendMessage(chatId, `✅ ${res?.data?.message}`);
@@ -11591,10 +11953,14 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
                   }
                 })
                 .catch(async (err) => {
-                  // await deleteAllmessages(chatId);
+                  if (userStates[chatId]?.loaderMessage) {
+                    await bot.deleteMessage(
+                      chatId,
+                      userStates[chatId]?.loaderMessage?.message_id
+                    );
+                    userStates[chatId].loaderMessage = null;
+                  }
                   resetUserState(chatId);
-                  clearInterval(interval);
-                  await bot.deleteMessage(chatId, loaderMessage.message_id);
                   return await bot.sendMessage(chatId, err?.message);
                 });
             }
@@ -11984,7 +12350,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
           }
         );
       } else {
-        const { loaderMessage, interval } = await animateLoader(chatId);
+        await animateLoader(chatId);
         try {
           let partAmount = userStates[chatId]?.transferPrice
             ?.toString()
@@ -12006,8 +12372,13 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
             },
           })
             .then(async (res) => {
-              clearInterval(interval);
-              await bot.deleteMessage(chatId, loaderMessage.message_id);
+              if (userStates[chatId]?.loaderMessage) {
+                await bot.deleteMessage(
+                  chatId,
+                  userStates[chatId]?.loaderMessage?.message_id
+                );
+                userStates[chatId].loaderMessage = null;
+              }
               resetUserState(chatId);
               if (res?.data?.status) {
                 await bot.sendMessage(chatId, `✅ ${res?.data?.message}`);
@@ -12020,8 +12391,13 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
               }
             })
             .catch(async (error) => {
-              clearInterval(interval);
-              await bot.deleteMessage(chatId, loaderMessage.message_id);
+              if (userStates[chatId]?.loaderMessage) {
+                await bot.deleteMessage(
+                  chatId,
+                  userStates[chatId]?.loaderMessage?.message_id
+                );
+                userStates[chatId].loaderMessage = null;
+              }
               resetUserState(chatId);
               await bot.sendMessage(
                 chatId,
@@ -12029,8 +12405,13 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
               );
             });
         } catch (error) {
-          clearInterval(interval);
-          await bot.deleteMessage(chatId, loaderMessage.message_id);
+          if (userStates[chatId]?.loaderMessage) {
+            await bot.deleteMessage(
+              chatId,
+              userStates[chatId]?.loaderMessage?.message_id
+            );
+            userStates[chatId].loaderMessage = null;
+          }
           resetUserState(chatId);
           console.log("🚀 ~ bot.on ~ error:", error?.message);
         }
@@ -12123,7 +12504,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
             }
           );
         } else {
-          const { loaderMessage, interval } = await animateLoader(chatId);
+          await animateLoader(chatId);
           await axios({
             url: `${API_URL}/transferSolanaToken`,
             method: "post",
@@ -12135,9 +12516,14 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
             },
           })
             .then(async (res) => {
+              if (userStates[chatId]?.loaderMessage) {
+                await bot.deleteMessage(
+                  chatId,
+                  userStates[chatId]?.loaderMessage?.message_id
+                );
+                userStates[chatId].loaderMessage = null;
+              }
               resetUserState(chatId);
-              clearInterval(interval);
-              await bot.deleteMessage(chatId, loaderMessage?.message_id);
               if (res?.data?.status) {
                 await bot.sendMessage(chatId, `✅ ${res?.data?.message}`);
                 await bot.sendMessage(
@@ -12149,9 +12535,14 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
               }
             })
             .catch(async (error) => {
+              if (userStates[chatId]?.loaderMessage) {
+                await bot.deleteMessage(
+                  chatId,
+                  userStates[chatId]?.loaderMessage?.message_id
+                );
+                userStates[chatId].loaderMessage = null;
+              }
               resetUserState(chatId);
-              clearInterval(interval);
-              await bot.deleteMessage(chatId, loaderMessage.message_id);
               await bot.sendMessage(
                 chatId,
                 "due to high transaction volume in solana you transaction has been faild!!"
