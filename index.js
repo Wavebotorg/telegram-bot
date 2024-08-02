@@ -222,7 +222,7 @@ const handleResetPassword = async (chatId, action, email) => {
   }).then(async (res) => {
     if (res?.data?.status) {
       userStates[chatId].currentStep = "getOtp";
-      await bot.sendMessage(chatId, "Check you mail and enter the OTP!!");
+      await bot.sendMessage(chatId, "📧 Check you mail and enter the OTP :");
     } else {
       await bot.sendMessage(
         chatId,
@@ -1964,9 +1964,17 @@ Wave Socials : https://linktr.ee/wavebot
 // Function to fetch Solana balance
 async function fetchSolanaBalance(chatId) {
   try {
+    await animateLoader(chatId);
     const response = await axios.post(`${API_URL}/solanaBalance`, {
       chatId: chatId,
     });
+    if (userStates[chatId]?.loaderMessage) {
+      await bot.deleteMessage(
+        chatId,
+        userStates[chatId]?.loaderMessage?.message_id
+      );
+      userStates[chatId].loaderMessage = null;
+    }
     const balances = await response?.data?.data?.filter(
       (item) => item?.amount * item?.price > 0.5
     );
@@ -1996,6 +2004,13 @@ async function fetchSolanaBalance(chatId) {
     }
   } catch (error) {
     console.error("Error fetching balance:", error);
+    if (userStates[chatId]?.loaderMessage) {
+      await bot.deleteMessage(
+        chatId,
+        userStates[chatId]?.loaderMessage?.message_id
+      );
+      userStates[chatId].loaderMessage = null;
+    }
     await bot.sendMessage(
       chatId,
       "An error occurred while fetching your balance."
@@ -2006,10 +2021,18 @@ async function fetchSolanaBalance(chatId) {
 // Function to fetch wallet tokens balances
 async function fetchTokenBalances(chatId, chainId, chain, isUser) {
   try {
+    await animateLoader(chatId);
     const response = await axios.post(`${API_URL}/fetchbalance`, {
       chatId: chatId,
       chainId: chainId,
     });
+    if (userStates[chatId]?.loaderMessage) {
+      await bot.deleteMessage(
+        chatId,
+        userStates[chatId]?.loaderMessage?.message_id
+      );
+      userStates[chatId].loaderMessage = null;
+    }
     const balances = response.data;
     let finalTokens = await balances?.data
       ?.filter((item) => item?.usd_price != null)
@@ -2026,6 +2049,13 @@ async function fetchTokenBalances(chatId, chainId, chain, isUser) {
       message += "Thank you for using our service!✌️";
       await bot.sendMessage(chatId, message);
     } else {
+      if (userStates[chatId]?.loaderMessage) {
+        await bot.deleteMessage(
+          chatId,
+          userStates[chatId]?.loaderMessage?.message_id
+        );
+        userStates[chatId].loaderMessage = null;
+      }
       await bot.sendMessage(chatId, "🔴 you do not have any tokens!!", {
         reply_markup: {
           inline_keyboard: [
@@ -2045,6 +2075,13 @@ async function fetchTokenBalances(chatId, chainId, chain, isUser) {
     }
   } catch (error) {
     console.error("Error fetching balance:", error);
+    if (userStates[chatId]?.loaderMessage) {
+      await bot.deleteMessage(
+        chatId,
+        userStates[chatId]?.loaderMessage?.message_id
+      );
+      userStates[chatId].loaderMessage = null;
+    }
     await bot.sendMessage(
       chatId,
       "An error occurred while fetching your balance."
