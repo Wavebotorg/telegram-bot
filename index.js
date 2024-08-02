@@ -1362,7 +1362,7 @@ async function logoutfunaction(chatId) {
 //Send welcome Msg
 async function sendWelcomeMessage(chatId) {
   const isUser = await getstartBot(chatId);
-  const keyboard = isUser && [
+  const keyboard = [
     [{ text: "SignUp", request_contact: false, request_location: false }],
     [{ text: "Login", request_contact: false, request_location: false }],
     [
