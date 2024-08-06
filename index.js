@@ -62,6 +62,7 @@ const resetUserState = (chatId) => {
     leaderTransactionMes: userStates[chatId]?.leaderTransactionMes,
     sellSolanaTokensDex: null,
     back: null,
+    gasFee: userStates[chatId]?.gasFee,
     sellToken: null,
     decimalValue: null,
     currentPlPrice: null,
@@ -128,6 +129,7 @@ const resetUserStateRef = (chatId) => {
     percentageChange: null,
     sellToken: null,
     transferCustomMessage: null,
+    gasFee: userStates[chatId]?.gasFee,
     market_cap: null,
     back: null,
     sellSolanaTokensDex: null,
@@ -1934,6 +1936,7 @@ async function setting(chatId) {
             // },
             { text: "Help", callback_data: "helpButton" },
             { text: "Reset PW", callback_data: "resetPassword" },
+            { text: "Set gas fee", callback_data: "setGasFee" },
           ],
         ],
       },
@@ -10534,6 +10537,105 @@ bot.on("callback_query", async (callbackQuery) => {
         `Our "Limit Orders" function is under development and will be launching soon! Stay tuned for more updates as we continue to enhance your trading experience. 📈✨`
       );
       break;
+    case "setGasFee":
+      resetUserState(chatId);      
+      userStates[chatId].gasFee = await bot.sendMessage(
+        chatId,
+        "✨ Set gas fee as per your need ✨",
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: `${
+                    isUser?.isLogin?.gasFee == "medium" ? "✅" : ""
+                  } Fast 🐴`,
+                  callback_data: "medium",
+                },
+                {
+                  text: `${
+                    isUser?.isLogin?.gasFee == "turbo" ? "✅" : ""
+                  } Turbo 🚀`,
+                  callback_data: "turbo",
+                },
+              ],
+            ],
+          },
+        }
+      );
+      break;
+    case "medium":
+      await axios({
+        url: `${API_URL}/setGasFee`,
+        method: "post",
+        data: {
+          email: isUser?.isLogin?.email,
+          gasType: "medium",
+        },
+      })
+        .then(async (res) => {
+          console.log("🚀 ~ bot.on ~ res:", res?.data?.gastype);
+          await bot.editMessageReplyMarkup(
+            {
+              inline_keyboard: [
+                [
+                  {
+                    text: `✅ Fast 🐴`,
+                    callback_data: "medium",
+                  },
+                  {
+                    text: `Turbo 🚀`,
+                    callback_data: "turbo",
+                  },
+                ],
+              ],
+            },
+            {
+              chat_id: chatId,
+              message_id: userStates[chatId]?.gasFee?.message_id,
+            }
+          );
+        })
+        .catch((error) => {
+          console.log("🚀 ~ bot.on ~ error:", error?.message);
+        });
+      break;
+    case "turbo":
+      await axios({
+        url: `${API_URL}/setGasFee`,
+        method: "post",
+        data: {
+          email: isUser?.isLogin?.email,
+          gasType: "turbo",
+        },
+      })
+        .then(async (res) => {
+          console.log("🚀 ~ bot.on ~ res:", res?.data?.gastype);
+          await bot.editMessageReplyMarkup(
+            {
+              inline_keyboard: [
+                [
+                  {
+                    text: `Fast 🐴`,
+                    callback_data: "medium",
+                  },
+                  {
+                    text: `✅ Turbo 🚀`,
+                    callback_data: "turbo",
+                  },
+                ],
+              ],
+            },
+            {
+              chat_id: chatId,
+              message_id: userStates[chatId]?.gasFee?.message_id,
+            }
+          );
+        })
+        .catch((error) => {
+          console.log("🚀 ~ bot.on ~ error:", error?.message);
+        });
+      break;
     case "newPairsButton":
       resetUserState(chatId);
       bot.sendMessage(
@@ -10894,6 +10996,7 @@ end of the week to get a boost in your referral rate.`,
         transferToken: null,
         swapFromToken: null,
         allSellSolanaToken: null,
+        gasFee: null,
         name: null,
         refId: null,
         referral: null,
