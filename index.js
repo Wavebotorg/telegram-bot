@@ -65,6 +65,7 @@ const resetUserState = (chatId) => {
     gasFee: userStates[chatId]?.gasFee,
     sellToken: null,
     decimalValue: null,
+    gasFeeNetwork: userStates[chatId]?.gasFeeNetwork,
     currentPlPrice: null,
     percentageChange: null,
     password: null,
@@ -125,6 +126,7 @@ const resetUserStateRef = (chatId) => {
     decimalValue: null,
     swapFromToken: null,
     leaderTransactionMes: userStates[chatId]?.leaderTransactionMes,
+    gasFeeNetwork: userStates[chatId]?.gasFeeNetwork,
     leaderBoardData: null,
     percentageChange: null,
     sellToken: null,
@@ -1052,6 +1054,32 @@ const buyblockchainKeyboard = {
     ],
   ],
 };
+
+// setGasFee keyboard
+const setGasFee = {
+  inline_keyboard: [
+    [
+      { text: "Solana", callback_data: "solana+gasFee" },
+      { text: "Ethereum", callback_data: "1+gasFee" },
+      { text: "Base", callback_data: "8453+gasFee" },
+    ],
+    [
+      { text: "BSC", callback_data: "56+gasFee" },
+      { text: "Avalanche", callback_data: "43114+gasFee" },
+      { text: "Arbitrum", callback_data: "42161+gasFee" },
+    ],
+    [
+      { text: "Fantom", callback_data: "250+gasFee" },
+      // { text: "Blast", callback_data: "81457+gasFee" },
+      { text: "Polygon", callback_data: "137+gasFee" },
+      { text: "Optimism", callback_data: "10+gasFee" },
+    ],
+    [
+      { text: "Linea", callback_data: "59144+gasFee" },
+      { text: "Cronos", callback_data: "25+gasFee" },
+    ],
+  ],
+};
 // sell token keyboard
 const sellblockchainKeyboard = {
   inline_keyboard: [
@@ -1347,6 +1375,17 @@ Great! Let's get started. Please select your preferred blockchain from the optio
     }
   );
 };
+// Withdraw token Token
+const setGasFeeHandler = async (chatId) => {
+  userStates[chatId].methodTransactions = await bot.sendMessage(
+    chatId,
+    `🌟 Choose Your Blockchain 🌟
+Great! Let's get started. Please select your preferred blockchain from the options below`,
+    {
+      reply_markup: JSON.stringify(setGasFee),
+    }
+  );
+};
 //Logout
 async function logoutfunaction(chatId) {
   try {
@@ -1591,7 +1630,10 @@ async function evmSwapHandle(amount, chatId, method) {
 // EVM sell function
 
 async function evmSellHandle(amount, chatId) {
-  if (userStates[chatId]?.selectedSellToken?.balance_formatted < amount) {
+  console.log("🚀 ~ evmSellHandle ~ balance_formatted:", userStates[chatId]?.selectedSellToken?.balance_formatted)
+  console.log("🚀 ~ evmSellHandle ~ amount:", amount)
+  const currentBalance = userStates[chatId]?.selectedSellToken?.balance_formatted
+  if (currentBalance < amount) {
     resetUserState(chatId);
     return bot.sendMessage(
       chatId,
@@ -10140,7 +10182,7 @@ https://dexscreener.com/solana/${
                 if (res?.data?.status) {
                   await bot.sendMessage(
                     chatId,
-                    `🎉 User registered successfully.`,
+                    `🎉 You registered successfully.`,
                     {
                       reply_markup: {
                         remove_keyboard: true,
@@ -10510,6 +10552,44 @@ bot.on("callback_query", async (callbackQuery) => {
     await leaderboardDateWiseChnages(chatId, part[0]);
   }
 
+  //  all about set gas fee
+  if (data?.slice(-6) == "gasFee") {
+    if (userStates[chatId]?.gasFee) {
+      await bot.deleteMessage(chatId, userStates[chatId]?.gasFee?.message_id);
+      userStates[chatId].gasFee = null;
+    }
+    let part = data.split("+");
+    userStates[chatId].gasFeeNetwork = part[0];
+    userStates[chatId].gasFee = await bot.sendMessage(
+      chatId,
+      "✨ Set gas fee as per your need ✨",
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: `${
+                  isUser?.isLogin?.gasFeeStructure[part[0]]?.gasType == "fast"
+                    ? "✅"
+                    : ""
+                } Fast 🐴`,
+                callback_data: "medium",
+              },
+              {
+                text: `${
+                  isUser?.isLogin?.gasFeeStructure[part[0]]?.gasType == "turbo"
+                    ? "✅"
+                    : ""
+                } Turbo 🚀`,
+                callback_data: "turbo",
+              },
+            ],
+          ],
+        },
+      }
+    );
+  }
+
   //  all buttons handlers
   switch (data) {
     case "mainMenuStart":
@@ -10538,31 +10618,8 @@ bot.on("callback_query", async (callbackQuery) => {
       );
       break;
     case "setGasFee":
-      resetUserState(chatId);      
-      userStates[chatId].gasFee = await bot.sendMessage(
-        chatId,
-        "✨ Set gas fee as per your need ✨",
-        {
-          reply_markup: {
-            inline_keyboard: [
-              [
-                {
-                  text: `${
-                    isUser?.isLogin?.gasFee == "medium" ? "✅" : ""
-                  } Fast 🐴`,
-                  callback_data: "medium",
-                },
-                {
-                  text: `${
-                    isUser?.isLogin?.gasFee == "turbo" ? "✅" : ""
-                  } Turbo 🚀`,
-                  callback_data: "turbo",
-                },
-              ],
-            ],
-          },
-        }
-      );
+      resetUserState(chatId);
+      await setGasFeeHandler(chatId);
       break;
     case "medium":
       await axios({
@@ -10570,7 +10627,9 @@ bot.on("callback_query", async (callbackQuery) => {
         method: "post",
         data: {
           email: isUser?.isLogin?.email,
-          gasType: "medium",
+          gasType: "fast",
+          chain: userStates[chatId].gasFeeNetwork,
+          customFee:0
         },
       })
         .then(async (res) => {
@@ -10607,6 +10666,8 @@ bot.on("callback_query", async (callbackQuery) => {
         data: {
           email: isUser?.isLogin?.email,
           gasType: "turbo",
+          chain: userStates[chatId].gasFeeNetwork,
+          customFee: 0
         },
       })
         .then(async (res) => {
@@ -10916,6 +10977,7 @@ end of the week to get a boost in your referral rate.`,
       if (userStates[chatId]?.flag && userStates[chatId]?.sellPrice) {
         let partAmount = userStates[chatId]?.sellPrice?.toString()?.split(".");
         if (partAmount[1]?.length > 5) {
+          console.log("----------------------->");
           let finalAmount = partAmount[0] + "." + partAmount[1]?.slice(0, 5);
           evmSellHandle(finalAmount, chatId);
         } else {
@@ -10988,6 +11050,7 @@ end of the week to get a boost in your referral rate.`,
         sellSolanaTokensList: null,
         positionList: null,
         back: null,
+        gasFeeNetwork: null,
         buyTokenData: null,
         selectedSellSolanaToken: null,
         allSellTokens: null,
