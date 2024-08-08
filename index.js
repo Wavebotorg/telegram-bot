@@ -95,6 +95,7 @@ const resetUserState = (chatId) => {
     statusFalse: null,
     solanaBuyMessage: userStates[chatId]?.solanaBuyMessage,
     evmBuyMessageDetail: null,
+    askGasFeeMsg: userStates[chatId]?.askGasFeeMsg,
     evmTransferMessage: userStates[chatId]?.evmTransferMessage,
     evmSellMessage: userStates[chatId]?.evmSellMessage,
     evmBuyMessage: userStates[chatId]?.evmBuyMessage,
@@ -133,6 +134,7 @@ const resetUserStateRef = (chatId) => {
     transferCustomMessage: null,
     gasFee: userStates[chatId]?.gasFee,
     market_cap: null,
+    askGasFeeMsg: userStates[chatId]?.askGasFeeMsg,
     back: null,
     sellSolanaTokensDex: null,
     currentPlPrice: null,
@@ -255,9 +257,7 @@ const handleToSell = async (chatId, chainId, network) => {
       userStates[chatId].sellTokensList = null;
     }
     await fetchWalletTokenBalances(chatId, chainId, network);
-  } catch (error) {
-    console.log("🚀 ~ handleToSell ~ error:", error?.message);
-  }
+  } catch (error) {}
 };
 
 // frist handle to transfer showing holding
@@ -370,9 +370,7 @@ async function transferHoldingsEvm(chatId, chainId, network) {
         "🔴 Something went wrong, please try again after some time!!"
       );
     }
-  } catch (error) {
-    console.log("🚀 ~ transferHoldingsEvm ~ error:", error?.message);
-  }
+  } catch (error) {}
 }
 
 // handle to Withdraw solana
@@ -386,9 +384,7 @@ async function transferHoldingsSol(chatId) {
           userStates[chatId]?.evmSellMessage?.message_id
         );
         userStates[chatId].evmSellMessage = null;
-      } catch (error) {
-        console.log("🚀 ~ transferHoldingsSol ~ error:", error?.message);
-      }
+      } catch (error) {}
     }
     if (userStates[chatId]?.sellTokensList) {
       try {
@@ -397,9 +393,7 @@ async function transferHoldingsSol(chatId) {
           userStates[chatId]?.sellTokensList?.message_id
         );
         userStates[chatId].sellTokensList = null;
-      } catch (error) {
-        console.log("🚀 ~ transferHoldingsSol ~ error:", error?.message);
-      }
+      } catch (error) {}
     }
     if (userStates[chatId]?.evmTransferMessage?.message_id) {
       await bot.deleteMessage(
@@ -493,7 +487,6 @@ async function transferHoldingsSol(chatId) {
           );
           userStates[chatId].loaderMessage = null;
         }
-        console.log("🚀 ~ .then ~ err:", err?.message);
         await bot.sendMessage(
           chatId,
           "🔴 Somthing went wrong please try again later!!",
@@ -623,7 +616,6 @@ const handleToSellSolana = async (chatId) => {
           );
           userStates[chatId].loaderMessage = null;
         }
-        console.log("🚀 ~ handleToSellSolana ~ err:", err?.message);
         await bot.sendMessage(
           chatId,
           "🔴 Somthing went wrong please try again later!!"
@@ -673,7 +665,6 @@ async function handleEvmSwap(chatId, chainId, network) {
           }
           if (response?.data?.status) {
             userStates[chatId].nativeBalance = response.data.data[0];
-            console.log("🚀 ~ .then ~", userStates[chatId].nativeBalance);
             const balances = response?.data?.data;
             const tokens = balances
               ?.filter((item) => item?.usd_price != null)
@@ -743,9 +734,7 @@ async function handleEvmSwap(chatId, chainId, network) {
             console.log(response?.data?.message);
           }
         })
-        .catch((error) => {
-          console.log("🚀 ~ handleEvmSwap ~ error:", error?.message);
-        });
+        .catch((error) => {});
     } catch (error) {
       if (userStates[chatId]?.loaderMessage) {
         await bot.deleteMessage(
@@ -760,9 +749,7 @@ async function handleEvmSwap(chatId, chainId, network) {
         "🔴 Something went wrong, please try again after some time!!"
       );
     }
-  } catch (error) {
-    console.log("🚀 ~ transferHoldingsEvm ~ error:", error?.message);
-  }
+  } catch (error) {}
 }
 async function handleSolanaSwap(chatId) {
   try {
@@ -861,7 +848,6 @@ async function handleSolanaSwap(chatId) {
         }
       })
       .catch(async (err) => {
-        console.log("🚀 ~ handleSolanaSwap ~ err:", err?.message);
         await bot.sendMessage(
           chatId,
           "🔴 Something went wrong, please try again later!!"
@@ -877,8 +863,6 @@ async function handleSolanaSwap(chatId) {
 }
 // fucntion to convert big decimals
 function decimalConvert(price) {
-  console.log("🚀 ~ decimalConvert ~ price:", price);
-  console.log("🚀 ~ decimalConvert ~ price:", price.toFixed(11));
   const [integerPart, decimalPart] = Number(price).toFixed(11).split(".");
   const leadingZeros = decimalPart.match(/^0*/)[0].length;
 
@@ -888,7 +872,6 @@ function decimalConvert(price) {
     const finalAmount = `${integerPart}.0(${m})${decimalNumber
       .toString()
       .slice(0, 4)}`;
-    console.log("🚀 ~ finalAmount ~ finalAmount:", finalAmount);
     return finalAmount;
   } else {
     return Number(price).toFixed(5);
@@ -1181,7 +1164,6 @@ const isValidPassword = (password) => {
 
 // get evm qr code
 async function getQrCode(chatId, wallet, chainName) {
-  console.log("🚀 ~ getQrCode ~ chainName:", chainName);
   try {
     // Delete the previous QR code message if it exists
     const notice = {
@@ -1256,9 +1238,7 @@ ${wallet == 1 ? `Notice : ${notice[chainName]?.not}` : ""}`,
         "🔴 Something went wrong, please try again later!!"
       );
     }
-  } catch (error) {
-    console.log("🚀 ~ getQrCode ~ error:", error.message);
-  }
+  } catch (error) {}
 }
 
 // get referral QR code
@@ -1452,7 +1432,7 @@ async function getstartBot(chatId) {
       return finddata?.data; // Sending an appropriate message if data is missing
     }
   } catch (error) {
-    console.error("Error fetching data:", error);
+    console.error("Error fetching data:", error?.message);
   }
 }
 
@@ -1630,9 +1610,8 @@ async function evmSwapHandle(amount, chatId, method) {
 // EVM sell function
 
 async function evmSellHandle(amount, chatId) {
-  console.log("🚀 ~ evmSellHandle ~ balance_formatted:", userStates[chatId]?.selectedSellToken?.balance_formatted)
-  console.log("🚀 ~ evmSellHandle ~ amount:", amount)
-  const currentBalance = userStates[chatId]?.selectedSellToken?.balance_formatted
+  const currentBalance =
+    userStates[chatId]?.selectedSellToken?.balance_formatted;
   if (currentBalance < amount) {
     resetUserState(chatId);
     return bot.sendMessage(
@@ -1858,7 +1837,6 @@ async function solanaSellHandle(chatId) {
         userStates[chatId].loaderMessage = null;
       }
       resetUserState(chatId);
-      console.log("🚀 ~ solanaSellHandle ~ error:", error);
       await bot.sendMessage(
         chatId,
         "🔴 somthing went wrong plase try again later!!"
@@ -1948,7 +1926,6 @@ async function solanaSellHandlePosition(chatId) {
         userStates[chatId].loaderMessage = null;
       }
       resetUserState(chatId);
-      console.log("🚀 ~ solanaSellHandle ~ error:", error);
       await bot.sendMessage(
         chatId,
         "🔴 somthing went wrong plase try again later!!"
@@ -1964,7 +1941,7 @@ async function setting(chatId) {
     const messageText = `🌊 Personal Info! 🌊\n
   *Your Email Address : <code>${userInfo?.email}</code> (Tap to copy)\n
   *Your Referral Id : <code>${userInfo?.referralId}</code> (Tap to copy)\n
-  *Your Bot Invite Link : <code>${process.env.REFLINK}?start=${userInfo?.referralId}</code> (Tap to copy)\n
+  *Your Bot Invite Link : <code>${process.env.REFLINK}?start=rs_${userInfo?.referralId}</code> (Tap to copy)\n
   *Your Wallet Address (EVM) : <code>${userInfo?.EVMwallet}</code> (Tap to copy)\n
   *Your Wallet Address (Solana) : <code>${userInfo?.solanaWallets}</code> (Tap to copy)`;
     await bot.sendMessage(chatId, messageText, {
@@ -2023,7 +2000,6 @@ async function fetchSolanaBalance(chatId) {
     const balances = await response?.data?.data?.filter(
       (item) => item?.amount * item?.price > 0.5
     );
-    console.log("🚀 ~ fetchSolanaBalance ~ balances :", balances);
     let message = "Your Token Balances :\n\n";
     if (balances) {
       message += `🏷 Token Name :  Solana\n`;
@@ -2424,9 +2400,7 @@ https://dexscreener.com/${userStates[chatId]?.network}/${
         }
       );
     }
-  } catch (error) {
-    console.log("🚀 ~ handleDynamicSellToken ~ error:", error?.message);
-  }
+  } catch (error) {}
 }
 
 //  function to handle dynamic  SOL percentage
@@ -2623,9 +2597,7 @@ https://dexscreener.com/solana/${
       resetUserState(chatId);
       sellStartTokenSelection(chatId);
     }
-  } catch (error) {
-    console.log("🚀 ~ bot.on ~ error:", error?.message);
-  }
+  } catch (error) {}
 }
 
 // function to handle dynamic EVM percentage
@@ -2836,13 +2808,10 @@ https://dexscreener.com/${userStates[chatId]?.network}/${
       resetUserState(chatId);
       sellStartTokenSelection(chatId);
     }
-  } catch (error) {
-    console.log("🚀 ~ bot.on ~ error:", error?.message);
-  }
+  } catch (error) {}
 }
 
 async function handleDynamicSellSolana(chatId, token) {
-  console.log("🚀 ~ handleDynamicSellSolana ~ token:", token);
   await animateLoader(chatId);
   try {
     if (userStates[chatId]?.sellTokensList) {
@@ -2862,7 +2831,6 @@ async function handleDynamicSellSolana(chatId, token) {
     const tokenDetails = await userStates[chatId]?.allSellSolanaToken?.filter(
       (item) => item.symbol == token
     );
-    console.log("🚀 ~ handleDynamicSellSolana ~ tokenDetails:", tokenDetails);
     if (tokenDetails) {
       userStates[chatId].selectedSellSolanaToken = tokenDetails[0];
       await axios
@@ -3059,7 +3027,6 @@ https://dexscreener.com/solana/${
           );
         })
         .catch(async (err) => {
-          console.log("🚀 ~ .then ~ err:", err?.message);
           if (userStates[chatId]?.loaderMessage) {
             await bot.deleteMessage(
               chatId,
@@ -3228,9 +3195,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
       resetUserState(chatId);
       buyStartTokenSelection(chatId);
     }
-  } catch (error) {
-    console.log("🚀 ~ bot.on ~ error:", error?.message);
-  }
+  } catch (error) {}
 }
 
 // funtion to handle buy EVM percentage dynamically
@@ -3441,9 +3406,7 @@ https://dexscreener.com/${
       resetUserState(chatId);
       buyStartTokenSelection(chatId);
     }
-  } catch (error) {
-    console.log("🚀 ~ bot.on ~ error:", error?.message);
-  }
+  } catch (error) {}
 }
 
 // positions function
@@ -3480,7 +3443,6 @@ async function handlePositions(chatId, chainId, network) {
 
     if (response?.data?.status) {
       const balances = response?.data?.data;
-      console.log("🚀 ~ handlePositions ~ balances:", balances);
       userStates[chatId].nativeBalance = response?.data?.data?.nativeToken;
       userStates[chatId].allPositionTokens = balances?.tokensData;
 
@@ -3535,8 +3497,6 @@ ${balance?.price_at_invested < balance?.currentPrice ? "🟩" : "🟥"} PNL ${
 
         // add static buttons
         keyboard.push([{ text: "⬅️ Back", callback_data: "positionButton" }]);
-
-        console.log("🚀 ~ handlePositions ~ keyboard:", keyboard);
         userStates[chatId].positionList = await bot.sendMessage(
           chatId,
           message,
@@ -3717,14 +3677,11 @@ ${balance?.price_at_invested < balance?.price ? "🟩" : "🟥"} PNL SOL : ${
       }
       console.error("Error fetching balance:", error.message);
     }
-  } catch (error) {
-    console.log("🚀 ~ handleSolanaPosition ~ error:", error?.message);
-  }
+  } catch (error) {}
 }
 
 // position sell
 async function handlePositionSell(chatId, token) {
-  console.log("🚀 ~ handlePositionSell ~ token:", token);
   if (userStates[chatId]?.positionList) {
     await bot.deleteMessage(
       chatId,
@@ -3914,14 +3871,11 @@ https://dexscreener.com/${userStates[chatId]?.network}/${
         }
       );
     }
-  } catch (error) {
-    console.log("🚀 ~ handleDynamicSellToken ~ error:", error?.message);
-  }
+  } catch (error) {}
 }
 
 // handle all percentage button of position sell dynamically
 async function handlePercentageofPositions(chatId, percentage) {
-  console.log("🚀 ~ handlePercentageofPositions ~ percentage:", percentage);
   try {
     if (userStates[chatId]?.flag) {
       if (!(percentage == "custom" || percentage == 100)) {
@@ -4117,14 +4071,11 @@ https://dexscreener.com/${userStates[chatId]?.network}/${
       resetUserState(chatId);
       sellStartTokenSelection(chatId);
     }
-  } catch (error) {
-    console.log("🚀 ~ handlePercentageofPositions ~ error:", error?.message);
-  }
+  } catch (error) {}
 }
 
 //  handle solana sell position
 async function handleSolanaPositionSell(chatId, token) {
-  console.log("🚀 ~ handleSolanaPositionSell ~ token:", token);
   if (userStates[chatId]?.positionList) {
     await bot.deleteMessage(
       chatId,
@@ -4303,9 +4254,7 @@ https://dexscreener.com/solana/${userStates[chatId].selectedSellToken?.mint}`,
         }
       );
     }
-  } catch (error) {
-    console.log("🚀 ~ handleDynamicSellToken ~ error:", error?.message);
-  }
+  } catch (error) {}
 }
 
 //  handle solana all percentage of position sell dynamically
@@ -4327,7 +4276,6 @@ async function handleSolanaPercentage(chatId, percentage) {
       if (percentage == 100) {
         userStates[chatId].sellPrice =
           (userStates[chatId]?.selectedSellToken?.amount * 99.8) / 100;
-        console.log("🚀sellPrice:", userStates[chatId].sellPrice);
       }
       await bot.editMessageText(
         `✨ Information of ${userStates[chatId].selectedSellToken?.name}\n
@@ -4499,9 +4447,7 @@ https://dexscreener.com/solana/${userStates[chatId].selectedSellToken?.mint}`,
         );
       }
     }
-  } catch (error) {
-    console.log("🚀 ~ handleSolanaPercentage ~ error:", error?.message);
-  }
+  } catch (error) {}
 }
 
 // handle EVM transfer per and wallet
@@ -4660,9 +4606,7 @@ https://dexscreener.com/${
       );
       userStates[chatId].currentStep = "customEvmTransfer";
     }
-  } catch (error) {
-    console.log("🚀 ~ handleEvmTransferPercentage ~ error:", error?.message);
-  }
+  } catch (error) {}
 }
 
 // handle  SOL transfer per and wallet
@@ -4820,9 +4764,7 @@ https://dexscreener.com/solana/${
       );
       userStates[chatId].currentStep = "customTransferSol";
     }
-  } catch (error) {
-    console.log("🚀 ~ handleSolTransferPercentage ~ error:", error?.message);
-  }
+  } catch (error) {}
 }
 
 // handle swap  SOL percentage
@@ -5002,9 +4944,7 @@ https://dexscreener.com/solana/${
       );
       userStates[chatId].currentStep = "customWalletSwap";
     }
-  } catch (error) {
-    console.log("🚀 ~ handleSolSwapPercentage ~ error:", error?.message);
-  }
+  } catch (error) {}
 }
 
 async function handleEvmSwapPercentage(chatId, percentage) {
@@ -5199,9 +5139,7 @@ ${
       );
       userStates[chatId].currentStep = "customWalletSwapEvm";
     }
-  } catch (error) {
-    console.log("🚀 ~ handleEvmSwapPercentage ~ error:", error?.message);
-  }
+  } catch (error) {}
 }
 
 //  leaderboard handler
@@ -5300,7 +5238,6 @@ async function leaderboardHandler(chatId) {
         }
       })
       .catch(async (err) => {
-        console.log("🚀 ~ awaitaxios.get ~ err:", err?.message);
         if (userStates[chatId]?.loaderMessage) {
           await bot.deleteMessage(
             chatId,
@@ -5314,13 +5251,10 @@ async function leaderboardHandler(chatId) {
         );
         resetUserState(chatId);
       });
-  } catch (error) {
-    console.log("🚀 ~ leaderboardHandler ~ error:", error?.message);
-  }
+  } catch (error) {}
 }
 
 async function leaderboardDateWiseChnages(chatId, date) {
-  console.log("🚀 ~ leaderboardDateWiseChnages ~ date:", date);
   let formateData = {
     daily: {
       duration: "day",
@@ -5394,19 +5328,19 @@ async function leaderboardDateWiseChnages(chatId, date) {
         ],
       },
     });
-  } catch (error) {
-    console.log("🚀 ~ leaderboardDateWiseChnages ~ error:", error?.message);
-  }
+  } catch (error) {}
 }
 
 // signup by referral
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
-  const pattern = /^\/start\s+\S+/;
-  if (pattern.test(msg.text)) {
+  const referralLink = msg.text?.split(" ");
+  const part = referralLink[1]?.toString().split("_")
+  if (part?.[0]=="rs") {
+    console.log("🚀 ~ bot.on ~ part[1]", part[0]=="rs")
     resetUserState(chatId);
-    const referralLink = msg.text?.split(" ")[1];
-    userStates[chatId].refId = referralLink;
+    userStates[chatId].refId = part[1];
+    console.log("🚀 ~ bot.on ~ userStates[chatId].refId:", userStates[chatId].refId)
     const isUser = await getstartBot(chatId);
     if (!isUser) {
       await sendWelcomeMessage(chatId);
@@ -5517,6 +5451,7 @@ bot.on("message", async (msg) => {
 // take input from user for swap , sell, buy, transfer, logoutUser, signupUser
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
+  const isUser = await getstartBot(chatId);
   if (!userStates[chatId] || !userStates[chatId].flag) {
     return;
   }
@@ -5563,10 +5498,6 @@ bot.on("message", async (msg) => {
                 chatId
               ]?.allSellSolanaToken?.filter(
                 (item) => item.symbol == userStates[chatId]?.swapFromToken
-              );
-              console.log(
-                "🚀 ~ handleDynamicSellSolana ~ tokenDetails:",
-                tokenDetails
               );
               if (tokenDetails) {
                 userStates[chatId].selectedSellSolanaToken = tokenDetails[0];
@@ -5735,7 +5666,6 @@ https://dexscreener.com/solana/${
                     );
                   })
                   .catch(async (err) => {
-                    console.log("🚀 ~ .then ~ err:", err?.message);
                     if (userStates[chatId]?.loaderMessage) {
                       await bot.deleteMessage(
                         chatId,
@@ -5757,18 +5687,12 @@ https://dexscreener.com/solana/${
                 );
                 userStates[chatId].loaderMessage = null;
               }
-              console.log(
-                "🚀 ~ handleDynamicSellToken ~ error:",
-                error?.message
-              );
               await bot.sendMessage(
                 chatId,
                 "🔴 Something went wrong, please try again after some time!!"
               );
             }
-          } catch (error) {
-            console.log("🚀 ~ bot.on ~ error:", error?.message);
-          }
+          } catch (error) {}
           break;
         case "customPerTransferSwap":
           try {
@@ -5897,12 +5821,7 @@ https://dexscreener.com/solana/${
                 },
               }
             );
-          } catch (error) {
-            console.log(
-              "🚀 ~ handleSolSwapPercentage ~ error:",
-              error?.message
-            );
-          }
+          } catch (error) {}
           break;
         case "customTransferSwap":
           try {
@@ -6027,12 +5946,7 @@ https://dexscreener.com/solana/${
                 },
               }
             );
-          } catch (error) {
-            console.log(
-              "🚀 ~ handleSolSwapPercentage ~ error:",
-              error?.message
-            );
-          }
+          } catch (error) {}
           break;
         case "customWalletSwap":
           try {
@@ -6162,12 +6076,7 @@ https://dexscreener.com/solana/${
                 },
               }
             );
-          } catch (error) {
-            console.log(
-              "🚀 ~ handleSolSwapPercentage ~ error:",
-              error?.message
-            );
-          }
+          } catch (error) {}
           break;
 
         //  handle Evm swap
@@ -6354,9 +6263,7 @@ ${
                 }
               );
             }
-          } catch (error) {
-            console.log("🚀 ~ bot.on ~ error:", error?.message);
-          }
+          } catch (error) {}
           break;
         case "customPerSwapEvm":
           try {
@@ -6502,12 +6409,7 @@ ${
                 },
               }
             );
-          } catch (error) {
-            console.log(
-              "🚀 ~ handleEvmSwapPercentage ~ error:",
-              error?.message
-            );
-          }
+          } catch (error) {}
           break;
         case "customSwapEvmAmt":
           try {
@@ -6648,12 +6550,7 @@ ${
                 },
               }
             );
-          } catch (error) {
-            console.log(
-              "🚀 ~ handleEvmSwapPercentage ~ error:",
-              error?.message
-            );
-          }
+          } catch (error) {}
           break;
         case "customWalletSwapEvm":
           try {
@@ -6801,12 +6698,7 @@ ${
                 },
               }
             );
-          } catch (error) {
-            console.log(
-              "🚀 ~ handleEvmSwapPercentage ~ error:",
-              error?.message
-            );
-          }
+          } catch (error) {}
           break;
         case "amountSwap":
           if (
@@ -6859,7 +6751,6 @@ ${
                   }
                 })
                 .catch(async (err) => {
-                  console.log("🚀 ~ bot.on ~ err:", err?.message);
                   if (userStates[chatId]?.loaderMessage) {
                     await bot.deleteMessage(
                       chatId,
@@ -7123,7 +7014,6 @@ https://dexscreener.com/solana/${state.toToken}`,
                     }
                   })
                   .catch(async (error) => {
-                    console.log("🚀 ~ bot.on ~ error:", error?.message);
                     if (userStates[chatId]?.loaderMessage) {
                       await bot.deleteMessage(
                         chatId,
@@ -7353,7 +7243,6 @@ https://dexscreener.com/${
                     }
                   })
                   .catch(async (error) => {
-                    console.log("🚀 ~ bot.on ~ error:", error?.message);
                     await bot.sendMessage(
                       chatId,
                       "🔴somthing has been wrong while fetching token price!!"
@@ -7361,7 +7250,6 @@ https://dexscreener.com/${
                   });
               }
             } catch (error) {
-              console.log("🚀 ~ bot.on ~ error:", error?.message);
               resetUserState(chatId);
               await bot.sendMessage(
                 chatId,
@@ -8765,9 +8653,7 @@ https://dexscreener.com/${
                 }
               );
             }
-          } catch (error) {
-            console.log("🚀 ~ bot.on ~ error:", error?.message);
-          }
+          } catch (error) {}
           break;
         case "customPerTransfer":
           try {
@@ -8870,12 +8756,7 @@ https://dexscreener.com/${
                 },
               }
             );
-          } catch (error) {
-            console.log(
-              "🚀 ~ handleEvmTransferPercentage ~ error:",
-              error?.message
-            );
-          }
+          } catch (error) {}
           break;
         case "customEvmTransfer":
           try {
@@ -8971,12 +8852,7 @@ https://dexscreener.com/${
                 },
               }
             );
-          } catch (error) {
-            console.log(
-              "🚀 ~ handleEvmTransferPercentage ~ error:",
-              error?.message
-            );
-          }
+          } catch (error) {}
           break;
         case "customTransferWallet":
           try {
@@ -9080,12 +8956,7 @@ https://dexscreener.com/${
                 },
               }
             );
-          } catch (error) {
-            console.log(
-              "🚀 ~ handleEvmTransferPercentage ~ error:",
-              error?.message
-            );
-          }
+          } catch (error) {}
           break;
 
         // solana transfer
@@ -9117,10 +8988,6 @@ https://dexscreener.com/${
                 chatId
               ]?.allSellSolanaToken?.filter(
                 (item) => item.symbol == userStates[chatId].transferToken
-              );
-              console.log(
-                "🚀 ~ handleDynamicSellSolana ~ tokenDetails:",
-                tokenDetails
               );
               if (tokenDetails) {
                 userStates[chatId].selectedSellSolanaToken = tokenDetails[0];
@@ -9260,7 +9127,6 @@ https://dexscreener.com/solana/${
                       );
                   })
                   .catch(async (err) => {
-                    console.log("🚀 ~ .then ~ err:", err?.message);
                     if (userStates[chatId]?.loaderMessage) {
                       await bot.deleteMessage(
                         chatId,
@@ -9282,18 +9148,12 @@ https://dexscreener.com/solana/${
                 );
                 userStates[chatId].loaderMessage = null;
               }
-              console.log(
-                "🚀 ~ handleDynamicSellToken ~ error:",
-                error?.message
-              );
               await bot.sendMessage(
                 chatId,
                 "🔴 Something went wrong, please try again after some time!!"
               );
             }
-          } catch (error) {
-            console.log("🚀 ~ bot.on ~ error:", error?.message);
-          }
+          } catch (error) {}
           break;
         case "customPerTransferSol":
           try {
@@ -9394,12 +9254,7 @@ https://dexscreener.com/solana/${
                 },
               }
             );
-          } catch (error) {
-            console.log(
-              "🚀 ~ handleSolTransferPercentage ~ error:",
-              error?.message
-            );
-          }
+          } catch (error) {}
           break;
         case "customTransferSol":
           try {
@@ -9497,12 +9352,7 @@ https://dexscreener.com/solana/${
                 },
               }
             );
-          } catch (error) {
-            console.log(
-              "🚀 ~ handleSolTransferPercentage ~ error:",
-              error?.message
-            );
-          }
+          } catch (error) {}
           break;
         case "customTransferWalletSol":
           try {
@@ -9603,12 +9453,7 @@ https://dexscreener.com/solana/${
                 },
               }
             );
-          } catch (error) {
-            console.log(
-              "🚀 ~ handleSolTransferPercentage ~ error:",
-              error?.message
-            );
-          }
+          } catch (error) {}
           break;
         case "amountTransfer":
           if (
@@ -10271,7 +10116,6 @@ https://dexscreener.com/solana/${
               }
             })
             .catch(async (e) => {
-              console.log("🚀 ~ bot.on ~ e:", e?.message);
               await bot.sendMessage(chatId, "❌ Something went wrong");
             });
           break;
@@ -10393,9 +10237,64 @@ https://dexscreener.com/solana/${
                 );
                 userStates[chatId].loaderMessage = null;
               }
-              console.log("🚀 ~ bot.on ~ e:", e?.message);
               await bot.sendMessage(chatId, "❌ Something went wrong");
             });
+      }
+      break;
+    case "gasFeeCustomization":
+      switch (state.currentStep) {
+        case "gasFeeCustomAdd":
+          try {
+            if (userStates[chatId]?.askGasFeeMsg) {
+              await bot.deleteMessage(
+                chatId,
+                userStates[chatId]?.askGasFeeMsg?.message_id
+              );
+              userStates[chatId].askGasFeeMsg = null;
+            }
+            await bot.deleteMessage(chatId, msg.message_id);
+            await axios({
+              url: `${API_URL}/setGasFee`,
+              method: "post",
+              data: {
+                email: isUser?.isLogin?.email,
+                gasType: "custom",
+                chain: userStates[chatId].gasFeeNetwork,
+                customFee: text,
+              },
+            })
+              .then(async (res) => {
+                console.log("🚀 ~ .then ~ res:", res?.data)
+                await bot.editMessageReplyMarkup(
+                  {
+                    inline_keyboard: [
+                      [
+                        {
+                          text: `Fast 🐴`,
+                          callback_data: "medium",
+                        },
+                        {
+                          text: `Turbo 🚀`,
+                          callback_data: "turbo",
+                        },
+                        {
+                          text: `✅ ${text}`,
+                          callback_data: "gasFeeCustomFee",
+                        },
+                      ],
+                    ],
+                  },
+                  {
+                    chat_id: chatId,
+                    message_id: userStates[chatId]?.gasFee?.message_id,
+                  }
+                );
+              })
+              .catch((error) => {
+                console.log("🚀 ~ bot.on ~ error:", error?.message);
+              });
+          } catch (error) {}
+          break;
       }
       break;
     default:
@@ -10583,6 +10482,16 @@ bot.on("callback_query", async (callbackQuery) => {
                 } Turbo 🚀`,
                 callback_data: "turbo",
               },
+              {
+                text: `${
+                  isUser?.isLogin?.gasFeeStructure[part[0]]?.gasType == "custom"
+                    ? `✅ ${
+                        isUser?.isLogin?.gasFeeStructure[part[0]]?.customGas
+                      }`
+                  : "Custom gasfee"
+                }`,
+                callback_data: "gasFeeCustomFee",
+              },
             ],
           ],
         },
@@ -10629,11 +10538,10 @@ bot.on("callback_query", async (callbackQuery) => {
           email: isUser?.isLogin?.email,
           gasType: "fast",
           chain: userStates[chatId].gasFeeNetwork,
-          customFee:0
+          customFee: 0,
         },
       })
         .then(async (res) => {
-          console.log("🚀 ~ bot.on ~ res:", res?.data?.gastype);
           await bot.editMessageReplyMarkup(
             {
               inline_keyboard: [
@@ -10646,6 +10554,10 @@ bot.on("callback_query", async (callbackQuery) => {
                     text: `Turbo 🚀`,
                     callback_data: "turbo",
                   },
+                  {
+                    text: `Custom gasfee`,
+                    callback_data: "gasFeeCustomFee",
+                  },
                 ],
               ],
             },
@@ -10655,9 +10567,7 @@ bot.on("callback_query", async (callbackQuery) => {
             }
           );
         })
-        .catch((error) => {
-          console.log("🚀 ~ bot.on ~ error:", error?.message);
-        });
+        .catch((error) => {});
       break;
     case "turbo":
       await axios({
@@ -10667,11 +10577,10 @@ bot.on("callback_query", async (callbackQuery) => {
           email: isUser?.isLogin?.email,
           gasType: "turbo",
           chain: userStates[chatId].gasFeeNetwork,
-          customFee: 0
+          customFee: 0,
         },
       })
         .then(async (res) => {
-          console.log("🚀 ~ bot.on ~ res:", res?.data?.gastype);
           await bot.editMessageReplyMarkup(
             {
               inline_keyboard: [
@@ -10684,6 +10593,10 @@ bot.on("callback_query", async (callbackQuery) => {
                     text: `✅ Turbo 🚀`,
                     callback_data: "turbo",
                   },
+                  {
+                    text: `Custom gasfee`,
+                    callback_data: "gasFeeCustomFee",
+                  },
                 ],
               ],
             },
@@ -10693,9 +10606,75 @@ bot.on("callback_query", async (callbackQuery) => {
             }
           );
         })
-        .catch((error) => {
-          console.log("🚀 ~ bot.on ~ error:", error?.message);
-        });
+        .catch((error) => {});
+      break;
+    case "gasFeeCustomFee":
+      const askGasFeeMessage = {
+        solana: {
+          ask: "Enter gasfee in SOL :-",
+        },
+        1: {
+          ask: "Enter gasfee in ETH :-",
+        },
+        8453: {
+          ask: "Enter gasfee in ETH :-",
+        },
+        56: {
+          ask: "Enter gasfee in BNB :-",
+        },
+        43114: {
+          ask: "Enter gasfee in AVAX :-",
+        },
+        42161: {
+          ask: "Enter gasfee in ETH :-",
+        },
+        250: {
+          ask: "Enter gasfee in FTM :-",
+        },
+        137: {
+          ask: "Enter gasfee in MATIC :-",
+        },
+        10: {
+          ask: "Enter gasfee in ETH :-",
+        },
+        59144: {
+          ask: "Enter gasfee in ETH :-",
+        },
+        25: {
+          ask: "Enter gasfee in CRO :-",
+        },
+      };
+      userStates[chatId].currentStep = "gasFeeCustomAdd";
+      userStates[chatId].method = "gasFeeCustomization";
+      userStates[chatId].flag = "gasFeeCustomization";
+      await bot.editMessageReplyMarkup(
+        {
+          inline_keyboard: [
+            [
+              {
+                text: `Fast 🐴`,
+                callback_data: "medium",
+              },
+              {
+                text: `Turbo 🚀`,
+                callback_data: "turbo",
+              },
+              {
+                text: `✅ Custom gasfee`,
+                callback_data: "gasFeeCustomFee",
+              },
+            ],
+          ],
+        },
+        {
+          chat_id: chatId,
+          message_id: userStates[chatId]?.gasFee?.message_id,
+        }
+      );
+      userStates[chatId].askGasFeeMsg = await bot.sendMessage(
+        chatId,
+        askGasFeeMessage[userStates[chatId]?.gasFeeNetwork]?.ask
+      );
       break;
     case "newPairsButton":
       resetUserState(chatId);
@@ -10822,7 +10801,6 @@ end of the week to get a boost in your referral rate.`,
           }
         });
       } catch (error) {
-        console.log("🚀 ~ bot.on ~ error:", error?.message);
         await bot.sendMessage(chatId, "🔴 something went wrong!!");
       }
       break;
@@ -11047,6 +11025,7 @@ end of the week to get a boost in your referral rate.`,
         password: null,
         sellTokensList: null,
         leaderBoardData: null,
+        askGasFeeMsg: null,
         sellSolanaTokensList: null,
         positionList: null,
         back: null,
@@ -11303,7 +11282,6 @@ https://dexscreener.com/${
               }
             })
             .catch(async (error) => {
-              console.log("🚀 ~ bot.on ~ error:", error?.message);
               if (userStates[chatId]?.loaderMessage) {
                 await bot.deleteMessage(
                   chatId,
@@ -11320,9 +11298,7 @@ https://dexscreener.com/${
           resetUserState(chatId);
           buyStartTokenSelection(chatId);
         }
-      } catch (error) {
-        console.log("🚀 ~ bot.on ~ error:", error?.message);
-      }
+      } catch (error) {}
       break;
 
     case "refreshButtonBuySolana":
@@ -11502,7 +11478,6 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
               }
             })
             .catch(async (error) => {
-              console.log("🚀 ~ bot.on ~ error:", error?.message);
               if (userStates[chatId]?.loaderMessage) {
                 await bot.deleteMessage(
                   chatId,
@@ -11519,9 +11494,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
           resetUserState(chatId);
           buyStartTokenSelection(chatId);
         }
-      } catch (error) {
-        console.log("🚀 ~ bot.on ~ error:", error?.message);
-      }
+      } catch (error) {}
       break;
     case "evmSellRefresh":
       if (userStates[chatId]?.flag) {
@@ -11946,7 +11919,6 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
               }
             })
             .catch(async (err) => {
-              console.log("🚀 ~ bot.on ~ err:", err?.message);
               if (userStates[chatId]?.loaderMessage) {
                 await bot.deleteMessage(
                   chatId,
@@ -12167,9 +12139,7 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
                   return await bot.sendMessage(chatId, err?.message);
                 });
             }
-          } catch (error) {
-            console.log("🚀 ~ bot.on ~ error:", error?.message);
-          }
+          } catch (error) {}
         }
       } else {
         resetUserState(chatId);
@@ -12616,7 +12586,6 @@ https://dexscreener.com/solana/${userStates[chatId].toToken}`,
             userStates[chatId].loaderMessage = null;
           }
           resetUserState(chatId);
-          console.log("🚀 ~ bot.on ~ error:", error?.message);
         }
       }
       break;
