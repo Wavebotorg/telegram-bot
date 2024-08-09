@@ -2,7 +2,9 @@ const TelegramBot = require("node-telegram-bot-api");
 require("dotenv").config();
 const { default: axios } = require("axios");
 const express = require("express");
+const fs = require("fs");
 const { removeKeyboard } = require("telegraf/markup");
+const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3333;
 const TOKEN = process.env.TOKEN; // Telegram Token
@@ -922,15 +924,13 @@ const evmWalletBalance = {
       { text: "Arbitrum", callback_data: "42161b" },
     ],
     [
-      { text: "Fantom", callback_data: "250b" },
+      // { text: "Fantom", callback_data: "250b" },
       // { text: "Blast", callback_data: "81457b" },
       { text: "Polygon", callback_data: "137b" },
       { text: "Optimism", callback_data: "10b" },
-    ],
-    [
       { text: "Linea", callback_data: "59144b" },
-      { text: "Cronos", callback_data: "25b" },
     ],
+    [{ text: "Cronos", callback_data: "25b" }],
   ],
 };
 // wallet addresses keyboard
@@ -947,15 +947,13 @@ const walletAddressKeyboard = {
       { text: "Arbitrum", callback_data: "arbitrum+addressWallet" },
     ],
     [
-      { text: "Fantom", callback_data: "fantom+addressWallet" },
+      // { text: "Fantom", callback_data: "fantom+addressWallet" },
       // { text: "Blast", callback_data: "blast+addressWallet" },
       { text: "Polygon", callback_data: "polygon+addressWallet" },
       { text: "Optimism", callback_data: "optimism+addressWallet" },
-    ],
-    [
       { text: "Linea", callback_data: "linea+addressWallet" },
-      { text: "Cronos", callback_data: "cronos+addressWallet" },
     ],
+    [{ text: "Cronos", callback_data: "cronos+addressWallet" }],
   ],
 };
 
@@ -976,15 +974,13 @@ const positionsKeyboard = {
       { text: "Arbitrum", callback_data: "42161+arbitrum+Arbitrum+Position" },
     ],
     [
-      { text: "Fantom", callback_data: "250+fantom+Fantom+Position" },
+      // { text: "Fantom", callback_data: "250+fantom+Fantom+Position" },
       // { text: "Blast", callback_data: "PositionBlast" },
       { text: "Polygon", callback_data: "137+polygon+Polygon+Position" },
       { text: "Optimism", callback_data: "10+optimism+Optimism+Position" },
-    ],
-    [
       { text: "Linea", callback_data: "59144+linea+Linea+Position" },
-      { text: "Cronos", callback_data: "25+cronos+Cronos+Position" },
     ],
+    [{ text: "Cronos", callback_data: "25+cronos+Cronos+Position" }],
   ],
 };
 // swap keyboard
@@ -1001,15 +997,13 @@ const blockchainKeyboard = {
       { text: "Arbitrum", callback_data: "42161" },
     ],
     [
-      { text: "Fantom", callback_data: "250" },
+      // { text: "Fantom", callback_data: "250" },
       // { text: "Blast", callback_data: "81457" },
       { text: "Polygon", callback_data: "137" },
       { text: "Optimism", callback_data: "10" },
-    ],
-    [
       { text: "Linea", callback_data: "59144" },
-      { text: "Cronos", callback_data: "25" },
     ],
+    [{ text: "Cronos", callback_data: "25" }],
   ],
 };
 // buy token keyboard
@@ -1026,15 +1020,13 @@ const buyblockchainKeyboard = {
       { text: "Arbitrum", callback_data: "42161buy" },
     ],
     [
-      { text: "Fantom", callback_data: "250buy" },
+      // { text: "Fantom", callback_data: "250buy" },
       // { text: "Blast", callback_data: "81457buy" },
       { text: "Polygon", callback_data: "137buy" },
       { text: "Optimism", callback_data: "10buy" },
-    ],
-    [
       { text: "Linea", callback_data: "59144buy" },
-      { text: "Cronos", callback_data: "25buy" },
     ],
+    [{ text: "Cronos", callback_data: "25buy" }],
   ],
 };
 
@@ -1052,15 +1044,13 @@ const setGasFee = {
       { text: "Arbitrum", callback_data: "42161+gasFee" },
     ],
     [
-      { text: "Fantom", callback_data: "250+gasFee" },
+      // { text: "Fantom", callback_data: "250+gasFee" },
       // { text: "Blast", callback_data: "81457+gasFee" },
       { text: "Polygon", callback_data: "137+gasFee" },
       { text: "Optimism", callback_data: "10+gasFee" },
-    ],
-    [
       { text: "Linea", callback_data: "59144+gasFee" },
-      { text: "Cronos", callback_data: "25+gasFee" },
     ],
+    [{ text: "Cronos", callback_data: "25+gasFee" }],
   ],
 };
 // sell token keyboard
@@ -1077,15 +1067,13 @@ const sellblockchainKeyboard = {
       { text: "Arbitrum", callback_data: "42161sell" },
     ],
     [
-      { text: "Fantom", callback_data: "250sell" },
+      // { text: "Fantom", callback_data: "250sell" },
       // { text: "Blast", callback_data: "81457sell" },
       { text: "Polygon", callback_data: "137sell" },
       { text: "Optimism", callback_data: "10sell" },
-    ],
-    [
       { text: "Linea", callback_data: "59144sell" },
-      { text: "Cronos", callback_data: "25sell" },
     ],
+    [{ text: "Cronos", callback_data: "25sell" }],
   ],
 };
 // Withdraw token keyboard
@@ -1102,15 +1090,13 @@ const withrawblockchainKeyboard = {
       { text: "Arbitrum", callback_data: "42161withraw" },
     ],
     [
-      { text: "Fantom", callback_data: "250withraw" },
+      // { text: "Fantom", callback_data: "250withraw" },
       // { text: "Blast", callback_data: "81457withraw" },
       { text: "Polygon", callback_data: "137withraw" },
       { text: "Optimism", callback_data: "10withraw" },
-    ],
-    [
       { text: "Linea", callback_data: "59144withraw" },
-      { text: "Cronos", callback_data: "25withraw" },
     ],
+    [{ text: "Cronos", callback_data: "25withraw" }],
   ],
 };
 // animation function
@@ -2213,7 +2199,7 @@ async function handleDynamicSellToken(chatId, token) {
       );
       userStates[chatId].sellTokensList = null;
     }
-    if (userStates[chatId].evmSellMessage) {
+    if (userStates[chatId]?.evmSellMessage) {
       await bot.deleteMessage(
         chatId,
         userStates[chatId].evmSellMessage?.message_id
@@ -2400,7 +2386,9 @@ https://dexscreener.com/${userStates[chatId]?.network}/${
         }
       );
     }
-  } catch (error) {}
+  } catch (error) {
+    console.log("🚀 ~ handleDynamicSellToken ~ error:", error?.message);
+  }
 }
 
 //  function to handle dynamic  SOL percentage
@@ -3452,7 +3440,18 @@ async function handlePositions(chatId, chainId, network) {
         balances?.tokensData?.forEach((balance) => {
           const oldPrice = balance?.qty * balance?.price_at_invested;
           const newPrice = balance?.qty * balance?.currentPrice;
-
+          let percentage;
+          if (balance?.percentage_of_growth < 0) {
+            console.log("-------------minus------------->");
+            let part = balance?.percentage_of_growth?.toString().split("-");
+            let part2 = part[1]?.toString().split(".");
+            percentage = `m-${part2[0]}-${part2[1]}`;
+          } else {
+            console.log("-------------plus------------->");
+            let part = balance?.percentage_of_growth?.toString().split("-");
+            let part2 = part[0]?.toString().split(".");
+            percentage = `p-${part2[0]}-${part2[1]}`;
+          }
           const oldConverted = decimalConvert(balance?.price_at_invested);
           const newConverted = decimalConvert(balance?.currentPrice);
           const difference = Math.abs(Number(oldPrice - newPrice).toFixed(2));
@@ -3481,13 +3480,15 @@ ${balance?.price_at_invested < balance?.currentPrice ? "🟩" : "🟥"} PNL ${
                 ).toFixed(5)}`
           } (${balance?.percentage_of_growth > 0 ? "+" : ""}${Number(
             balance?.percentage_of_growth
-          ).toFixed(2)}%)\n\n\n`;
+          ).toFixed(2)}%)
+<a href='${process.env.REFLINK}?start=rc_${balance?.symbol}_${
+            userStates[chatId].nativeBalance?.symbol
+          }_${percentage}_${balance?.duration}'>PNL Card 🖼️</a>\n\n\n`;
         });
         const buttons = balances?.tokensData?.map((item) => ({
           text: item.symbol,
           callback_data: `${item.symbol}SellP`,
         }));
-
         const keyboard = [];
 
         // add dynamic buttons in the keyboard
@@ -3526,7 +3527,7 @@ ${balance?.price_at_invested < balance?.currentPrice ? "🟩" : "🟥"} PNL ${
       );
     }
   } catch (error) {
-    console.error("Error fetching balance:", error.message);
+    console.error("Error fetching balance:", error?.message);
     await bot.sendMessage(
       chatId,
       "🔴 Something went wrong, please try again after some time!!"
@@ -3576,7 +3577,18 @@ async function handleSolanaPosition(chatId) {
               balances?.forEach((balance) => {
                 const oldPrice = balance?.amount * balance?.price_at_invested;
                 const newPrice = balance?.amount * balance?.price;
-
+                let percentage;
+                if (balance?.percentage_of_growth < 0) {
+                  console.log("-------------minus------------->");
+                  let part = balance?.percentage?.toString().split("-");
+                  let part2 = part[1]?.toString().split(".");
+                  percentage = `m-${part2[0]}-${part2[1]}`;
+                } else {
+                  console.log("-------------plus------------->");
+                  let part = balance?.percentage?.toString().split("-");
+                  let part2 = part[0]?.toString().split(".");
+                  percentage = `p-${part2[0]}-${part2[1]}`;
+                }
                 const oldConverted = decimalConvert(balance?.price_at_invested);
                 const newConverted = decimalConvert(balance?.price);
                 const difference = Math.abs(
@@ -3605,7 +3617,10 @@ ${balance?.price_at_invested < balance?.price ? "🟩" : "🟥"} PNL SOL : ${
                       ).toFixed(5)}`
                 } (${balance?.percentage > 0 ? "+" : ""}${Number(
                   balance?.percentage
-                ).toFixed(2)}%)\n\n\n`;
+                ).toFixed(2)}%)
+<a href='${process.env.REFLINK}?start=rc_${balance?.symbol}_SOL_${percentage}_${
+                  balance?.duration
+                }'>PNL Card 🖼️</a>\n\n\n`;
               });
               const buttons = balances
                 ?.filter((item) => item?.symbol)
@@ -5335,17 +5350,77 @@ async function leaderboardDateWiseChnages(chatId, date) {
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   const referralLink = msg.text?.split(" ");
-  const part = referralLink[1]?.toString().split("_")
-  if (part?.[0]=="rs") {
-    console.log("🚀 ~ bot.on ~ part[1]", part[0]=="rs")
+  console.log("🚀 ~ bot.on ~ referralLink:", referralLink);
+  const part = referralLink[1]?.toString().split("_");
+  console.log("🚀 ~ bot.on ~ part:", part);
+  const isUser = await getstartBot(chatId);
+  console.log("🚀 ~ bot.on ~ isUser:", isUser);
+  if (part?.[0] == "rs") {
+    console.log("🚀 ~ bot.on ~ part[1]", part[0] == "rs");
     resetUserState(chatId);
     userStates[chatId].refId = part[1];
-    console.log("🚀 ~ bot.on ~ userStates[chatId].refId:", userStates[chatId].refId)
-    const isUser = await getstartBot(chatId);
+    console.log(
+      "🚀 ~ bot.on ~ userStates[chatId].refId:",
+      userStates[chatId].refId
+    );
     if (!isUser) {
       await sendWelcomeMessage(chatId);
     } else {
       await start(chatId);
+    }
+  } else if (part?.[0] == "rc") {
+    try {
+      if (userStates[chatId]?.pnlCard) {
+        await bot.deleteMessage(
+          chatId,
+          userStates[chatId]?.pnlCard?.message_id
+        );
+        userStates[chatId].pnlCard = null;
+      }
+      if (msg) {
+        await bot.deleteMessage(chatId, msg.message_id);
+      }
+      let percentage;
+      let percentagePart = part[3]?.toString().split("-");
+      percentage =
+        percentagePart[0] == "m"
+          ? `-${percentagePart[1]}.${Number(percentagePart[2])
+              ?.toString()
+              ?.slice(0, 2)}%`
+          : `+${percentagePart[1]}.${Number(percentagePart[2])
+              ?.toString()
+              ?.slice(0, 2)}%`;
+      axios({
+        url: `${API_URL}/referralCard`,
+        method: "post",
+        responseType: "arraybuffer", // Ensure that the response is received as binary data
+        data: {
+          name: `${part[1]} / ${part[2]}`,
+          percent: percentage,
+          time: part[4],
+          chatId: chatId,
+        },
+      })
+        .then(async (res) => {
+          const imageBuffer = Buffer.from(res.data, "binary");
+          const imageName = `${chatId}.jpg`;
+          const imagePath = path.join(__dirname, imageName);
+          fs.writeFileSync(imagePath, imageBuffer);
+          userStates[chatId].pnlCard = await bot.sendPhoto(chatId, imagePath, {
+            caption: `${percentage} ${part[1]}/${part[2]} ${
+              percentagePart[0] == "m"? "📈" : "📉"
+            }\n\nShare token with your Reflink:\n<code>${
+              process.env.REFLINK
+            }?start=rs_${isUser?.isLogin?.referralId}</code>`,
+            parse_mode: "HTML",
+          });
+          fs.unlinkSync(imagePath);
+        })
+        .catch((error) => {
+          console.log("🚀 ~ bot.on ~ error:", error?.message);
+        });
+    } catch (error) {
+      console.log("🚀 ~ bot.on ~ error:", error?.message);
     }
   }
 });
@@ -10264,7 +10339,7 @@ https://dexscreener.com/solana/${
               },
             })
               .then(async (res) => {
-                console.log("🚀 ~ .then ~ res:", res?.data)
+                console.log("🚀 ~ .then ~ res:", res?.data);
                 await bot.editMessageReplyMarkup(
                   {
                     inline_keyboard: [
@@ -10488,7 +10563,7 @@ bot.on("callback_query", async (callbackQuery) => {
                     ? `✅ ${
                         isUser?.isLogin?.gasFeeStructure[part[0]]?.customGas
                       }`
-                  : "Custom gasfee"
+                    : "Custom gasfee"
                 }`,
                 callback_data: "gasFeeCustomFee",
               },
