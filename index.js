@@ -74,6 +74,7 @@ const resetUserState = (chatId) => {
     sellTokensList: userStates[chatId]?.sellTokensList,
     sellSolanaTokensList: userStates[chatId]?.sellSolanaTokensList,
     positionList: userStates[chatId]?.positionList,
+    pnlCard: userStates[chatId]?.pnlCard,
     buyTokenData: null,
     selectedSellSolanaToken: null,
     allSellTokens: null,
@@ -132,6 +133,7 @@ const resetUserStateRef = (chatId) => {
     gasFeeNetwork: userStates[chatId]?.gasFeeNetwork,
     leaderBoardData: null,
     percentageChange: null,
+    pnlCard: userStates[chatId]?.pnlCard,
     sellToken: null,
     transferCustomMessage: null,
     gasFee: userStates[chatId]?.gasFee,
@@ -3437,54 +3439,56 @@ async function handlePositions(chatId, chainId, network) {
       let message = "✨ Your Tokens :\n";
       message += `🔗 Chain : ${userStates[chatId].chainName}\n\n`;
       if (!balances?.tokensData?.length == 0) {
-        balances?.tokensData?.forEach((balance) => {
-          const oldPrice = balance?.qty * balance?.price_at_invested;
-          const newPrice = balance?.qty * balance?.currentPrice;
-          let percentage;
-          if (balance?.percentage_of_growth < 0) {
-            console.log("-------------minus------------->");
-            let part = balance?.percentage_of_growth?.toString().split("-");
-            let part2 = part[1]?.toString().split(".");
-            percentage = `m-${part2[0]}-${part2[1]}`;
-          } else {
-            console.log("-------------plus------------->");
-            let part = balance?.percentage_of_growth?.toString().split("-");
-            let part2 = part[0]?.toString().split(".");
-            percentage = `p-${part2[0]}-${part2[1]}`;
-          }
-          const oldConverted = decimalConvert(balance?.price_at_invested);
-          const newConverted = decimalConvert(balance?.currentPrice);
-          const difference = Math.abs(Number(oldPrice - newPrice).toFixed(2));
-          message += `🏷 Token Name : ${balance?.symbol}
+        balances?.tokensData
+          ?.filter((item) => item?.value_in_usd >= 0.5)
+          ?.forEach((balance) => {
+            const oldPrice = balance?.qty * balance?.price_at_invested;
+            const newPrice = balance?.qty * balance?.currentPrice;
+            let percentage;
+            if (balance?.percentage_of_growth < 0) {
+              console.log("-------------minus------------->");
+              let part = balance?.percentage_of_growth?.toString().split("-");
+              let part2 = part[1]?.toString().split(".");
+              percentage = `m-${part2[0]}-${part2[1]}`;
+            } else {
+              console.log("-------------plus------------->");
+              let part = balance?.percentage_of_growth?.toString().split("-");
+              let part2 = part[0]?.toString().split(".");
+              percentage = `p-${part2[0]}-${part2[1]}`;
+            }
+            const oldConverted = decimalConvert(balance?.price_at_invested);
+            const newConverted = decimalConvert(balance?.currentPrice);
+            const difference = Math.abs(Number(oldPrice - newPrice).toFixed(2));
+            message += `🏷 Token Name : ${balance?.symbol}
 💰 Balance : ${Number(balance?.qty).toFixed(5)} ($${Number(
-            balance?.qty * balance?.currentPrice
-          ).toFixed(2)})
+              balance?.value_in_usd
+            ).toFixed(2)})
 💵 ${balance?.symbol} Price : $${newConverted}
 📊 Avg Entry Price : $${oldConverted}
 ${balance?.price_at_invested < balance?.currentPrice ? "🟩" : "🟥"} PNL USD : ${
-            balance?.price_at_invested < balance?.currentPrice
-              ? `+$${Number(difference).toFixed(2)}`
-              : `-$${Number(difference).toFixed(2)}`
-          } (${balance?.percentage_of_growth > 0 ? "+" : ""}${Number(
-            balance?.percentage_of_growth
-          ).toFixed(2)}%)
+              balance?.price_at_invested < balance?.currentPrice
+                ? `+$${Number(difference).toFixed(2)}`
+                : `-$${Number(difference).toFixed(2)}`
+            } (${balance?.percentage_of_growth > 0 ? "+" : ""}${Number(
+              balance?.percentage_of_growth
+            ).toFixed(2)}%)
 ${balance?.price_at_invested < balance?.currentPrice ? "🟩" : "🟥"} PNL ${
-            userStates[chatId].nativeBalance?.symbol
-          } : ${
-            balance?.price_at_invested < balance?.currentPrice
-              ? `+${Number(
-                  difference / userStates[chatId].nativeBalance?.usd_price
-                ).toFixed(5)}`
-              : `-${Number(
-                  difference / userStates[chatId].nativeBalance?.usd_price
-                ).toFixed(5)}`
-          } (${balance?.percentage_of_growth > 0 ? "+" : ""}${Number(
-            balance?.percentage_of_growth
-          ).toFixed(2)}%)
+              userStates[chatId].nativeBalance?.symbol
+            } : ${
+              balance?.price_at_invested < balance?.currentPrice
+                ? `+${Number(
+                    difference / userStates[chatId].nativeBalance?.usd_price
+                  ).toFixed(5)}`
+                : `-${Number(
+                    difference / userStates[chatId].nativeBalance?.usd_price
+                  ).toFixed(5)}`
+            } (${balance?.percentage_of_growth > 0 ? "+" : ""}${Number(
+              balance?.percentage_of_growth
+            ).toFixed(2)}%)
 <a href='${process.env.REFLINK}?start=rc_${balance?.symbol}_${
-            userStates[chatId].nativeBalance?.symbol
-          }_${percentage}_${balance?.duration}'>PNL Card 🖼️</a>\n\n\n`;
-        });
+              userStates[chatId].nativeBalance?.symbol
+            }_${percentage}_${balance?.duration}'>PNL Card 🖼️</a>\n\n\n`;
+          });
         const buttons = balances?.tokensData?.map((item) => ({
           text: item.symbol,
           callback_data: `${item.symbol}SellP`,
@@ -5370,6 +5374,7 @@ bot.on("message", async (msg) => {
     }
   } else if (part?.[0] == "rc") {
     try {
+      await animateLoader(chatId);
       if (userStates[chatId]?.pnlCard) {
         await bot.deleteMessage(
           chatId,
@@ -5382,21 +5387,18 @@ bot.on("message", async (msg) => {
       }
       let percentage;
       let percentagePart = part[3]?.toString().split("-");
-      percentage =
-        percentagePart[0] == "m"
-          ? `-${percentagePart[1]}.${Number(percentagePart[2])
-              ?.toString()
-              ?.slice(0, 2)}%`
-          : `+${percentagePart[1]}.${Number(percentagePart[2])
-              ?.toString()
-              ?.slice(0, 2)}%`;
+      percentage = Number(`${percentagePart[1]}.${percentagePart[2]}`).toFixed(
+        2
+      );
+      console.log("🚀 ~ bot.on ~ percentage:", percentage);
       axios({
         url: `${API_URL}/referralCard`,
         method: "post",
-        responseType: "arraybuffer", // Ensure that the response is received as binary data
+        responseType: "arraybuffer",
         data: {
           name: `${part[1]} / ${part[2]}`,
-          percent: percentage,
+          percent:
+            percentagePart[0] == "m" ? `-${percentage}%` : `+${percentage}%`,
           time: part[4],
           chatId: chatId,
         },
@@ -5406,17 +5408,31 @@ bot.on("message", async (msg) => {
           const imageName = `${chatId}.jpg`;
           const imagePath = path.join(__dirname, imageName);
           fs.writeFileSync(imagePath, imageBuffer);
+          if (userStates[chatId]?.loaderMessage) {
+            await bot.deleteMessage(
+              chatId,
+              userStates[chatId]?.loaderMessage?.message_id
+            );
+            userStates[chatId].loaderMessage = null;
+          }
           userStates[chatId].pnlCard = await bot.sendPhoto(chatId, imagePath, {
             caption: `${percentage} ${part[1]}/${part[2]} ${
-              percentagePart[0] == "m"? "📈" : "📉"
-            }\n\nShare token with your Reflink:\n<code>${
+              percentagePart[0] == "m" ? "📈" : "📉"
+            }\n\nShare your reflink with your friends:\n<code>${
               process.env.REFLINK
             }?start=rs_${isUser?.isLogin?.referralId}</code>`,
             parse_mode: "HTML",
           });
           fs.unlinkSync(imagePath);
         })
-        .catch((error) => {
+        .catch(async (error) => {
+          if (userStates[chatId]?.loaderMessage) {
+            await bot.deleteMessage(
+              chatId,
+              userStates[chatId]?.loaderMessage?.message_id
+            );
+            userStates[chatId].loaderMessage = null;
+          }
           console.log("🚀 ~ bot.on ~ error:", error?.message);
         });
     } catch (error) {
@@ -11114,6 +11130,7 @@ end of the week to get a boost in your referral rate.`,
         swapFromToken: null,
         allSellSolanaToken: null,
         gasFee: null,
+        pnlCard: null,
         name: null,
         refId: null,
         referral: null,
