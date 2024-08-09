@@ -3582,7 +3582,7 @@ async function handleSolanaPosition(chatId) {
                 const oldPrice = balance?.amount * balance?.price_at_invested;
                 const newPrice = balance?.amount * balance?.price;
                 let percentage;
-                if (balance?.percentage_of_growth < 0) {
+                if (balance?.percentage < 0) {
                   console.log("-------------minus------------->");
                   let part = balance?.percentage?.toString().split("-");
                   let part2 = part[1]?.toString().split(".");
